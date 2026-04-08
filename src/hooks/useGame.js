@@ -1,0 +1,161 @@
+import { useState, useEffect, useCallback } from 'react';
+import {
+  doc, getDoc, setDoc, serverTimestamp,
+} from 'firebase/firestore';
+import { db, firebaseConfigured } from '../firebase.js';
+import { bfs, diffsByOneLetter, getStars } from '../utils/wordUtils.js';
+import {
+  getDateProgress, saveDateProgress,
+  updateStatsOnWin, updateStatsOnGiveUp, loadStats,
+} from '../utils/storage.js';
+import { getDailyInfo } from '../dailyPairs.js';
+import { getWordSet } from '../words.js';
+
+export function useGame(user, wordListReady) {
+  const { pair, dateStr, gameNumber } = getDailyInfo();
+
+  const [chain, setChain] = useState([pair.start]);
+  const [optimalPath, setOptimalPath] = useState(null);
+  const [status, setStatus] = useState('playing'); // 'playing' | 'won' | 'gaveUp'
+  const [error, setError] = useState('');
+  const [hintUsed, setHintUsed] = useState(false);
+  const [stats, setStats] = useState(loadStats());
+
+  const parSteps = optimalPath ? optimalPath.length - 1 : null;
+  const userSteps = chain.length - 1;
+  const currentWord = chain[chain.length - 1];
+
+  // Compute BFS optimal path once word list is ready
+  useEffect(() => {
+    if (!wordListReady) return;
+    const ws = getWordSet();
+    if (!ws) return;
+    const path = bfs(pair.start, pair.end, ws);
+    setOptimalPath(path);
+  }, [wordListReady, pair.start, pair.end]);
+
+  // Restore saved progress
+  useEffect(() => {
+    const saved = getDateProgress(dateStr);
+    if (!saved) return;
+    setChain(saved.chain || [pair.start]);
+    setStatus(saved.status || 'playing');
+    setHintUsed(saved.hintUsed || false);
+  }, [dateStr, pair.start]);
+
+  // Sync progress with cloud when user is signed in
+  useEffect(() => {
+    if (!firebaseConfigured || !user) return;
+    const ref = doc(db, 'users', user.uid, 'games', dateStr);
+    getDoc(ref).then((snap) => {
+      if (snap.exists()) {
+        const data = snap.data();
+        setChain(data.chain || [pair.start]);
+        setStatus(data.status || 'playing');
+        setHintUsed(data.hintUsed || false);
+      }
+    });
+  }, [user, dateStr, pair.start]);
+
+  const persist = useCallback(
+    async (newChain, newStatus, newHintUsed) => {
+      const data = {
+        chain: newChain,
+        status: newStatus,
+        hintUsed: newHintUsed,
+        start: pair.start,
+        end: pair.end,
+        gameNumber,
+      };
+      saveDateProgress(dateStr, data);
+      if (firebaseConfigured && user) {
+        const ref = doc(db, 'users', user.uid, 'games', dateStr);
+        await setDoc(ref, { ...data, updatedAt: serverTimestamp() }, { merge: true });
+      }
+    },
+    [dateStr, pair, gameNumber, user]
+  );
+
+  function submitWord(word) {
+    const w = word.toLowerCase().trim();
+    setError('');
+
+    if (w.length !== 4) {
+      setError('Word must be exactly 4 letters.');
+      return false;
+    }
+
+    const ws = getWordSet();
+    if (ws && !ws.has(w)) {
+      setError('Not a valid word.');
+      return false;
+    }
+
+    if (!diffsByOneLetter(currentWord, w)) {
+      setError('Must change exactly one letter.');
+      return false;
+    }
+
+    if (chain.includes(w)) {
+      setError('Word already used in this chain.');
+      return false;
+    }
+
+    const newChain = [...chain, w];
+    setChain(newChain);
+
+    if (w === pair.end) {
+      // Won!
+      const newStatus = 'won';
+      setStatus(newStatus);
+      const stars = getStars(newChain.length - 1, parSteps || newChain.length - 1);
+      const newStats = updateStatsOnWin(stars, dateStr);
+      setStats(newStats);
+      persist(newChain, newStatus, hintUsed);
+    } else {
+      persist(newChain, 'playing', hintUsed);
+    }
+
+    return true;
+  }
+
+  function giveUp() {
+    const newStatus = 'gaveUp';
+    setStatus(newStatus);
+    const newStats = updateStatsOnGiveUp(dateStr);
+    setStats(newStats);
+    persist(chain, newStatus, hintUsed);
+  }
+
+  function useHint() {
+    if (!optimalPath) return null;
+    setHintUsed(true);
+    persist(chain, status, true);
+    // Find where we are in the optimal path and suggest the next step
+    const currentIdx = optimalPath.indexOf(currentWord);
+    if (currentIdx >= 0 && currentIdx < optimalPath.length - 1) {
+      return optimalPath[currentIdx + 1];
+    }
+    // If current word isn't on optimal path, return the next word from start
+    return optimalPath[1] || null;
+  }
+
+  return {
+    pair,
+    dateStr,
+    gameNumber,
+    chain,
+    optimalPath,
+    parSteps,
+    userSteps,
+    currentWord,
+    status,
+    error,
+    hintUsed,
+    stats,
+    submitWord,
+    giveUp,
+    useHint,
+    setError,
+  };
+}

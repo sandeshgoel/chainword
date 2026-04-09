@@ -5,7 +5,7 @@ import ShareModal from './ShareModal.jsx';
 
 function Connector() {
   return (
-    <div className="ml-[29px] w-0.5 h-3 bg-gray-200 dark:bg-gray-700" />
+    <div className="self-center w-0.5 h-3 bg-gray-200 dark:bg-gray-700" />
   );
 }
 
@@ -13,9 +13,7 @@ function Connector() {
 function InputTiles({ value, currentWord, onClick }) {
   const letters = value.padEnd(4, ' ').split('');
   return (
-    <div className="flex items-center gap-2 cursor-text" onClick={onClick}>
-      {/* Step number spacer */}
-      <div className="w-6" />
+    <div className="flex justify-center cursor-text" onClick={onClick}>
       <div className="flex gap-1.5">
         {letters.map((ch, i) => {
           const filled = ch !== ' ';

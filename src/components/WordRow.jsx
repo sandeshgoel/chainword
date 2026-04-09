@@ -31,26 +31,18 @@ export default function WordRow({ word, prevWord, variant = 'step', stepNumber, 
   }
 
   return (
-    <div className="flex items-center gap-2">
-      {/* Step number badge */}
-      <div className="w-6 text-right">
-        {stepNumber !== undefined && variant !== 'start' && variant !== 'end' && (
-          <span className="text-xs font-medium text-gray-400 dark:text-gray-500">
-            {stepNumber}
-          </span>
-        )}
-      </div>
+    <div className="relative flex justify-center items-center">
+      {stepNumber !== undefined && variant !== 'start' && variant !== 'end' && (
+        <span className="absolute left-0 text-xs font-medium text-gray-400 dark:text-gray-500">
+          {stepNumber}
+        </span>
+      )}
       <div className="flex gap-1.5">
         {letters.map((letter, i) => (
           <div key={i} className={cellClass(i)}>
             {letter}
           </div>
         ))}
-      </div>
-      {/* Label */}
-      <div className="text-xs text-gray-400 dark:text-gray-500 ml-1">
-        {variant === 'start' && 'start'}
-        {variant === 'end' && 'end'}
       </div>
     </div>
   );

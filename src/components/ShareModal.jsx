@@ -17,7 +17,8 @@ export default function ShareModal({ open, onClose, gameData }) {
     });
   }
 
-  const stars = gaveUp ? 0 : getStars(userSteps, parSteps);
+  const effectiveGuesses = userSteps - 1 + (hintsUsed || 0);
+  const stars = gaveUp ? 0 : getStars(userSteps + (hintsUsed || 0), parSteps);
 
   return (
     <Modal open={open} onClose={onClose} title="Share Your Result">
@@ -33,7 +34,7 @@ export default function ShareModal({ open, onClose, gameData }) {
           <p className="text-sm text-gray-500 dark:text-gray-400">
             {gaveUp
               ? `Gave up (optimal: ${parSteps - 1} guess${parSteps - 1 !== 1 ? 'es' : ''})`
-              : `Solved in ${userSteps - 1} guess${userSteps - 1 !== 1 ? 'es' : ''} (par: ${parSteps - 1})`}
+              : `Solved in ${effectiveGuesses} guess${effectiveGuesses !== 1 ? 'es' : ''} (par: ${parSteps - 1})`}
             {!gaveUp && hintsUsed > 0 && ` • 💡 ${hintsUsed} hint${hintsUsed !== 1 ? 's' : ''}`}
           </p>
         </div>

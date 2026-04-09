@@ -4,7 +4,8 @@ export default function ResultBanner({ status, userSteps, parSteps, hintsUsed, o
   if (status === 'playing') return null;
 
   const gaveUp = status === 'gaveUp';
-  const stars = gaveUp ? 0 : getStars(userSteps, parSteps);
+  const effectiveGuesses = userSteps - 1 + (hintsUsed || 0);
+  const stars = gaveUp ? 0 : getStars(userSteps + (hintsUsed || 0), parSteps);
   const label = gaveUp ? 'Better luck tomorrow!' : getScoreLabel(stars);
 
   return (
@@ -22,7 +23,7 @@ export default function ResultBanner({ status, userSteps, parSteps, hintsUsed, o
       </p>
       {!gaveUp && (
         <p className="text-sm text-gray-600 dark:text-gray-400">
-          {userSteps - 1} guess{userSteps - 1 !== 1 ? 'es' : ''}
+          {effectiveGuesses} guess{effectiveGuesses !== 1 ? 'es' : ''}
           {parSteps !== null && ` (par: ${parSteps - 1})`}
           {hintsUsed > 0 && ` • 💡 ${hintsUsed} hint${hintsUsed !== 1 ? 's' : ''}`}
         </p>

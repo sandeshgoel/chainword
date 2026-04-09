@@ -112,7 +112,7 @@ export function useGame(user, wordListReady) {
       // Won!
       const newStatus = 'won';
       setStatus(newStatus);
-      const stars = getStars(finalChain.length - 1, parSteps || finalChain.length - 1);
+      const stars = getStars(finalChain.length - 1 + hintsUsed, parSteps || finalChain.length - 1);
       const newStats = updateStatsOnWin(stars, dateStr);
       setStats(newStats);
       persist(finalChain, newStatus, hintsUsed);

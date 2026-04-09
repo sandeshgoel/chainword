@@ -55,6 +55,7 @@ export default function Game({ game, wordListReady }) {
   const [showShare, setShowShare] = useState(false);
   const [hintWord, setHintWord] = useState(null);
   const [hintVisible, setHintVisible] = useState(false);
+  const [hintConfirming, setHintConfirming] = useState(false);
   const [inputValue, setInputValue] = useState('');
   const inputRef = useRef(null);
 
@@ -82,6 +83,11 @@ export default function Game({ game, wordListReady }) {
   }
 
   function handleHint() {
+    if (!hintConfirming) {
+      setHintConfirming(true);
+      return;
+    }
+    setHintConfirming(false);
     const hint = useHint();
     if (hint) {
       setHintWord(hint);
@@ -201,9 +207,15 @@ export default function Game({ game, wordListReady }) {
               <button
                 type="button"
                 onClick={handleHint}
-                className="px-4 py-2 text-sm text-amber-600 dark:text-amber-400 border border-amber-300 dark:border-amber-700 rounded-xl hover:bg-amber-50 dark:hover:bg-amber-900/20 transition-colors font-medium"
+                onBlur={() => setHintConfirming(false)}
+                className={[
+                  'px-4 py-2 text-sm rounded-xl transition-colors font-medium',
+                  hintConfirming
+                    ? 'bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300 border border-amber-400 dark:border-amber-600'
+                    : 'text-amber-600 dark:text-amber-400 border border-amber-300 dark:border-amber-700 hover:bg-amber-50 dark:hover:bg-amber-900/20',
+                ].join(' ')}
               >
-                💡 Hint
+                {hintConfirming ? '⚠ +1 guess — confirm?' : '💡 Hint'}
               </button>
             )}
             <button
@@ -216,14 +228,20 @@ export default function Game({ game, wordListReady }) {
           </div>
 
           {/* Progress */}
-          <p className="text-sm text-gray-500 dark:text-gray-400">
-            {userSteps} guess{userSteps !== 1 ? 'es' : ''} so far
-            {parSteps !== null && (
-              <span className={userSteps >= parSteps ? ' text-amber-500' : ''}>
-                {userSteps < parSteps ? ' — on track!' : ` (+${userSteps - parSteps + 1} over par)`}
-              </span>
-            )}
-          </p>
+          {(() => {
+            const effective = userSteps + hintsUsed;
+            return (
+              <p className="text-sm text-gray-500 dark:text-gray-400">
+                {effective} guess{effective !== 1 ? 'es' : ''} so far
+                {hintsUsed > 0 && <span className="text-amber-500"> (incl. {hintsUsed} hint{hintsUsed !== 1 ? 's' : ''})</span>}
+                {parSteps !== null && (
+                  <span className={effective >= parSteps ? ' text-amber-500' : ''}>
+                    {effective < parSteps ? ' — on track!' : ` (+${effective - parSteps + 1} over par)`}
+                  </span>
+                )}
+              </p>
+            );
+          })()}
         </form>
       )}
 

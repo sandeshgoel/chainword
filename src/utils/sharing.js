@@ -2,7 +2,7 @@ import { getStars, getScoreLabel } from './wordUtils.js';
 
 // Build a shareable text without revealing the actual words used
 export function buildShareText({ gameNumber, dateStr, start, end, userSteps, parSteps, chain, hintsUsed, gaveUp }) {
-  const stars = gaveUp ? 0 : getStars(userSteps, parSteps);
+  const stars = gaveUp ? 0 : getStars(userSteps + (hintsUsed || 0), parSteps);
   const starEmojis = gaveUp ? '❌' : '⭐'.repeat(stars) + (stars < 3 ? '☆'.repeat(3 - stars) : '');
   const label = gaveUp ? 'Gave up' : getScoreLabel(stars);
 
@@ -21,12 +21,12 @@ export function buildShareText({ gameNumber, dateStr, start, end, userSteps, par
     }
   }
 
-  const userGuesses = userSteps - 1;
+  const effectiveGuesses = userSteps - 1 + (hintsUsed || 0);
   const parGuesses = parSteps - 1;
   const hintStr = hintsUsed > 0 ? ` 💡${hintsUsed}` : '';
   const stepInfo = gaveUp
     ? `DNF (par: ${parGuesses} guess${parGuesses !== 1 ? 'es' : ''})`
-    : `${userGuesses}/${parGuesses} guess${parGuesses !== 1 ? 'es' : ''}${hintStr}`;
+    : `${effectiveGuesses}/${parGuesses} guess${parGuesses !== 1 ? 'es' : ''}${hintStr}`;
 
   return (
     `Chainword #${gameNumber} 🔗\n` +

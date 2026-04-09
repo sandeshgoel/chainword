@@ -63,7 +63,9 @@ export default function Game({ game, wordListReady }) {
 
   // Auto-focus when game is active
   useEffect(() => {
-    if (isPlaying && wordListReady) inputRef.current?.focus();
+    if (!isPlaying || !wordListReady) return;
+    const id = requestAnimationFrame(() => inputRef.current?.focus());
+    return () => cancelAnimationFrame(id);
   }, [isPlaying, wordListReady]);
 
   function handleChange(e) {
@@ -215,10 +217,10 @@ export default function Game({ game, wordListReady }) {
 
           {/* Progress */}
           <p className="text-sm text-gray-500 dark:text-gray-400">
-            {userSteps - 1} guess{userSteps - 1 !== 1 ? 'es' : ''} so far
+            {userSteps} guess{userSteps !== 1 ? 'es' : ''} so far
             {parSteps !== null && (
-              <span className={userSteps > parSteps ? ' text-amber-500' : ''}>
-                {userSteps <= parSteps ? ' — on track!' : ` (+${userSteps - parSteps} over par)`}
+              <span className={userSteps >= parSteps ? ' text-amber-500' : ''}>
+                {userSteps < parSteps ? ' — on track!' : ` (+${userSteps - parSteps + 1} over par)`}
               </span>
             )}
           </p>

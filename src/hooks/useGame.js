@@ -18,7 +18,7 @@ export function useGame(user, wordListReady) {
   const [optimalPath, setOptimalPath] = useState(null);
   const [status, setStatus] = useState('playing'); // 'playing' | 'won' | 'gaveUp'
   const [error, setError] = useState('');
-  const [hintUsed, setHintUsed] = useState(false);
+  const [hintsUsed, setHintsUsed] = useState(0);
   const [stats, setStats] = useState(loadStats());
 
   const parSteps = optimalPath ? optimalPath.length - 1 : null;
@@ -40,7 +40,7 @@ export function useGame(user, wordListReady) {
     if (!saved) return;
     setChain(saved.chain || [pair.start]);
     setStatus(saved.status || 'playing');
-    setHintUsed(saved.hintUsed || false);
+    setHintsUsed(saved.hintsUsed || saved.hintUsed ? 1 : 0);
   }, [dateStr, pair.start]);
 
   // Sync progress with cloud when user is signed in
@@ -52,7 +52,7 @@ export function useGame(user, wordListReady) {
         const data = snap.data();
         setChain(data.chain || [pair.start]);
         setStatus(data.status || 'playing');
-        setHintUsed(data.hintUsed || false);
+        setHintsUsed(data.hintsUsed || (data.hintUsed ? 1 : 0));
       }
     });
   }, [user, dateStr, pair.start]);
@@ -62,7 +62,7 @@ export function useGame(user, wordListReady) {
       const data = {
         chain: newChain,
         status: newStatus,
-        hintUsed: newHintUsed,
+        hintsUsed: newHintUsed,
         start: pair.start,
         end: pair.end,
         gameNumber,
@@ -111,9 +111,9 @@ export function useGame(user, wordListReady) {
       const stars = getStars(newChain.length - 1, parSteps || newChain.length - 1);
       const newStats = updateStatsOnWin(stars, dateStr);
       setStats(newStats);
-      persist(newChain, newStatus, hintUsed);
+      persist(newChain, newStatus, hintsUsed);
     } else {
-      persist(newChain, 'playing', hintUsed);
+      persist(newChain, 'playing', hintsUsed);
     }
 
     return true;
@@ -124,13 +124,14 @@ export function useGame(user, wordListReady) {
     setStatus(newStatus);
     const newStats = updateStatsOnGiveUp(dateStr);
     setStats(newStats);
-    persist(chain, newStatus, hintUsed);
+    persist(chain, newStatus, hintsUsed);
   }
 
   function useHint() {
     if (!optimalPath) return null;
-    setHintUsed(true);
-    persist(chain, status, true);
+    const newCount = hintsUsed + 1;
+    setHintsUsed(newCount);
+    persist(chain, status, newCount);
     // Find where we are in the optimal path and suggest the next step
     const currentIdx = optimalPath.indexOf(currentWord);
     if (currentIdx >= 0 && currentIdx < optimalPath.length - 1) {
@@ -151,7 +152,7 @@ export function useGame(user, wordListReady) {
     currentWord,
     status,
     error,
-    hintUsed,
+    hintsUsed,
     stats,
     submitWord,
     giveUp,

@@ -1,6 +1,6 @@
 import { getStars, getScoreLabel } from '../utils/wordUtils.js';
 
-export default function ResultBanner({ status, userSteps, parSteps, optimalPath, onShare }) {
+export default function ResultBanner({ status, userSteps, parSteps, hintsUsed, optimalPath, onShare }) {
   if (status === 'playing') return null;
 
   const gaveUp = status === 'gaveUp';
@@ -22,13 +22,14 @@ export default function ResultBanner({ status, userSteps, parSteps, optimalPath,
       </p>
       {!gaveUp && (
         <p className="text-sm text-gray-600 dark:text-gray-400">
-          {userSteps} step{userSteps !== 1 ? 's' : ''}
-          {parSteps !== null && ` (par: ${parSteps})`}
+          {userSteps - 1} guess{userSteps - 1 !== 1 ? 'es' : ''}
+          {parSteps !== null && ` (par: ${parSteps - 1})`}
+          {hintsUsed > 0 && ` • 💡 ${hintsUsed} hint${hintsUsed !== 1 ? 's' : ''}`}
         </p>
       )}
       {gaveUp && optimalPath && (
         <div className="text-sm text-gray-600 dark:text-gray-400">
-          <p className="font-medium mb-1">Optimal solution ({optimalPath.length - 1} steps):</p>
+          <p className="font-medium mb-1">Optimal solution ({optimalPath.length - 2} guess{optimalPath.length - 2 !== 1 ? 'es' : ''}):</p>
           <div className="flex flex-wrap justify-center gap-1">
             {optimalPath.map((w, i) => (
               <span key={i} className="font-mono font-bold text-sm">

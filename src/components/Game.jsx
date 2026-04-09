@@ -48,7 +48,7 @@ export default function Game({ game, wordListReady }) {
   const {
     pair, dateStr, gameNumber,
     chain, optimalPath, parSteps, userSteps,
-    currentWord, status, error,
+    currentWord, status, error, hintsUsed,
     submitWord, giveUp, useHint, setError,
   } = game;
 
@@ -98,7 +98,7 @@ export default function Game({ game, wordListReady }) {
         </p>
         {parSteps !== null ? (
           <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">
-            Par: {parSteps} step{parSteps !== 1 ? 's' : ''}
+            Par: {parSteps - 1} guess{parSteps - 1 !== 1 ? 'es' : ''}
           </p>
         ) : wordListReady ? (
           <p className="text-xs text-amber-500 mt-0.5">
@@ -122,6 +122,7 @@ export default function Game({ game, wordListReady }) {
               prevWord={chain[idx]}
               variant={word === pair.end ? 'end' : 'step'}
               stepNumber={idx + 1}
+              endWord={word === pair.end ? undefined : pair.end}
             />
           </div>
         ))}
@@ -214,7 +215,7 @@ export default function Game({ game, wordListReady }) {
 
           {/* Progress */}
           <p className="text-sm text-gray-500 dark:text-gray-400">
-            {userSteps} step{userSteps !== 1 ? 's' : ''} so far
+            {userSteps - 1} guess{userSteps - 1 !== 1 ? 'es' : ''} so far
             {parSteps !== null && (
               <span className={userSteps > parSteps ? ' text-amber-500' : ''}>
                 {userSteps <= parSteps ? ' — on track!' : ` (+${userSteps - parSteps} over par)`}
@@ -230,6 +231,7 @@ export default function Game({ game, wordListReady }) {
           status={status}
           userSteps={userSteps}
           parSteps={parSteps}
+          hintsUsed={hintsUsed}
           optimalPath={status === 'gaveUp' ? optimalPath : null}
           onShare={() => setShowShare(true)}
         />
@@ -242,7 +244,7 @@ export default function Game({ game, wordListReady }) {
         gameData={isFinished ? {
           gameNumber, dateStr,
           start: pair.start, end: pair.end,
-          userSteps, parSteps, chain,
+          userSteps, parSteps, chain, hintsUsed,
           gaveUp: status === 'gaveUp',
         } : null}
       />

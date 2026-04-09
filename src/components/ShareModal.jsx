@@ -7,8 +7,8 @@ export default function ShareModal({ open, onClose, gameData }) {
   const [copied, setCopied] = useState(false);
 
   if (!gameData) return null;
-  const { gameNumber, dateStr, start, end, userSteps, parSteps, chain, gaveUp } = gameData;
-  const text = buildShareText({ gameNumber, dateStr, start, end, userSteps, parSteps, chain, gaveUp });
+  const { gameNumber, dateStr, start, end, userSteps, parSteps, chain, hintsUsed, gaveUp } = gameData;
+  const text = buildShareText({ gameNumber, dateStr, start, end, userSteps, parSteps, chain, hintsUsed, gaveUp });
 
   async function handleShare() {
     await shareOrCopy(text, () => {
@@ -32,8 +32,9 @@ export default function ShareModal({ open, onClose, gameData }) {
           </p>
           <p className="text-sm text-gray-500 dark:text-gray-400">
             {gaveUp
-              ? `Gave up (optimal: ${parSteps} step${parSteps !== 1 ? 's' : ''})`
-              : `Solved in ${userSteps} step${userSteps !== 1 ? 's' : ''} (par: ${parSteps})`}
+              ? `Gave up (optimal: ${parSteps - 1} guess${parSteps - 1 !== 1 ? 'es' : ''})`
+              : `Solved in ${userSteps - 1} guess${userSteps - 1 !== 1 ? 'es' : ''} (par: ${parSteps - 1})`}
+            {!gaveUp && hintsUsed > 0 && ` • 💡 ${hintsUsed} hint${hintsUsed !== 1 ? 's' : ''}`}
           </p>
         </div>
 

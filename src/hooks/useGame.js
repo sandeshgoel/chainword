@@ -102,16 +102,20 @@ export function useGame(user, wordListReady) {
     }
 
     const newChain = [...chain, w];
-    setChain(newChain);
 
-    if (w === pair.end) {
+    // Auto-complete: if this word is exactly 1 letter from the end, add end and win
+    const autoWin = w !== pair.end && diffsByOneLetter(w, pair.end);
+    const finalChain = autoWin ? [...newChain, pair.end] : newChain;
+    setChain(finalChain);
+
+    if (w === pair.end || autoWin) {
       // Won!
       const newStatus = 'won';
       setStatus(newStatus);
-      const stars = getStars(newChain.length - 1, parSteps || newChain.length - 1);
+      const stars = getStars(finalChain.length - 1, parSteps || finalChain.length - 1);
       const newStats = updateStatsOnWin(stars, dateStr);
       setStats(newStats);
-      persist(newChain, newStatus, hintsUsed);
+      persist(finalChain, newStatus, hintsUsed);
     } else {
       persist(newChain, 'playing', hintsUsed);
     }

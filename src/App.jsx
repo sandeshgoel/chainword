@@ -8,7 +8,7 @@ import AuthModal from './components/AuthModal.jsx';
 import FriendsModal from './components/FriendsModal.jsx';
 import { useAuth } from './hooks/useAuth.js';
 import { useGame } from './hooks/useGame.js';
-import { loadTheme, saveTheme } from './utils/storage.js';
+import { loadTheme, saveTheme, loadStats } from './utils/storage.js';
 import { loadWordList } from './words.js';
 
 export default function App() {
@@ -52,6 +52,13 @@ export default function App() {
     }
   }, [game.status]);
 
+  function handleReset() {
+    Object.keys(localStorage)
+      .filter(k => k.startsWith('chainword'))
+      .forEach(k => localStorage.removeItem(k));
+    window.location.reload();
+  }
+
   return (
     <div className="min-h-screen bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 transition-colors">
       <Toaster position="top-center" />
@@ -78,6 +85,7 @@ export default function App() {
         open={showStats}
         onClose={() => setShowStats(false)}
         stats={game.stats}
+        onReset={handleReset}
       />
 
       <AuthModal

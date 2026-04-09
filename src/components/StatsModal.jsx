@@ -1,7 +1,16 @@
+import { useState } from 'react';
 import Modal from './Modal.jsx';
 
-export default function StatsModal({ open, onClose, stats }) {
+export default function StatsModal({ open, onClose, stats, onReset }) {
+  const [confirming, setConfirming] = useState(false);
   const { played, won, currentStreak, maxStreak, distribution } = stats;
+
+  function handleReset() {
+    if (!confirming) { setConfirming(true); return; }
+    onReset();
+    setConfirming(false);
+    onClose();
+  }
   const winRate = played > 0 ? Math.round((won / played) * 100) : 0;
 
   const distKeys = [0, 1, 2, 3];
@@ -63,6 +72,22 @@ export default function StatsModal({ open, onClose, stats }) {
             No games played yet. Start today's puzzle!
           </p>
         )}
+
+        {/* Reset — for testing */}
+        <div className="pt-2 border-t border-gray-100 dark:border-gray-700">
+          <button
+            onClick={handleReset}
+            onBlur={() => setConfirming(false)}
+            className={[
+              'w-full py-2 rounded-xl text-xs font-medium transition-colors',
+              confirming
+                ? 'bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 border border-red-300 dark:border-red-700'
+                : 'text-gray-400 dark:text-gray-600 hover:text-red-500 dark:hover:text-red-400 hover:bg-gray-50 dark:hover:bg-gray-700/50',
+            ].join(' ')}
+          >
+            {confirming ? '⚠ Tap again to confirm reset' : 'Reset all game data'}
+          </button>
+        </div>
       </div>
     </Modal>
   );

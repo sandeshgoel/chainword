@@ -21,12 +21,12 @@ export function buildShareText({ gameNumber, dateStr, start, end, userSteps, par
     }
   }
 
-  const effectiveGuesses = userSteps - 1 + (hintsUsed || 0);
+  const guesses = userSteps - 1;
   const parGuesses = parSteps - 1;
-  const hintStr = hintsUsed > 0 ? ` 💡${hintsUsed}` : '';
+  const hintStr = (hintsUsed || 0) > 0 ? ` 💡${hintsUsed}` : '';
   const stepInfo = gaveUp
     ? `DNF (par: ${parGuesses} guess${parGuesses !== 1 ? 'es' : ''})`
-    : `${effectiveGuesses}/${parGuesses} guess${parGuesses !== 1 ? 'es' : ''}${hintStr}`;
+    : `${guesses}/${parGuesses} guess${parGuesses !== 1 ? 'es' : ''}${hintStr}`;
 
   return (
     `Chainword #${gameNumber} 🔗\n` +

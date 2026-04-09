@@ -65,9 +65,13 @@ export default function Game({ game, wordListReady }) {
   // Auto-focus when game is active
   useEffect(() => {
     if (!isPlaying || !wordListReady) return;
-    const id = requestAnimationFrame(() => inputRef.current?.focus());
-    return () => cancelAnimationFrame(id);
+    const id = setTimeout(() => inputRef.current?.focus(), 50);
+    return () => clearTimeout(id);
   }, [isPlaying, wordListReady]);
+
+  function refocus() {
+    setTimeout(() => inputRef.current?.focus(), 0);
+  }
 
   function handleChange(e) {
     const raw = e.target.value.replace(/[^a-zA-Z]/g, '').toLowerCase().slice(0, 4);
@@ -80,11 +84,13 @@ export default function Game({ game, wordListReady }) {
     if (inputValue.length !== 4) return;
     const ok = submitWord(inputValue);
     if (ok) setInputValue('');
+    refocus();
   }
 
   function handleHint() {
     if (!hintConfirming) {
       setHintConfirming(true);
+      refocus();
       return;
     }
     setHintConfirming(false);
@@ -94,6 +100,7 @@ export default function Game({ game, wordListReady }) {
       setHintVisible(true);
       setTimeout(() => setHintVisible(false), 4000);
     }
+    refocus();
   }
 
   return (
@@ -169,6 +176,7 @@ export default function Game({ game, wordListReady }) {
             spellCheck={false}
             value={inputValue}
             onChange={handleChange}
+            onKeyDown={(e) => e.key === 'Enter' && handleSubmit()}
             disabled={!wordListReady}
             maxLength={4}
             className="sr-only"
@@ -196,18 +204,11 @@ export default function Game({ game, wordListReady }) {
 
           {/* Buttons */}
           <div className="flex gap-3">
-            <button
-              type="submit"
-              disabled={!wordListReady || inputValue.length !== 4}
-              className="px-6 py-2.5 bg-indigo-600 hover:bg-indigo-700 disabled:bg-gray-300 dark:disabled:bg-gray-700 text-white disabled:text-gray-400 font-semibold rounded-xl transition-colors text-sm"
-            >
-              Submit
-            </button>
             {optimalPath && (
               <button
                 type="button"
+                onMouseDown={(e) => e.preventDefault()}
                 onClick={handleHint}
-                onBlur={() => setHintConfirming(false)}
                 className={[
                   'px-4 py-2 text-sm rounded-xl transition-colors font-medium',
                   hintConfirming
@@ -220,6 +221,7 @@ export default function Game({ game, wordListReady }) {
             )}
             <button
               type="button"
+              onMouseDown={(e) => e.preventDefault()}
               onClick={giveUp}
               className="px-4 py-2 text-sm text-gray-500 dark:text-gray-400 border border-gray-300 dark:border-gray-600 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
             >
@@ -228,20 +230,14 @@ export default function Game({ game, wordListReady }) {
           </div>
 
           {/* Progress */}
-          {(() => {
-            const effective = userSteps + hintsUsed;
-            return (
-              <p className="text-sm text-gray-500 dark:text-gray-400">
-                {effective} guess{effective !== 1 ? 'es' : ''} so far
-                {hintsUsed > 0 && <span className="text-amber-500"> (incl. {hintsUsed} hint{hintsUsed !== 1 ? 's' : ''})</span>}
-                {parSteps !== null && (
-                  <span className={effective >= parSteps ? ' text-amber-500' : ''}>
-                    {effective < parSteps ? ' — on track!' : ` (+${effective - parSteps + 1} over par)`}
-                  </span>
-                )}
-              </p>
-            );
-          })()}
+          <p className="text-sm text-gray-500 dark:text-gray-400">
+            {userSteps} guess{userSteps !== 1 ? 'es' : ''} so far
+            {parSteps !== null && (
+              <span className={userSteps >= parSteps ? ' text-amber-500' : ''}>
+                {userSteps < parSteps ? ' — on track!' : ` (+${userSteps - parSteps + 1} over par)`}
+              </span>
+            )}
+          </p>
         </form>
       )}
 

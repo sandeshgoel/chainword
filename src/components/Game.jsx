@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import WordRow from './WordRow.jsx';
 import ResultBanner from './ResultBanner.jsx';
 import ShareModal from './ShareModal.jsx';
+import Modal from './Modal.jsx';
 
 function Connector() {
   return (
@@ -53,7 +54,7 @@ export default function Game({ game, wordListReady }) {
   const [showShare, setShowShare] = useState(false);
   const [hintWord, setHintWord] = useState(null);
   const [hintVisible, setHintVisible] = useState(false);
-  const [hintConfirming, setHintConfirming] = useState(false);
+  const [showHintModal, setShowHintModal] = useState(false);
   const [inputValue, setInputValue] = useState('');
   const inputRef = useRef(null);
 
@@ -86,12 +87,11 @@ export default function Game({ game, wordListReady }) {
   }
 
   function handleHint() {
-    if (!hintConfirming) {
-      setHintConfirming(true);
-      refocus();
-      return;
-    }
-    setHintConfirming(false);
+    setShowHintModal(true);
+  }
+
+  function confirmHint() {
+    setShowHintModal(false);
     const hint = useHint();
     if (hint) {
       setHintWord(hint);
@@ -207,14 +207,9 @@ export default function Game({ game, wordListReady }) {
                 type="button"
                 onMouseDown={(e) => e.preventDefault()}
                 onClick={handleHint}
-                className={[
-                  'px-4 py-2 text-sm rounded-xl transition-colors font-medium',
-                  hintConfirming
-                    ? 'bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-300 border border-amber-400 dark:border-amber-600'
-                    : 'text-amber-600 dark:text-amber-400 border border-amber-300 dark:border-amber-700 hover:bg-amber-50 dark:hover:bg-amber-900/20',
-                ].join(' ')}
+                className="px-4 py-2 text-sm text-amber-600 dark:text-amber-400 border border-amber-300 dark:border-amber-700 rounded-xl hover:bg-amber-50 dark:hover:bg-amber-900/20 transition-colors font-medium"
               >
-                {hintConfirming ? '⚠ +1 guess — confirm?' : '💡 Hint'}
+                💡 Hint
               </button>
             )}
             <button
@@ -262,6 +257,31 @@ export default function Game({ game, wordListReady }) {
           gaveUp: status === 'gaveUp',
         } : null}
       />
+
+      {/* Hint confirmation modal */}
+      <Modal open={showHintModal} onClose={() => { setShowHintModal(false); refocus(); }} title="Use a hint?">
+        <div className="space-y-4">
+          <p className="text-sm text-gray-600 dark:text-gray-400">
+            A hint will reveal the next word on the optimal path.
+            <br />
+            <span className="font-semibold text-amber-600 dark:text-amber-400">This counts as +1 guess towards your score.</span>
+          </p>
+          <div className="flex gap-3 justify-end">
+            <button
+              onClick={() => { setShowHintModal(false); refocus(); }}
+              className="px-4 py-2 text-sm font-medium text-gray-600 dark:text-gray-400 border border-gray-300 dark:border-gray-600 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={confirmHint}
+              className="px-4 py-2 text-sm font-semibold text-white bg-amber-500 hover:bg-amber-600 rounded-xl transition-colors"
+            >
+              Yes, show hint
+            </button>
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 }

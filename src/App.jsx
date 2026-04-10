@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Toaster, toast } from 'react-hot-toast';
+import { Analytics } from '@vercel/analytics/react';
 import Header from './components/Header.jsx';
 import Game from './components/Game.jsx';
 import HowToPlay from './components/HowToPlay.jsx';
@@ -102,6 +103,8 @@ export default function App() {
         user={user}
         dateStr={game.dateStr}
       />
+
+      <Analytics />
     </div>
   );
 }

@@ -62,3 +62,21 @@ export async function shareOrCopy(text, onCopied) {
     onCopied?.();
   }
 }
+
+export function buildWordleShareText({ gameNumber, dateStr, guesses, status }) {
+  const result = status === 'won' ? guesses.length : 'X';
+  let text = `Wordle #${gameNumber} 🟩\n${dateStr}  •  ${result}/6\n\n`;
+
+  for (const guess of guesses) {
+    let row = '';
+    for (const color of guess.colors) {
+      if (color === 'green') row += '🟩';
+      else if (color === 'orange') row += '🟨';
+      else row += '⬛';
+    }
+    text += row + '\n';
+  }
+
+  text += `\nPlay at chainword.app`;
+  return text;
+}

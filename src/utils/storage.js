@@ -98,6 +98,64 @@ function getPreviousDateStr(dateStr) {
   return d.toISOString().split('T')[0];
 }
 
+// --- Wordle Statistics ---
+
+const WORDLE_STATS_KEY = 'chainword_wordle_stats';
+
+export function loadWordleStats() {
+  try {
+    return JSON.parse(localStorage.getItem(WORDLE_STATS_KEY) || 'null') || defaultWordleStats();
+  } catch {
+    return defaultWordleStats();
+  }
+}
+
+function defaultWordleStats() {
+  return {
+    played: 0,
+    won: 0,
+    currentStreak: 0,
+    maxStreak: 0,
+    // distribution: 1 to 6 guesses
+    distribution: { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0 },
+    lastPlayedDate: null,
+  };
+}
+
+export function saveWordleStats(stats) {
+  try {
+    localStorage.setItem(WORDLE_STATS_KEY, JSON.stringify(stats));
+  } catch (_) {}
+}
+
+export function updateWordleStats(guessesCount, dateStr) {
+  const stats = loadWordleStats();
+  stats.played++;
+  
+  if (guessesCount > 0) {
+    stats.won++;
+    const yesterday = getPreviousDateStr(dateStr);
+    if (stats.lastPlayedDate === yesterday) {
+      stats.currentStreak++;
+    } else if (stats.lastPlayedDate !== dateStr) {
+      stats.currentStreak = 1;
+    }
+    stats.maxStreak = Math.max(stats.maxStreak, stats.currentStreak);
+    
+    // Add to distribution
+    const key = String(guessesCount);
+    stats.distribution[key] = (stats.distribution[key] || 0) + 1;
+  } else {
+    // broke streak
+    stats.currentStreak = 0;
+  }
+  
+  stats.lastPlayedDate = dateStr;
+  saveWordleStats(stats);
+  return stats;
+}
+
+
 // --- Theme ---
 
 export function loadTheme() {

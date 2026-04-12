@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import Modal from './Modal.jsx';
 
-export default function StatsModal({ open, onClose, stats, onReset }) {
+export default function StatsModal({ open, onClose, stats, onReset, isWordle }) {
   const [confirming, setConfirming] = useState(false);
   const { played, won, currentStreak, maxStreak, distribution } = stats;
 
@@ -13,10 +13,17 @@ export default function StatsModal({ open, onClose, stats, onReset }) {
   }
   const winRate = played > 0 ? Math.round((won / played) * 100) : 0;
 
-  const distKeys = [0, 1, 2, 3];
+  const distKeys = isWordle ? [1, 2, 3, 4, 5, 6] : [0, 1, 2, 3];
   const maxCount = Math.max(1, ...distKeys.map(k => distribution[k] || 0));
 
-  const labels = {
+  const labels = isWordle ? {
+    1: '1 Guess',
+    2: '2 Guesses',
+    3: '3 Guesses',
+    4: '4 Guesses',
+    5: '5 Guesses',
+    6: '6 Guesses',
+  } : {
     0: '⭐⭐⭐ Optimal',
     1: '⭐⭐ Great',
     2: '⭐ Good',

@@ -2,16 +2,19 @@ import { useState, useEffect } from 'react';
 import { Toaster, toast } from 'react-hot-toast';
 import Header from './components/Header.jsx';
 import Game from './components/Game.jsx';
+import WordleGame from './components/WordleGame.jsx';
 import HowToPlay from './components/HowToPlay.jsx';
 import StatsModal from './components/StatsModal.jsx';
 import AuthModal from './components/AuthModal.jsx';
 import FriendsModal from './components/FriendsModal.jsx';
 import { useAuth } from './hooks/useAuth.js';
 import { useGame } from './hooks/useGame.js';
+import { useWordle } from './hooks/useWordle.js';
 import { loadTheme, saveTheme, loadStats } from './utils/storage.js';
 import { loadWordList } from './words.js';
 
 export default function App() {
+  const [activeGame, setActiveGame] = useState('chainword');
   const [darkMode, setDarkMode] = useState(() => loadTheme() === 'dark');
   const [wordListReady, setWordListReady] = useState(false);
 
@@ -23,6 +26,7 @@ export default function App() {
 
   const { user, authLoading, signInWithGoogle, signOut } = useAuth();
   const game = useGame(user, wordListReady);
+  const wordle = useWordle(wordListReady);
 
   // Apply dark mode to document
   useEffect(() => {
@@ -52,6 +56,12 @@ export default function App() {
     }
   }, [game.status]);
 
+  useEffect(() => {
+    if (wordle.status === 'won') {
+      toast.success('Wordle complete!', { duration: 2000 });
+    }
+  }, [wordle.status]);
+
   function handleReset() {
     Object.keys(localStorage)
       .filter(k => k.startsWith('chainword'))
@@ -64,7 +74,9 @@ export default function App() {
       <Toaster position="top-center" />
 
       <Header
-        gameNumber={game.gameNumber}
+        activeGame={activeGame}
+        onSelectGame={setActiveGame}
+        gameNumber={activeGame === 'chainword' ? game.gameNumber : wordle.gameNumber}
         darkMode={darkMode}
         onToggleDark={() => setDarkMode(d => !d)}
         onHowToPlay={() => setShowHelp(true)}
@@ -75,7 +87,11 @@ export default function App() {
       />
 
       <main>
-        <Game game={game} wordListReady={wordListReady} />
+        {activeGame === 'chainword' ? (
+          <Game game={game} wordListReady={wordListReady} />
+        ) : (
+          <WordleGame game={wordle} wordListReady={wordListReady} />
+        )}
       </main>
 
       {/* Modals */}
@@ -84,8 +100,9 @@ export default function App() {
       <StatsModal
         open={showStats}
         onClose={() => setShowStats(false)}
-        stats={game.stats}
+        stats={activeGame === 'wordle' ? wordle.stats : game.stats}
         onReset={handleReset}
+        isWordle={activeGame === 'wordle'}
       />
 
       <AuthModal

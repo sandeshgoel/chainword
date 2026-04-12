@@ -77,6 +77,6 @@ export function buildWordleShareText({ gameNumber, dateStr, guesses, status }) {
     text += row + '\n';
   }
 
-  text += `\nPlay at chainword.app`;
+  text += `\nPlay at https://chainword-five.vercel.app/`;
   return text;
 }

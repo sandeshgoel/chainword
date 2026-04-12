@@ -1,4 +1,4 @@
-export const COMMON_WORDS = ["that", "this", "with", "from", "your", "have", "more", "will",
+words = ["that", "this", "with", "from", "your", "have", "more", "will",
     "home", "page", "free", "time", "they", "site", "what", "news", "only", "when", "here", "also",
     "help", "view", "been", "were", "some", "like", "than", "find", "date", "back", "list", "name",
     "just", "over", "year", "into", "next", "used", "work", "last", "most", "data", "make", "them",
@@ -59,4 +59,89 @@ export const COMMON_WORDS = ["that", "this", "with", "from", "your", "have", "mo
     "lips", "pond", "tire", "chad", "drag", "ripe", "rely", "nuts", "nail", "span", "joke", "pads",
     "inns", "cups", "foam", "poem", "asks", "bean", "bias", "swim", "nano", "loud", "rats", "stat",
     "thee", "pray", "pope", "jeep", "bare", "hung", "mono", "tile", "apps", "ciao", "knee", "prep",
-    "duck", "dive", "raid", "volt", "dirt", "geek", "sink", "grip", "watt", "pins", "polo", "horn", "frog", "logs", "snap", "swap", "flip", "buzz", "nuke", "boom", "calm", "fork", "troy", "sims", "tray", "sage", "cave", "wool", "eyed", "grab", "oops", "trap", "fool", "dies", "jail", "lace", "ugly", "rows", "gods", "poly", "ears", "fist", "mere", "cons", "taxi", "worn", "expo", "deny", "trio", "cube", "rugs", "fate", "oval", "soma", "tier", "earl", "cite", "mess", "rope", "dump", "hose", "pubs", "mild", "clan", "sync", "hull", "shed", "memo", "tide", "funk", "reel", "bind", "buck", "acre", "lows", "aqua", "pest", "reef", "sofa", "tent", "hack", "dare", "hawk", "lamb", "junk", "poet", "epic", "sake", "sans", "lean", "dude", "alto", "gore", "cult", "dash", "cage", "ping", "flux", "rage", "prix", "rays", "walt", "acne", "undo", "halo", "gays", "doom", "bite", "myth", "weed", "dice", "quad", "dock", "mods", "hint", "buys", "pork", "barn", "fare", "bald", "mold", "dame", "herb", "idle", "cove", "casa", "eden", "flex", "hash", "lazy", "pens", "worm", "deaf", "mats", "mime", "keen", "peas", "owns", "zinc", "levy", "grad", "pale", "gaps", "tear", "nest", "gale", "idol", "moss", "cork", "dome", "heel", "dumb", "feat", "glow", "oaks", "norm", "ware", "jade", "foul", "seas", "pose", "goat", "sail", "bolt", "urge", "neon", "ours", "lone", "cope", "lime", "bool", "spas", "jets", "yarn", "knit", "pike", "bent"];
+    "duck", "dive", "raid", "volt", "dirt", "geek", "sink", "grip", "watt", "pins", "polo", "horn", "frog", "logs", "snap", "swap", "flip", "buzz", "nuke", "boom", "calm", "fork", "troy", "sims", "tray", "sage", "cave", "wool", "eyed", "grab", "oops", "trap", "fool", "dies", "jail", "lace", "ugly", "rows", "gods", "poly", "ears", "fist", "mere", "cons", "taxi", "worn", "expo", "deny", "trio", "cube", "rugs", "fate", "oval", "soma", "tier", "earl", "cite", "mess", "rope", "dump", "hose", "pubs", "mild", "clan", "sync", "hull", "shed", "memo", "tide", "funk", "reel", "bind", "buck", "acre", "lows", "aqua", "pest", "reef", "sofa", "tent", "hack", "dare", "hawk", "lamb", "junk", "poet", "epic", "sake", "sans", "lean", "dude", "alto", "gore", "cult", "dash", "cage", "ping", "flux", "rage", "prix", "rays", "walt", "acne", "undo", "halo", "gays", "doom", "bite", "myth", "weed", "dice", "quad", "dock", "mods", "hint", "buys", "pork", "barn", "fare", "bald", "mold", "dame", "herb", "idle", "cove", "casa", "eden", "flex", "hash", "lazy", "pens", "worm", "deaf", "mats", "mime", "keen", "peas", "owns", "zinc", "levy", "grad", "pale", "gaps", "tear", "nest", "gale", "idol", "moss", "cork", "dome", "heel", "dumb", "feat", "glow", "oaks", "norm", "ware", "jade", "foul", "seas", "pose", "goat", "sail", "bolt", "urge", "neon", "ours", "lone", "cope", "lime", "bool", "spas", "jets", "yarn", "knit", "pike", "bent"]
+
+
+word_set = set(words)
+
+def find_chain(start, end, max_chain_length):
+    from collections import deque
+    
+    if start not in word_set or end not in word_set:
+        return []
+        
+    queue = deque([[start]])
+    visited = {start}
+    
+    while queue:
+        path = queue.popleft()
+        if len(path) > max_chain_length: continue
+
+        current_word = path[-1]
+        
+        if current_word == end:
+            return path
+            
+        for i in range(4):
+            for char_code in range(97, 123): # 'a' to 'z'
+                c = chr(char_code)
+                if c != current_word[i]:
+                    next_word = current_word[:i] + c + current_word[i+1:]
+                    if next_word in word_set and next_word not in visited:
+                        visited.add(next_word)
+                        queue.append(path + [next_word])
+                        
+    return []
+
+total = len(words)
+limit = 500
+pairs_5 = []
+pairs_6 = []
+
+from collections import Counter
+len_hist = Counter()
+
+print(f'Total Words: {total}')
+
+import random
+for i in range(total):
+    num_pairs_5 = 0
+    num_pairs_6 = 0
+    max_chain_length = 6
+    for j in range(random.randint(0,total),total):
+        pair_found = True
+        for k in range(4):
+            if words[i][k] == words[j][k]:
+                pair_found = False
+                break
+
+        if pair_found:
+            chain = find_chain(words[i], words[j], max_chain_length)
+            len_hist[len(chain)] += 1
+            if len(chain) > 0 and len(chain) < 7:
+                pair = {"start": words[i], "stop": words[j], "chain": chain}
+                if len(chain) == 5: pairs_5.append(chain)
+                if len(chain) == 6: pairs_6.append(chain)
+                print(i, j, len(pairs_5), len(pairs_6), pair)
+
+                if len(chain) == 5: num_pairs_5 += 1
+                if len(chain) == 6: num_pairs_6 += 1
+                if num_pairs_5 > 2: break
+                if num_pairs_6 > 2: max_chain_length = 5
+
+    if len_hist[5] > limit: break
+
+len_hist = dict(sorted(len_hist.items(), key=lambda x: x[0]))
+for length, count in len_hist.items():
+    print(f'Length {length}: {count}')
+
+# randomize lists pairs_5 and pairs_6
+random.shuffle(pairs_5)
+random.shuffle(pairs_6)
+
+# dump pairs_5 and pairs_6 to json files
+import json
+with open('pairs_5.json', 'w') as f:
+    json.dump(pairs_5, f)
+with open('pairs_6.json', 'w') as f:
+    json.dump(pairs_6, f)

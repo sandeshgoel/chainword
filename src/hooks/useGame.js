@@ -12,7 +12,7 @@ import { getDailyInfo } from '../dailyPairs.js';
 import { getWordSet } from '../words.js';
 
 export function useGame(user, wordListReady) {
-  const { pair, dateStr, gameNumber } = getDailyInfo();
+  const { pair, pairpath, dateStr, gameNumber } = getDailyInfo();
 
   const [chain, setChain] = useState([pair.start]);
   const [optimalPath, setOptimalPath] = useState(null);
@@ -30,8 +30,8 @@ export function useGame(user, wordListReady) {
     if (!wordListReady) return;
     const ws = getWordSet();
     if (!ws) return;
-    const path = bfs(pair.start, pair.end, ws);
-    setOptimalPath(path);
+    //const path = bfs(pair.start, pair.end, ws);
+    setOptimalPath(pairpath);
   }, [wordListReady, pair.start, pair.end]);
 
   // Restore saved progress

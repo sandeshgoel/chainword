@@ -29,7 +29,7 @@ export function getDailyWordleTarget() {
   // Choose only from the common dictionary words
   const target = COMMON_WORDS[epochDay % COMMON_WORDS.length];
 
-  const BASE_EPOCH_DAY = 20188; // 2025-04-01 in IST roughly as per dailyPairs.js
+  const BASE_EPOCH_DAY = 20555; // 2026-04-12 in IST
   const gameNumber = Math.max(1, epochDay - BASE_EPOCH_DAY + 1);
   const dateStr = ist.toISOString().split('T')[0];
 

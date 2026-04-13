@@ -1,4 +1,4 @@
-import Modal from './Modal.jsx';
+import Modal from '../../../components/Modal.jsx';
 
 export default function HowToPlay({ open, onClose }) {
   return (

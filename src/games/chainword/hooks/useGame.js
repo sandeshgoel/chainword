@@ -2,14 +2,14 @@ import { useState, useEffect, useCallback } from 'react';
 import {
   doc, getDoc, setDoc, serverTimestamp,
 } from 'firebase/firestore';
-import { db, firebaseConfigured } from '../firebase.js';
-import { bfs, diffsByOneLetter, getStars } from '../utils/wordUtils.js';
+import { db, firebaseConfigured } from '../../../firebase.js';
+import { bfs, diffsByOneLetter, getStars } from '../../../utils/wordUtils.js';
 import {
   getDateProgress, saveDateProgress,
   updateStatsOnWin, updateStatsOnGiveUp, loadStats,
-} from '../utils/storage.js';
-import { getDailyInfo } from '../dailyPairs.js';
-import { getWordSet } from '../words.js';
+} from '../../../utils/storage.js';
+import { getDailyInfo } from '../data/dailyPairs.js';
+import { getWordSet } from '../../../words.js';
 
 export function useGame(user, wordListReady) {
   const { pair, pairpath, dateStr, gameNumber } = getDailyInfo();

@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import WordRow from './WordRow.jsx';
 import ResultBanner from './ResultBanner.jsx';
 import ShareModal from './ShareModal.jsx';
-import Modal from './Modal.jsx';
+import Modal from '../../../components/Modal.jsx';
 
 function Connector() {
   return (

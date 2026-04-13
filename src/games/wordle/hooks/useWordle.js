@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
-import { getDailyWordleTarget, getWordSet } from '../words.js';
-import { loadWordleStats, updateWordleStats } from '../utils/storage.js';
+import { getDailyWordleTarget, getWordSet } from '../../../words.js';
+import { loadWordleStats, updateWordleStats } from '../../../utils/storage.js';
 
 function evaluateGuess(guess, target) {
   const result = Array(4).fill('gray');
@@ -92,13 +92,13 @@ export function useWordle(wordListReady) {
     setGuesses(newGuesses);
     setStatus(newStatus);
     persist(newGuesses, newStatus);
-    
+
     if (newStatus === 'won') {
       setStats(updateWordleStats(newGuesses.length, dateStr));
     } else if (newStatus === 'lost') {
       setStats(updateWordleStats(0, dateStr));
     }
-    
+
     return true;
   }
 

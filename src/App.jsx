@@ -1,15 +1,15 @@
 import { useState, useEffect } from 'react';
 import { Toaster, toast } from 'react-hot-toast';
 import Header from './components/Header.jsx';
-import Game from './components/Game.jsx';
-import WordleGame from './components/WordleGame.jsx';
-import HowToPlay from './components/HowToPlay.jsx';
+import Game from './games/chainword/components/Game.jsx';
+import WordleGame from './games/wordle/components/WordleGame.jsx';
+import HowToPlay from './games/chainword/components/HowToPlay.jsx';
 import StatsModal from './components/StatsModal.jsx';
 import AuthModal from './components/AuthModal.jsx';
 import FriendsModal from './components/FriendsModal.jsx';
 import { useAuth } from './hooks/useAuth.js';
-import { useGame } from './hooks/useGame.js';
-import { useWordle } from './hooks/useWordle.js';
+import { useGame } from './games/chainword/hooks/useGame.js';
+import { useWordle } from './games/wordle/hooks/useWordle.js';
 import { loadTheme, saveTheme, loadStats } from './utils/storage.js';
 import { loadWordList } from './words.js';
 
@@ -56,11 +56,6 @@ export default function App() {
     }
   }, [game.status]);
 
-  useEffect(() => {
-    if (wordle.status === 'won') {
-      toast.success('Wordle complete!', { duration: 2000 });
-    }
-  }, [wordle.status]);
 
   function handleReset() {
     Object.keys(localStorage)
@@ -70,7 +65,7 @@ export default function App() {
   }
 
   return (
-    <div className="min-h-screen bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 transition-colors">
+    <div className="h-dvh flex flex-col bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 transition-colors">
       <Toaster position="top-center" />
 
       <Header
@@ -86,7 +81,7 @@ export default function App() {
         user={user}
       />
 
-      <main>
+      <main className="flex-1 overflow-hidden">
         {activeGame === 'chainword' ? (
           <Game game={game} wordListReady={wordListReady} />
         ) : (

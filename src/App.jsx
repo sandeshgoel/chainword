@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Toaster, toast } from 'react-hot-toast';
+import { Toaster } from 'react-hot-toast';
 import Header from './components/Header.jsx';
 import Game from './games/chainword/components/Game.jsx';
 import WordleGame from './games/wordle/components/WordleGame.jsx';
@@ -20,6 +20,7 @@ import { loadWordList } from './words.js';
 export default function App() {
   const [activeGame, setActiveGame] = useState('chainword');
   const [darkMode, setDarkMode] = useState(() => loadTheme() === 'dark');
+  const [hardMode, setHardMode] = useState(() => localStorage.getItem('chainword_hard_mode') === 'true');
   const [wordListReady, setWordListReady] = useState(false);
 
   // Modals
@@ -29,7 +30,7 @@ export default function App() {
   const [showFriends, setShowFriends] = useState(false);
 
   const { user, signInWithGoogle, signOut } = useAuth();
-  const game = useGame(user, wordListReady);
+  const game = useGame(user, wordListReady, hardMode);
   const wordle = useWordle(wordListReady);
   const tiles = useTiles();
   const squares = useSquares();
@@ -57,7 +58,6 @@ export default function App() {
   // Show stats after completing a game
   useEffect(() => {
     if (game.status === 'won') {
-      toast.success('Puzzle complete!', { duration: 2000 });
       setTimeout(() => setShowStats(true), 1500);
     }
   }, [game.status]);
@@ -89,7 +89,16 @@ export default function App() {
 
       <main className="flex-1 overflow-hidden">
         {activeGame === 'chainword' ? (
-          <Game game={game} wordListReady={wordListReady} />
+          <Game
+            game={game}
+            wordListReady={wordListReady}
+            hardMode={hardMode}
+            onToggleHardMode={() => {
+              const next = !hardMode;
+              setHardMode(next);
+              localStorage.setItem('chainword_hard_mode', next ? 'true' : 'false');
+            }}
+          />
         ) : activeGame === '4word' ? (
           <WordleGame game={wordle} wordListReady={wordListReady} />
         ) : activeGame === 'squares' ? (
@@ -109,6 +118,7 @@ export default function App() {
         onReset={handleReset}
         isWordle={activeGame === '4word'}
         isTiles={activeGame === 'tiles'}
+        hardMode={activeGame === 'chainword' ? hardMode : undefined}
       />
 
       <AuthModal

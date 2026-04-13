@@ -11,15 +11,18 @@ import {
 import { getDailyInfo } from '../data/dailyPairs.js';
 import { getWordSet } from '../../../words.js';
 
-export function useGame(user, wordListReady) {
-  const { pair, pairpath, dateStr, gameNumber } = getDailyInfo();
+export function useGame(user, wordListReady, hardMode = false) {
+  const { pair, pairpath, dateStr, gameNumber } = getDailyInfo(hardMode);
+  // Mode-specific keys so easy and hard progress/stats are stored separately
+  const progressKey = hardMode ? `${dateStr}_hard` : dateStr;
+  const statsKey = hardMode ? 'chainword_stats_hard' : 'chainword_stats';
 
   const [chain, setChain] = useState([pair.start]);
   const [optimalPath, setOptimalPath] = useState(null);
   const [status, setStatus] = useState('playing'); // 'playing' | 'won' | 'gaveUp'
   const [error, setError] = useState('');
   const [hintsUsed, setHintsUsed] = useState(0);
-  const [stats, setStats] = useState(loadStats());
+  const [stats, setStats] = useState(() => loadStats(statsKey));
 
   const parSteps = optimalPath ? optimalPath.length - 1 : null;
   const userSteps = chain.length - 1;
@@ -34,14 +37,19 @@ export function useGame(user, wordListReady) {
     setOptimalPath(pairpath);
   }, [wordListReady, pair.start, pair.end]);
 
-  // Restore saved progress
+  // Restore saved progress and reload stats when mode/date changes
   useEffect(() => {
-    const saved = getDateProgress(dateStr);
-    if (!saved) return;
-    setChain(saved.chain || [pair.start]);
-    setStatus(saved.status || 'playing');
-    setHintsUsed(saved.hintsUsed || saved.hintUsed ? 1 : 0);
-  }, [dateStr, pair.start]);
+    setChain([pair.start]);
+    setStatus('playing');
+    setHintsUsed(0);
+    const saved = getDateProgress(progressKey);
+    if (saved) {
+      setChain(saved.chain || [pair.start]);
+      setStatus(saved.status || 'playing');
+      setHintsUsed(saved.hintsUsed || (saved.hintUsed ? 1 : 0));
+    }
+    setStats(loadStats(statsKey));
+  }, [progressKey, pair.start, statsKey]);
 
   // Sync progress with cloud when user is signed in
   useEffect(() => {
@@ -67,13 +75,13 @@ export function useGame(user, wordListReady) {
         end: pair.end,
         gameNumber,
       };
-      saveDateProgress(dateStr, data);
+      saveDateProgress(progressKey, data);
       if (firebaseConfigured && user) {
-        const ref = doc(db, 'users', user.uid, 'games', dateStr);
+        const ref = doc(db, 'users', user.uid, 'games', progressKey);
         await setDoc(ref, { ...data, updatedAt: serverTimestamp() }, { merge: true });
       }
     },
-    [dateStr, pair, gameNumber, user]
+    [progressKey, pair, gameNumber, user]
   );
 
   function submitWord(word) {
@@ -113,7 +121,7 @@ export function useGame(user, wordListReady) {
       const newStatus = 'won';
       setStatus(newStatus);
       const stars = getStars(finalChain.length - 1 + hintsUsed, parSteps || finalChain.length - 1);
-      const newStats = updateStatsOnWin(stars, dateStr);
+      const newStats = updateStatsOnWin(stars, dateStr, statsKey);
       setStats(newStats);
       persist(finalChain, newStatus, hintsUsed);
     } else {
@@ -134,7 +142,7 @@ export function useGame(user, wordListReady) {
   function giveUp() {
     const newStatus = 'gaveUp';
     setStatus(newStatus);
-    const newStats = updateStatsOnGiveUp(dateStr);
+    const newStats = updateStatsOnGiveUp(dateStr, statsKey);
     setStats(newStats);
     persist(chain, newStatus, hintsUsed);
   }

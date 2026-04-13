@@ -30,9 +30,9 @@ export function saveDateProgress(dateStr, data) {
 
 // --- Statistics ---
 
-export function loadStats() {
+export function loadStats(key = STATS_KEY) {
   try {
-    return JSON.parse(localStorage.getItem(STATS_KEY) || 'null') || defaultStats();
+    return JSON.parse(localStorage.getItem(key) || 'null') || defaultStats();
   } catch {
     return defaultStats();
   }
@@ -50,14 +50,14 @@ function defaultStats() {
   };
 }
 
-export function saveStats(stats) {
+export function saveStats(stats, key = STATS_KEY) {
   try {
-    localStorage.setItem(STATS_KEY, JSON.stringify(stats));
+    localStorage.setItem(key, JSON.stringify(stats));
   } catch (_) {}
 }
 
-export function updateStatsOnWin(stars, dateStr) {
-  const stats = loadStats();
+export function updateStatsOnWin(stars, dateStr, key = STATS_KEY) {
+  const stats = loadStats(key);
   stats.played++;
   stats.won++;
 
@@ -73,22 +73,22 @@ export function updateStatsOnWin(stars, dateStr) {
 
   // Distribution: extra steps = 3 - stars (0 extra means 3 stars)
   const extra = Math.max(0, 3 - stars);
-  const key = String(Math.min(extra, 3));
-  stats.distribution[key] = (stats.distribution[key] || 0) + 1;
+  const k = String(Math.min(extra, 3));
+  stats.distribution[k] = (stats.distribution[k] || 0) + 1;
 
-  saveStats(stats);
+  saveStats(stats, key);
   return stats;
 }
 
-export function updateStatsOnGiveUp(dateStr) {
-  const stats = loadStats();
+export function updateStatsOnGiveUp(dateStr, key = STATS_KEY) {
+  const stats = loadStats(key);
   stats.played++;
   // streak broken if not already played today
   if (stats.lastPlayedDate !== dateStr) {
     stats.currentStreak = 0;
     stats.lastPlayedDate = dateStr;
   }
-  saveStats(stats);
+  saveStats(stats, key);
   return stats;
 }
 

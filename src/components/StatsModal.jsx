@@ -96,7 +96,7 @@ function TilesStats({ stats }) {
   );
 }
 
-export default function StatsModal({ open, onClose, stats, onReset, isWordle, isTiles }) {
+export default function StatsModal({ open, onClose, stats, onReset, isWordle, isTiles, hardMode }) {
   const { played, won, currentStreak, maxStreak, distribution } = isTiles ? {} : stats;
 
   const winRate = !isTiles && played > 0 ? Math.round((won / played) * 100) : 0;
@@ -112,6 +112,17 @@ export default function StatsModal({ open, onClose, stats, onReset, isWordle, is
   return (
     <Modal open={open} onClose={onClose} title="Statistics">
       <div className="space-y-6">
+        {!isWordle && !isTiles && (
+          <div className="flex justify-center">
+            <span className={`text-xs font-bold px-3 py-1 rounded-full ${
+              hardMode
+                ? 'bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400'
+                : 'bg-indigo-100 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400'
+            }`}>
+              {hardMode ? 'Hard Mode' : 'Easy Mode'}
+            </span>
+          </div>
+        )}
         {isTiles ? (
           <TilesStats stats={stats} />
         ) : (

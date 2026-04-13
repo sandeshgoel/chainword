@@ -67,7 +67,36 @@ function InputTiles({ value, currentWord, onClick }) {
   );
 }
 
-export default function Game({ game, wordListReady }) {
+function DifficultyToggle({ hardMode, onToggle }) {
+  return (
+    <div className="flex flex-col text-[10px] font-bold rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden select-none">
+      <button
+        onMouseDown={(e) => e.preventDefault()}
+        onClick={() => hardMode && onToggle()}
+        className={`px-2.5 py-1 transition-colors ${
+          !hardMode
+            ? 'bg-indigo-600 text-white'
+            : 'text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300'
+        }`}
+      >
+        Easy
+      </button>
+      <button
+        onMouseDown={(e) => e.preventDefault()}
+        onClick={() => !hardMode && onToggle()}
+        className={`px-2.5 py-1 transition-colors ${
+          hardMode
+            ? 'bg-red-500 text-white'
+            : 'text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300'
+        }`}
+      >
+        Hard
+      </button>
+    </div>
+  );
+}
+
+export default function Game({ game, wordListReady, hardMode, onToggleHardMode }) {
   const {
     pair, dateStr, gameNumber,
     chain, optimalPath, parSteps, userSteps,
@@ -154,8 +183,8 @@ export default function Game({ game, wordListReady }) {
       <div ref={scrollRef} className="flex-1 overflow-y-auto">
         <div className="flex flex-col items-center gap-5 px-4 py-6 max-w-sm mx-auto w-full">
 
-          {/* Today's info */}
-          <div className="text-center">
+          {/* Today's info + difficulty toggle */}
+          <div className="relative w-full text-center">
             <p className="text-xs text-gray-400 dark:text-gray-500">
               {formatDate(dateStr)} &nbsp;•&nbsp; Daily Chainword #{gameNumber}
             </p>
@@ -168,6 +197,9 @@ export default function Game({ game, wordListReady }) {
                 ⚠ No path found for today's pair (try again tomorrow)
               </p>
             ) : null}
+            <div className="absolute top-0 right-0">
+              <DifficultyToggle hardMode={hardMode} onToggle={onToggleHardMode} />
+            </div>
           </div>
 
           {/* Chain display */}

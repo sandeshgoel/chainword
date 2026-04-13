@@ -4,6 +4,7 @@ import Header from './components/Header.jsx';
 import Game from './games/chainword/components/Game.jsx';
 import WordleGame from './games/wordle/components/WordleGame.jsx';
 import TilesGame from './games/tiles/components/TilesGame.jsx';
+import SquaresGame from './games/squares/components/SquaresGame.jsx';
 import HowToPlay from './games/chainword/components/HowToPlay.jsx';
 import StatsModal from './components/StatsModal.jsx';
 import AuthModal from './components/AuthModal.jsx';
@@ -12,6 +13,7 @@ import { useAuth } from './hooks/useAuth.js';
 import { useGame } from './games/chainword/hooks/useGame.js';
 import { useWordle } from './games/wordle/hooks/useWordle.js';
 import { useTiles } from './games/tiles/hooks/useTiles.js';
+import { useSquares } from './games/squares/hooks/useSquares.js';
 import { loadTheme, saveTheme } from './utils/storage.js';
 import { loadWordList } from './words.js';
 
@@ -30,6 +32,7 @@ export default function App() {
   const game = useGame(user, wordListReady);
   const wordle = useWordle(wordListReady);
   const tiles = useTiles();
+  const squares = useSquares();
 
   // Apply dark mode to document
   useEffect(() => {
@@ -87,8 +90,10 @@ export default function App() {
       <main className="flex-1 overflow-hidden">
         {activeGame === 'chainword' ? (
           <Game game={game} wordListReady={wordListReady} />
-        ) : activeGame === 'wordle' ? (
+        ) : activeGame === '4word' ? (
           <WordleGame game={wordle} wordListReady={wordListReady} />
+        ) : activeGame === 'squares' ? (
+          <SquaresGame game={squares} />
         ) : (
           <TilesGame game={tiles} />
         )}
@@ -100,9 +105,9 @@ export default function App() {
       <StatsModal
         open={showStats}
         onClose={() => setShowStats(false)}
-        stats={activeGame === 'wordle' ? wordle.stats : activeGame === 'tiles' ? tiles.stats : game.stats}
+        stats={activeGame === '4word' ? wordle.stats : activeGame === 'tiles' ? tiles.stats : game.stats}
         onReset={handleReset}
-        isWordle={activeGame === 'wordle'}
+        isWordle={activeGame === '4word'}
         isTiles={activeGame === 'tiles'}
       />
 

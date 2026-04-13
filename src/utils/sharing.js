@@ -65,7 +65,7 @@ export async function shareOrCopy(text, onCopied) {
 
 export function buildWordleShareText({ gameNumber, dateStr, guesses, status }) {
   const result = status === 'won' ? guesses.length : 'X';
-  let text = `Wordle #${gameNumber} 🟩\n${dateStr}  •  ${result}/6\n\n`;
+  let text = `4word #${gameNumber} 🔤\n${dateStr}  •  ${result}/6\n\n`;
 
   for (const guess of guesses) {
     let row = '';

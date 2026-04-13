@@ -55,12 +55,12 @@ export default function Header({
                 </div>
               </button>
               <button
-                onClick={() => { onSelectGame('wordle'); setIsMenuOpen(false); }}
-                className={`w-full flex items-center gap-3 px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors text-left ${activeGame === 'wordle' ? 'bg-indigo-50 dark:bg-indigo-900/20' : ''}`}
+                onClick={() => { onSelectGame('4word'); setIsMenuOpen(false); }}
+                className={`w-full flex items-center gap-3 px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors text-left ${activeGame === '4word' ? 'bg-indigo-50 dark:bg-indigo-900/20' : ''}`}
               >
-                <span className="text-xl flex-shrink-0">🟩</span>
+                <span className="text-xl flex-shrink-0">🔤</span>
                 <div>
-                  <div className={`text-sm font-medium ${activeGame === 'wordle' ? 'text-indigo-900 dark:text-indigo-300' : 'text-gray-900 dark:text-white'}`}>Wordle</div>
+                  <div className={`text-sm font-medium ${activeGame === '4word' ? 'text-indigo-900 dark:text-indigo-300' : 'text-gray-900 dark:text-white'}`}>4word</div>
                 </div>
               </button>
               <button
@@ -70,6 +70,15 @@ export default function Header({
                 <span className="text-xl flex-shrink-0">🎯</span>
                 <div>
                   <div className={`text-sm font-medium ${activeGame === 'tiles' ? 'text-indigo-900 dark:text-indigo-300' : 'text-gray-900 dark:text-white'}`}>Tiles</div>
+                </div>
+              </button>
+              <button
+                onClick={() => { onSelectGame('squares'); setIsMenuOpen(false); }}
+                className={`w-full flex items-center gap-3 px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors text-left ${activeGame === 'squares' ? 'bg-indigo-50 dark:bg-indigo-900/20' : ''}`}
+              >
+                <span className="text-xl flex-shrink-0">🔲</span>
+                <div>
+                  <div className={`text-sm font-medium ${activeGame === 'squares' ? 'text-indigo-900 dark:text-indigo-300' : 'text-gray-900 dark:text-white'}`}>Squares</div>
                 </div>
               </button>
               <div className="border-t border-gray-100 dark:border-gray-700 my-1"></div>
@@ -108,7 +117,7 @@ export default function Header({
       {/* Center: title */}
       <div className="text-center absolute left-1/2 -translate-x-1/2">
         <h1 className="text-xl font-extrabold tracking-tight text-gray-900 dark:text-white leading-none">
-          {activeGame === 'wordle' ? '🟩 Wordle' : activeGame === 'tiles' ? '🎯 Tiles' : '🔗 Chainword'}
+          {activeGame === '4word' ? '🔤 4word' : activeGame === 'tiles' ? '🎯 Tiles' : activeGame === 'squares' ? '🔲 Squares' : '🔗 Chainword'}
         </h1>
       </div>
 

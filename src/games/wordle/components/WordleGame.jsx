@@ -200,7 +200,7 @@ export default function WordleGame({ game, wordListReady }) {
         <div className="flex flex-col items-center gap-4 px-4 py-6 max-w-sm mx-auto w-full">
           <div className="text-center mb-2">
             <p className="text-sm text-gray-600 dark:text-gray-400">
-              {formatDate(dateStr)} &nbsp;•&nbsp; Daily Wordle #{gameNumber}
+              {formatDate(dateStr)} &nbsp;•&nbsp; Daily 4word #{gameNumber}
             </p>
           </div>
 

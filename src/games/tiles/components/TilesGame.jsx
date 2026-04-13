@@ -16,7 +16,7 @@ function ScrabbleTile({ letter, points, used, onClick }) {
     <button
       onClick={onClick}
       disabled={used}
-      className={`relative w-12 h-12 rounded-lg text-xl font-extrabold flex items-center justify-center select-none transition-[transform,box-shadow]
+      className={`relative w-10 h-10 rounded-lg text-base font-extrabold flex items-center justify-center select-none transition-[transform,box-shadow]
         ${used
           ? 'bg-gray-100 dark:bg-gray-800 text-gray-300 dark:text-gray-600 border border-gray-200 dark:border-gray-700 cursor-not-allowed opacity-50'
           : 'text-amber-900 dark:text-amber-100 cursor-pointer active:translate-y-[3px]'
@@ -52,7 +52,7 @@ function SlotCell({ tile, multiplier, onClick }) {
   return (
     <button
       onClick={onClick}
-      className={`relative w-14 h-14 rounded-xl flex flex-col items-center justify-center text-2xl font-extrabold transition-[transform,box-shadow]
+      className={`relative w-11 h-11 rounded-xl flex flex-col items-center justify-center text-lg font-extrabold transition-[transform,box-shadow]
         ${tile
           ? 'text-amber-900 dark:text-amber-100 cursor-pointer active:translate-y-[3px]'
           : 'border-2 border-dashed bg-white dark:bg-gray-800 cursor-default'
@@ -197,7 +197,7 @@ export default function TilesGame({ game }) {
                     return (
                       <div
                         key={j}
-                        className="relative w-11 h-11 rounded-lg flex flex-col items-center justify-center text-lg font-extrabold text-amber-900"
+                        className="relative w-9 h-9 rounded-lg flex flex-col items-center justify-center text-sm font-extrabold text-amber-900"
                         style={{
                           background: 'linear-gradient(170deg, #fef9c3 0%, #fde68a 55%, #fbbf24 100%)',
                           border: '1px solid #d97706',

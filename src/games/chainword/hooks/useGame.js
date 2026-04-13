@@ -123,6 +123,14 @@ export function useGame(user, wordListReady) {
     return true;
   }
 
+  function undoLastMove() {
+    if (chain.length <= 1) return;
+    const newChain = chain.slice(0, -1);
+    setChain(newChain);
+    setError('');
+    persist(newChain, 'playing', hintsUsed);
+  }
+
   function giveUp() {
     const newStatus = 'gaveUp';
     setStatus(newStatus);
@@ -159,6 +167,7 @@ export function useGame(user, wordListReady) {
     hintsUsed,
     stats,
     submitWord,
+    undoLastMove,
     giveUp,
     useHint,
     setError,

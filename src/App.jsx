@@ -3,6 +3,7 @@ import { Toaster, toast } from 'react-hot-toast';
 import Header from './components/Header.jsx';
 import Game from './games/chainword/components/Game.jsx';
 import WordleGame from './games/wordle/components/WordleGame.jsx';
+import TilesGame from './games/tiles/components/TilesGame.jsx';
 import HowToPlay from './games/chainword/components/HowToPlay.jsx';
 import StatsModal from './components/StatsModal.jsx';
 import AuthModal from './components/AuthModal.jsx';
@@ -10,6 +11,7 @@ import FriendsModal from './components/FriendsModal.jsx';
 import { useAuth } from './hooks/useAuth.js';
 import { useGame } from './games/chainword/hooks/useGame.js';
 import { useWordle } from './games/wordle/hooks/useWordle.js';
+import { useTiles } from './games/tiles/hooks/useTiles.js';
 import { loadTheme, saveTheme, loadStats } from './utils/storage.js';
 import { loadWordList } from './words.js';
 
@@ -27,6 +29,7 @@ export default function App() {
   const { user, authLoading, signInWithGoogle, signOut } = useAuth();
   const game = useGame(user, wordListReady);
   const wordle = useWordle(wordListReady);
+  const tiles = useTiles();
 
   // Apply dark mode to document
   useEffect(() => {
@@ -84,8 +87,10 @@ export default function App() {
       <main className="flex-1 overflow-hidden">
         {activeGame === 'chainword' ? (
           <Game game={game} wordListReady={wordListReady} />
-        ) : (
+        ) : activeGame === 'wordle' ? (
           <WordleGame game={wordle} wordListReady={wordListReady} />
+        ) : (
+          <TilesGame game={tiles} />
         )}
       </main>
 

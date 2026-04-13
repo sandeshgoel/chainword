@@ -48,12 +48,10 @@ export default function Game({ game, wordListReady }) {
     pair, dateStr, gameNumber,
     chain, optimalPath, parSteps, userSteps,
     currentWord, status, error, hintsUsed,
-    submitWord, giveUp, useHint, setError,
+    submitWord, undoLastMove, giveUp, useHint, setError,
   } = game;
 
   const [showShare, setShowShare] = useState(false);
-  const [hintWord, setHintWord] = useState(null);
-  const [hintVisible, setHintVisible] = useState(false);
   const [showHintModal, setShowHintModal] = useState(false);
   const [inputValue, setInputValue] = useState('');
   const inputRef = useRef(null);
@@ -94,14 +92,14 @@ export default function Game({ game, wordListReady }) {
     setShowHintModal(false);
     const hint = useHint();
     if (hint) {
-      setHintWord(hint);
-      setHintVisible(true);
-      setTimeout(() => setHintVisible(false), 4000);
+      submitWord(hint);
+      setInputValue('');
     }
     refocus();
   }
 
   return (
+    <div className="h-full overflow-y-auto">
     <div className="flex flex-col items-center gap-5 px-4 py-6 max-w-sm mx-auto w-full">
 
       {/* Today's info */}
@@ -193,15 +191,18 @@ export default function Game({ game, wordListReady }) {
             </p>
           )}
 
-          {/* Hint reveal */}
-          {hintVisible && hintWord && (
-            <div className="text-sm bg-amber-50 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 px-4 py-2 rounded-xl border border-amber-200 dark:border-amber-700">
-              Hint: try <strong>{hintWord.toUpperCase()}</strong>
-            </div>
-          )}
-
           {/* Buttons */}
           <div className="flex gap-3">
+            {chain.length > 1 && (
+              <button
+                type="button"
+                onMouseDown={(e) => e.preventDefault()}
+                onClick={() => { undoLastMove(); refocus(); }}
+                className="px-4 py-2 text-sm text-blue-600 dark:text-blue-400 border border-blue-300 dark:border-blue-700 rounded-xl hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors font-medium"
+              >
+                ↩ Undo
+              </button>
+            )}
             {optimalPath && (
               <button
                 type="button"
@@ -224,7 +225,8 @@ export default function Game({ game, wordListReady }) {
 
           {/* Progress */}
           <p className="text-sm text-gray-500 dark:text-gray-400">
-            {userSteps} guess{userSteps !== 1 ? 'es' : ''} so far
+            {userSteps} guess{userSteps !== 1 ? 'es' : ''}
+            {hintsUsed > 0 && <span className="text-amber-500 dark:text-amber-400"> • 💡 {hintsUsed} hint{hintsUsed !== 1 ? 's' : ''}</span>}
             {parSteps !== null && (
               <span className={userSteps >= parSteps ? ' text-amber-500' : ''}>
                 {userSteps < parSteps ? ' — on track!' : ` (+${userSteps - parSteps + 1} over par)`}
@@ -282,6 +284,7 @@ export default function Game({ game, wordListReady }) {
           </div>
         </div>
       </Modal>
+    </div>
     </div>
   );
 }

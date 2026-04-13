@@ -144,13 +144,18 @@ export function useGame(user, wordListReady) {
     const newCount = hintsUsed + 1;
     setHintsUsed(newCount);
     persist(chain, status, newCount);
-    // Find where we are in the optimal path and suggest the next step
+    // If current word is on the optimal path, suggest the next step along it
     const currentIdx = optimalPath.indexOf(currentWord);
     if (currentIdx >= 0 && currentIdx < optimalPath.length - 1) {
       return optimalPath[currentIdx + 1];
     }
-    // If current word isn't on optimal path, return the next word from start
-    return optimalPath[1] || null;
+    // Off the optimal path — BFS from current position to find the next step
+    const ws = getWordSet();
+    if (ws) {
+      const path = bfs(currentWord, pair.end, ws);
+      if (path && path.length > 1) return path[1];
+    }
+    return null;
   }
 
   return {

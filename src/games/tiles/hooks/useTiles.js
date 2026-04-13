@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { getDailyTiles } from '../data/dailyTiles.js';
 import { getWordSet } from '../../../words.js';
+import { loadTilesStats, updateTilesStats } from '../../../utils/storage.js';
 
 // Slot multipliers: positions 0-3 → ×1, ×2 (DL), ×1, ×3 (TL)
 export const SLOT_MULTIPLIERS = [1, 2, 1, 3];
@@ -12,6 +13,44 @@ export function calcScore(slots) {
   }, 0);
 }
 
+// Enumerate all 4-permutations of the 7 tiles and find the highest-scoring valid word.
+function findOptimalPlay(tiles) {
+  const ws = getWordSet();
+  if (!ws) return { optimalScore: 0, optimalWord: null };
+
+  let optimalScore = 0;
+  let optimalWord = null;
+
+  for (let a = 0; a < 7; a++) {
+    for (let b = 0; b < 7; b++) {
+      if (b === a) continue;
+      for (let c = 0; c < 7; c++) {
+        if (c === a || c === b) continue;
+        for (let d = 0; d < 7; d++) {
+          if (d === a || d === b || d === c) continue;
+            const word = (
+              tiles[a].letter + tiles[b].letter +
+              tiles[c].letter + tiles[d].letter
+            ).toLowerCase();
+            if (ws.has(word)) {
+              const score =
+                tiles[a].points * SLOT_MULTIPLIERS[0] +
+                tiles[b].points * SLOT_MULTIPLIERS[1] +
+                tiles[c].points * SLOT_MULTIPLIERS[2] +
+                tiles[d].points * SLOT_MULTIPLIERS[3];
+              if (score > optimalScore) {
+                optimalScore = score;
+                optimalWord = word.toUpperCase();
+              }
+            }
+        }
+      }
+    }
+  }
+
+  return { optimalScore, optimalWord };
+}
+
 export function useTiles() {
   const { tiles: dailyTiles, dateStr, gameNumber } = getDailyTiles();
 
@@ -20,6 +59,9 @@ export function useTiles() {
   const [error, setError] = useState('');
   const [submissions, setSubmissions] = useState([]);
   const [bestScore, setBestScore] = useState(0);
+  const [stats, setStats] = useState(loadTilesStats());
+
+  const { optimalScore, optimalWord } = findOptimalPlay(dailyTiles);
 
   // Restore saved submissions from localStorage
   useEffect(() => {
@@ -67,6 +109,17 @@ export function useTiles() {
     setError('');
   }
 
+  function shuffleTiles() {
+    setTiles(prev => {
+      const arr = [...prev];
+      for (let i = arr.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [arr[i], arr[j]] = [arr[j], arr[i]];
+      }
+      return arr;
+    });
+  }
+
   function clearSlots() {
     setSlots([null, null, null, null]);
     setTiles(dailyTiles.map(t => ({ ...t, used: false })));
@@ -96,6 +149,12 @@ export function useTiles() {
     setBestScore(newBest);
     setError('');
     persist(newSubmissions, newBest);
+
+    // Update stats whenever we have a new best for today
+    if (score >= newBest) {
+      setStats(updateTilesStats(dateStr, newBest, optimalScore));
+    }
+
     return true;
   }
 
@@ -107,9 +166,13 @@ export function useTiles() {
     error,
     submissions,
     bestScore,
+    optimalScore,
+    optimalWord,
+    stats,
     placeTile,
     removeFromSlot,
     clearSlots,
+    shuffleTiles,
     submitWord,
     setError,
   };

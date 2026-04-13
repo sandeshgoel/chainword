@@ -12,7 +12,7 @@ import { useAuth } from './hooks/useAuth.js';
 import { useGame } from './games/chainword/hooks/useGame.js';
 import { useWordle } from './games/wordle/hooks/useWordle.js';
 import { useTiles } from './games/tiles/hooks/useTiles.js';
-import { loadTheme, saveTheme, loadStats } from './utils/storage.js';
+import { loadTheme, saveTheme } from './utils/storage.js';
 import { loadWordList } from './words.js';
 
 export default function App() {
@@ -26,7 +26,7 @@ export default function App() {
   const [showAuth, setShowAuth] = useState(false);
   const [showFriends, setShowFriends] = useState(false);
 
-  const { user, authLoading, signInWithGoogle, signOut } = useAuth();
+  const { user, signInWithGoogle, signOut } = useAuth();
   const game = useGame(user, wordListReady);
   const wordle = useWordle(wordListReady);
   const tiles = useTiles();
@@ -100,9 +100,10 @@ export default function App() {
       <StatsModal
         open={showStats}
         onClose={() => setShowStats(false)}
-        stats={activeGame === 'wordle' ? wordle.stats : game.stats}
+        stats={activeGame === 'wordle' ? wordle.stats : activeGame === 'tiles' ? tiles.stats : game.stats}
         onReset={handleReset}
         isWordle={activeGame === 'wordle'}
+        isTiles={activeGame === 'tiles'}
       />
 
       <AuthModal

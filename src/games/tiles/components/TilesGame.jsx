@@ -1,9 +1,14 @@
 import { calcScore, SLOT_MULTIPLIERS } from '../hooks/useTiles.js';
+import { formatDate } from '../../../utils/wordUtils.js';
 
 const MULTIPLIER_LABEL = { 2: 'DL', 3: 'TL' };
 const MULTIPLIER_COLOR = {
   2: 'text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30',
   3: 'text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/30',
+};
+const MULTIPLIER_TEXT = {
+  2: 'text-blue-500 dark:text-blue-400',
+  3: 'text-red-500 dark:text-red-400',
 };
 
 function ScrabbleTile({ letter, points, used, onClick }) {
@@ -11,15 +16,29 @@ function ScrabbleTile({ letter, points, used, onClick }) {
     <button
       onClick={onClick}
       disabled={used}
-      className={`relative w-12 h-12 rounded-lg text-xl font-extrabold flex items-center justify-center transition-all select-none
+      className={`relative w-12 h-12 rounded-lg text-xl font-extrabold flex items-center justify-center select-none transition-[transform,box-shadow]
         ${used
-          ? 'bg-gray-100 dark:bg-gray-800 text-gray-300 dark:text-gray-600 border-2 border-gray-200 dark:border-gray-700 cursor-not-allowed'
-          : 'bg-amber-100 dark:bg-amber-900/60 text-amber-900 dark:text-amber-100 border-2 border-amber-300 dark:border-amber-600 shadow-sm hover:bg-amber-200 dark:hover:bg-amber-800 active:scale-95 cursor-pointer'
+          ? 'bg-gray-100 dark:bg-gray-800 text-gray-300 dark:text-gray-600 border border-gray-200 dark:border-gray-700 cursor-not-allowed opacity-50'
+          : 'text-amber-900 dark:text-amber-100 cursor-pointer active:translate-y-[3px]'
         }`}
+      style={used ? {} : {
+        background: 'linear-gradient(170deg, #fef9c3 0%, #fde68a 55%, #fbbf24 100%)',
+        border: '1px solid #d97706',
+        boxShadow: '0 4px 0 #92400e, 0 5px 8px rgba(0,0,0,0.18), inset 0 1px 2px rgba(255,255,255,0.8)',
+      }}
+      onMouseDown={(e) => {
+        if (!used) e.currentTarget.style.boxShadow = '0 1px 0 #92400e, 0 2px 4px rgba(0,0,0,0.15), inset 0 1px 2px rgba(255,255,255,0.8)';
+      }}
+      onMouseUp={(e) => {
+        if (!used) e.currentTarget.style.boxShadow = '0 4px 0 #92400e, 0 5px 8px rgba(0,0,0,0.18), inset 0 1px 2px rgba(255,255,255,0.8)';
+      }}
+      onMouseLeave={(e) => {
+        if (!used) e.currentTarget.style.boxShadow = '0 4px 0 #92400e, 0 5px 8px rgba(0,0,0,0.18), inset 0 1px 2px rgba(255,255,255,0.8)';
+      }}
     >
       {letter}
       {!used && (
-        <span className="absolute bottom-0.5 right-1 text-[9px] font-bold leading-none text-amber-600 dark:text-amber-400">
+        <span className="absolute bottom-0.5 right-1 text-[9px] font-bold leading-none text-amber-700">
           {points}
         </span>
       )}
@@ -27,45 +46,47 @@ function ScrabbleTile({ letter, points, used, onClick }) {
   );
 }
 
-function SlotCell({ tile, slotIndex, multiplier, onClick }) {
+function SlotCell({ tile, multiplier, onClick }) {
   const label = MULTIPLIER_LABEL[multiplier];
-  const colorClass = MULTIPLIER_COLOR[multiplier];
 
   return (
-    <div className="flex flex-col items-center gap-1">
-      <button
-        onClick={onClick}
-        className={`relative w-14 h-14 rounded-xl border-2 flex items-center justify-center text-2xl font-extrabold transition-all
-          ${tile
-            ? 'bg-amber-100 dark:bg-amber-900/60 border-amber-300 dark:border-amber-600 text-amber-900 dark:text-amber-100 shadow-sm hover:bg-amber-200 active:scale-95 cursor-pointer'
-            : 'border-dashed border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 cursor-default'
-          }`}
-      >
-        {tile ? (
-          <>
-            {tile.letter}
-            <span className="absolute bottom-0.5 right-1 text-[9px] font-bold leading-none text-amber-600 dark:text-amber-400">
-              {tile.points}
-            </span>
-          </>
-        ) : (
-          <span className="text-xs text-gray-300 dark:text-gray-600 font-normal">{slotIndex + 1}</span>
-        )}
-      </button>
-      {label ? (
-        <span className={`text-[11px] font-extrabold px-1.5 py-0.5 rounded ${colorClass}`}>{label}</span>
-      ) : (
-        <span className="text-[11px] text-transparent select-none">—</span>
-      )}
-    </div>
+    <button
+      onClick={onClick}
+      className={`relative w-14 h-14 rounded-xl flex flex-col items-center justify-center text-2xl font-extrabold transition-[transform,box-shadow]
+        ${tile
+          ? 'text-amber-900 dark:text-amber-100 cursor-pointer active:translate-y-[3px]'
+          : 'border-2 border-dashed bg-white dark:bg-gray-800 cursor-default'
+        } ${!tile && label === 'DL' ? 'border-blue-300 dark:border-blue-700'
+          : !tile && label === 'TL' ? 'border-red-300 dark:border-red-700'
+          : !tile ? 'border-gray-300 dark:border-gray-600' : ''}`}
+      style={tile ? {
+        background: 'linear-gradient(170deg, #fef9c3 0%, #fde68a 55%, #fbbf24 100%)',
+        border: '1px solid #d97706',
+        boxShadow: '0 4px 0 #92400e, 0 5px 8px rgba(0,0,0,0.18), inset 0 1px 2px rgba(255,255,255,0.8)',
+      } : {}}
+    >
+      {tile ? (
+        <>
+          {tile.letter}
+          <span className="absolute bottom-0.5 right-1 text-[9px] font-bold leading-none text-amber-600 dark:text-amber-400">
+            {tile.points}
+          </span>
+          {label && (
+            <span className={`absolute top-0.5 right-1 text-[8px] font-extrabold leading-none ${MULTIPLIER_TEXT[multiplier]}`}>{label}</span>
+          )}
+        </>
+      ) : label ? (
+        <span className={`text-xs font-extrabold tracking-wide ${MULTIPLIER_TEXT[multiplier]}`}>{label}</span>
+      ) : null}
+    </button>
   );
 }
 
 export default function TilesGame({ game }) {
   const {
     tiles, slots, dateStr, gameNumber,
-    error, submissions, bestScore,
-    placeTile, removeFromSlot, clearSlots, submitWord,
+    error, submissions, bestScore, optimalScore, optimalWord,
+    placeTile, removeFromSlot, clearSlots, shuffleTiles, submitWord,
   } = game;
 
   const filledCount = slots.filter(Boolean).length;
@@ -78,9 +99,8 @@ export default function TilesGame({ game }) {
 
         {/* Header */}
         <div className="text-center">
-          <p className="text-xs text-gray-400 dark:text-gray-500 uppercase tracking-widest font-semibold mb-1">Tiles</p>
           <p className="text-sm text-gray-600 dark:text-gray-400">
-            {dateStr} &nbsp;•&nbsp; Puzzle #{gameNumber}
+            {formatDate(dateStr)} &nbsp;•&nbsp; Daily Tiles #{gameNumber}
           </p>
         </div>
 
@@ -92,7 +112,6 @@ export default function TilesGame({ game }) {
               <SlotCell
                 key={i}
                 tile={tile}
-                slotIndex={i}
                 multiplier={SLOT_MULTIPLIERS[i]}
                 onClick={() => tile && removeFromSlot(i)}
               />
@@ -114,8 +133,16 @@ export default function TilesGame({ game }) {
 
         {/* Tile rack */}
         <div className="flex flex-col items-center gap-3 w-full">
-          <p className="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">Your tiles — tap to place</p>
-          <div className="flex gap-2 flex-wrap justify-center">
+          <div className="flex items-center justify-between w-full">
+            <p className="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">Your tiles — tap to place</p>
+            <button
+              onClick={shuffleTiles}
+              className="text-xs text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 transition-colors px-2 py-1 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800"
+            >
+              🔀 Shuffle
+            </button>
+          </div>
+          <div className="flex gap-1.5 justify-center">
             {tiles.map(tile => (
               <ScrabbleTile
                 key={tile.id}
@@ -156,37 +183,53 @@ export default function TilesGame({ game }) {
         {/* Best word — always visible once any valid word submitted */}
         {submissions.length > 0 && (() => {
           const best = submissions.reduce((a, b) => b.score > a.score ? b : a);
+          const isOptimal = best.score === optimalScore;
           return (
-            <div className="w-full rounded-2xl bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-200 dark:border-indigo-800 px-4 py-4">
-              <p className="text-xs font-semibold text-indigo-400 dark:text-indigo-500 uppercase tracking-wider text-center mb-3">Best word</p>
+            <div className={`w-full rounded-2xl px-4 py-4 border ${isOptimal ? 'bg-emerald-50 dark:bg-emerald-900/20 border-emerald-200 dark:border-emerald-800' : 'bg-indigo-50 dark:bg-indigo-900/20 border-indigo-200 dark:border-indigo-800'}`}>
+              <p className={`text-xs font-semibold uppercase tracking-wider text-center mb-3 ${isOptimal ? 'text-emerald-500 dark:text-emerald-400' : 'text-indigo-400 dark:text-indigo-500'}`}>
+                {isOptimal ? '★ Best word — optimal!' : 'Best word so far'}
+              </p>
               <div className="flex items-center justify-between">
                 <div className="flex gap-2">
                   {best.slots.map((t, j) => {
                     const mult = SLOT_MULTIPLIERS[j];
                     const label = MULTIPLIER_LABEL[mult];
                     return (
-                      <div key={j} className="flex flex-col items-center gap-1">
-                        <div className="relative w-11 h-11 rounded-lg bg-amber-100 dark:bg-amber-900/60 border-2 border-amber-300 dark:border-amber-600 flex items-center justify-center text-lg font-extrabold text-amber-900 dark:text-amber-100">
-                          {t.letter}
-                          <span className="absolute bottom-0.5 right-1 text-[9px] font-bold leading-none text-amber-600 dark:text-amber-400">{t.points}</span>
-                        </div>
-                        {label ? (
-                          <span className={`text-[10px] font-extrabold px-1 rounded ${MULTIPLIER_COLOR[mult]}`}>{label}</span>
-                        ) : (
-                          <span className="text-[10px] text-transparent select-none">—</span>
+                      <div
+                        key={j}
+                        className="relative w-11 h-11 rounded-lg flex flex-col items-center justify-center text-lg font-extrabold text-amber-900"
+                        style={{
+                          background: 'linear-gradient(170deg, #fef9c3 0%, #fde68a 55%, #fbbf24 100%)',
+                          border: '1px solid #d97706',
+                          boxShadow: '0 3px 0 #92400e, 0 4px 6px rgba(0,0,0,0.15), inset 0 1px 2px rgba(255,255,255,0.8)',
+                        }}
+                      >
+                        {t.letter}
+                        <span className="absolute bottom-0.5 right-1 text-[9px] font-bold leading-none text-amber-700">{t.points}</span>
+                        {label && (
+                          <span className={`absolute top-0.5 left-1 text-[8px] font-extrabold leading-none ${MULTIPLIER_TEXT[mult]}`}>{label}</span>
                         )}
                       </div>
                     );
                   })}
                 </div>
                 <div className="text-right">
-                  <p className="text-2xl font-black text-indigo-600 dark:text-indigo-400">{best.score}</p>
-                  <p className="text-xs text-indigo-400 dark:text-indigo-500 font-medium">pts</p>
+                  <p className={`text-2xl font-black ${isOptimal ? 'text-emerald-600 dark:text-emerald-400' : 'text-indigo-600 dark:text-indigo-400'}`}>{best.score}</p>
+                  <p className={`text-xs font-medium ${isOptimal ? 'text-emerald-400 dark:text-emerald-500' : 'text-indigo-400 dark:text-indigo-500'}`}>
+                    / {optimalScore} pts max
+                  </p>
                 </div>
               </div>
             </div>
           );
         })()}
+
+        {/* Show target score before first submission */}
+        {submissions.length === 0 && optimalScore > 0 && (
+          <p className="text-xs text-gray-400 dark:text-gray-500 text-center">
+            Best possible score today: <span className="font-bold text-gray-600 dark:text-gray-300">{optimalScore} pts</span>
+          </p>
+        )}
 
         {/* All attempts */}
         {submissions.length > 0 && (

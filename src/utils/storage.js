@@ -156,6 +156,60 @@ export function updateWordleStats(guessesCount, dateStr) {
 }
 
 
+// --- Tiles Statistics ---
+
+const TILES_STATS_KEY = 'chainword_tiles_stats';
+
+export function loadTilesStats() {
+  try {
+    return JSON.parse(localStorage.getItem(TILES_STATS_KEY) || 'null') || defaultTilesStats();
+  } catch {
+    return defaultTilesStats();
+  }
+}
+
+function defaultTilesStats() {
+  return {
+    played: 0,
+    optimalAchieved: 0,
+    bestScore: 0,
+    lastPlayedDate: null,
+    // history: [{dateStr, score, optimalScore, isOptimal}], most recent first, capped at 30
+    history: [],
+  };
+}
+
+export function saveTilesStats(stats) {
+  try {
+    localStorage.setItem(TILES_STATS_KEY, JSON.stringify(stats));
+  } catch (_) {}
+}
+
+// Called every time the user achieves a new best score for the day.
+export function updateTilesStats(dateStr, score, optimalScore) {
+  const stats = loadTilesStats();
+  const isOptimal = score >= optimalScore;
+  const existingIdx = stats.history.findIndex(h => h.dateStr === dateStr);
+
+  if (existingIdx === -1) {
+    // First submission today
+    stats.played++;
+    if (isOptimal) stats.optimalAchieved++;
+    stats.history.unshift({ dateStr, score, optimalScore, isOptimal });
+    if (stats.history.length > 30) stats.history.pop();
+  } else {
+    const prev = stats.history[existingIdx];
+    // If newly achieved optimal this session, count it
+    if (isOptimal && !prev.isOptimal) stats.optimalAchieved++;
+    stats.history[existingIdx] = { dateStr, score, optimalScore, isOptimal };
+  }
+
+  stats.bestScore = Math.max(stats.bestScore, score);
+  stats.lastPlayedDate = dateStr;
+  saveTilesStats(stats);
+  return stats;
+}
+
 // --- Theme ---
 
 export function loadTheme() {

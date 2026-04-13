@@ -1,3 +1,9 @@
+const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+export function formatDate(dateStr) {
+  const [y, m, d] = dateStr.split('-').map(Number);
+  return `${MONTHS[m - 1]} ${d}, ${y}`;
+}
+
 // Returns true if two same-length words differ by exactly one letter
 export function diffsByOneLetter(a, b) {
   if (a.length !== b.length) return false;

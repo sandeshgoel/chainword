@@ -1,10 +1,11 @@
 import { useState, useRef, useEffect } from 'react';
 import { buildWordleShareText, shareOrCopy } from '../../../utils/sharing.js';
+import { formatDate } from '../../../utils/wordUtils.js';
 
 const KEYBOARD_ROWS = [
   ['Q','W','E','R','T','Y','U','I','O','P'],
   ['A','S','D','F','G','H','J','K','L'],
-  ['ENTER','Z','X','C','V','B','N','M','⌫'],
+  ['⌫','Z','X','C','V','B','N','M','ENTER'],
 ];
 
 function getLetterStates(guesses) {
@@ -80,7 +81,7 @@ function Tile({ char, color }) {
   }
 
   return (
-    <div className={`w-14 h-14 flex items-center justify-center rounded-lg text-2xl font-extrabold border-2 transition-all duration-200 transform ${bgClass}`}>
+    <div className={`w-11 h-11 flex items-center justify-center rounded-lg text-xl font-extrabold border-2 transition-all duration-200 transform ${bgClass}`}>
       {char ? char.toUpperCase() : ''}
     </div>
   );
@@ -198,9 +199,8 @@ export default function WordleGame({ game, wordListReady }) {
       <div className="flex-1 overflow-y-auto">
         <div className="flex flex-col items-center gap-4 px-4 py-6 max-w-sm mx-auto w-full">
           <div className="text-center mb-2">
-            <p className="text-xs text-gray-400 dark:text-gray-500 uppercase tracking-widest font-semibold mb-1">Wordle Mode</p>
             <p className="text-sm text-gray-600 dark:text-gray-400">
-              {dateStr} &nbsp;•&nbsp; Daily Wordle #{gameNumber}
+              {formatDate(dateStr)} &nbsp;•&nbsp; Daily Wordle #{gameNumber}
             </p>
           </div>
 

@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
-import { Toaster } from 'react-hot-toast';
+import { Toaster, toast } from 'react-hot-toast';
+import { Analytics } from '@vercel/analytics/react';
 import Header from './components/Header.jsx';
 import Game from './games/chainword/components/Game.jsx';
 import WordleGame from './games/wordle/components/WordleGame.jsx';
@@ -162,6 +163,7 @@ export default function App() {
         dateStr={game.dateStr}
       />
 
+      <Analytics />
       <ArchiveModal
         open={showArchive}
         onClose={() => setShowArchive(false)}

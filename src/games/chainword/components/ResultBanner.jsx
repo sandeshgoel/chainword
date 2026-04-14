@@ -1,4 +1,4 @@
-import { getStars, getScoreLabel } from '../utils/wordUtils.js';
+import { getStars, getScoreLabel } from '../../../utils/wordUtils.js';
 
 export default function ResultBanner({ status, userSteps, parSteps, hintsUsed, optimalPath, onShare }) {
   if (status === 'playing') return null;

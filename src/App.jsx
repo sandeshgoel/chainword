@@ -2,28 +2,46 @@ import { useState, useEffect } from 'react';
 import { Toaster, toast } from 'react-hot-toast';
 import { Analytics } from '@vercel/analytics/react';
 import Header from './components/Header.jsx';
-import Game from './components/Game.jsx';
-import HowToPlay from './components/HowToPlay.jsx';
+import Game from './games/chainword/components/Game.jsx';
+import WordleGame from './games/wordle/components/WordleGame.jsx';
+import TilesGame from './games/tiles/components/TilesGame.jsx';
+import SquaresGame from './games/squares/components/SquaresGame.jsx';
+import HowToPlay from './games/chainword/components/HowToPlay.jsx';
 import StatsModal from './components/StatsModal.jsx';
 import AuthModal from './components/AuthModal.jsx';
 import FriendsModal from './components/FriendsModal.jsx';
+import ArchiveModal from './components/ArchiveModal.jsx';
 import { useAuth } from './hooks/useAuth.js';
-import { useGame } from './hooks/useGame.js';
-import { loadTheme, saveTheme, loadStats } from './utils/storage.js';
+import { useGame } from './games/chainword/hooks/useGame.js';
+import { useWordle } from './games/wordle/hooks/useWordle.js';
+import { useTiles } from './games/tiles/hooks/useTiles.js';
+import { useSquares } from './games/squares/hooks/useSquares.js';
+import { loadTheme, saveTheme } from './utils/storage.js';
 import { loadWordList } from './words.js';
 
 export default function App() {
+  const [activeGame, setActiveGame] = useState('chainword');
   const [darkMode, setDarkMode] = useState(() => loadTheme() === 'dark');
+  const [hardMode, setHardMode] = useState(() => localStorage.getItem('chainword_hard_mode') === 'true');
   const [wordListReady, setWordListReady] = useState(false);
+
+  // Per-game archive date overrides (null = today)
+  const [archiveDates, setArchiveDates] = useState({
+    chainword: null, '4word': null, tiles: null, squares: null,
+  });
 
   // Modals
   const [showHelp, setShowHelp] = useState(false);
   const [showStats, setShowStats] = useState(false);
   const [showAuth, setShowAuth] = useState(false);
   const [showFriends, setShowFriends] = useState(false);
+  const [showArchive, setShowArchive] = useState(false);
 
-  const { user, authLoading, signInWithGoogle, signOut } = useAuth();
-  const game = useGame(user, wordListReady);
+  const { user, signInWithGoogle, signOut } = useAuth();
+  const game = useGame(user, wordListReady, hardMode, archiveDates.chainword);
+  const wordle = useWordle(wordListReady, archiveDates['4word']);
+  const tiles = useTiles(archiveDates.tiles);
+  const squares = useSquares(archiveDates.squares);
 
   // Apply dark mode to document
   useEffect(() => {
@@ -45,13 +63,17 @@ export default function App() {
     }
   }, []);
 
-  // Show stats after completing a game
+  // Show stats after completing today's chainword
   useEffect(() => {
-    if (game.status === 'won') {
-      toast.success('Puzzle complete!', { duration: 2000 });
+    if (game.status === 'won' && !archiveDates.chainword) {
       setTimeout(() => setShowStats(true), 1500);
     }
   }, [game.status]);
+
+  function handleArchiveSelect(dateStr) {
+    setArchiveDates(prev => ({ ...prev, [activeGame]: dateStr }));
+    setShowArchive(false);
+  }
 
   function handleReset() {
     Object.keys(localStorage)
@@ -61,11 +83,13 @@ export default function App() {
   }
 
   return (
-    <div className="min-h-screen bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 transition-colors">
+    <div className="h-dvh flex flex-col bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 transition-colors">
       <Toaster position="top-center" />
 
       <Header
-        gameNumber={game.gameNumber}
+        activeGame={activeGame}
+        onSelectGame={setActiveGame}
+        gameNumber={activeGame === 'chainword' ? game.gameNumber : wordle.gameNumber}
         darkMode={darkMode}
         onToggleDark={() => setDarkMode(d => !d)}
         onHowToPlay={() => setShowHelp(true)}
@@ -75,18 +99,53 @@ export default function App() {
         user={user}
       />
 
-      <main>
-        <Game game={game} wordListReady={wordListReady} />
+      <main className="flex-1 overflow-hidden">
+        {activeGame === 'chainword' ? (
+          <Game
+            game={game}
+            wordListReady={wordListReady}
+            hardMode={hardMode}
+            onToggleHardMode={() => {
+              const next = !hardMode;
+              setHardMode(next);
+              localStorage.setItem('chainword_hard_mode', next ? 'true' : 'false');
+            }}
+            onArchive={() => setShowArchive(true)}
+            archiveDate={archiveDates.chainword}
+          />
+        ) : activeGame === '4word' ? (
+          <WordleGame
+            game={wordle}
+            wordListReady={wordListReady}
+            onArchive={() => setShowArchive(true)}
+            archiveDate={archiveDates['4word']}
+          />
+        ) : activeGame === 'squares' ? (
+          <SquaresGame
+            game={squares}
+            onArchive={() => setShowArchive(true)}
+            archiveDate={archiveDates.squares}
+          />
+        ) : (
+          <TilesGame
+            game={tiles}
+            onArchive={() => setShowArchive(true)}
+            archiveDate={archiveDates.tiles}
+          />
+        )}
       </main>
 
       {/* Modals */}
-      <HowToPlay open={showHelp} onClose={() => setShowHelp(false)} />
+      <HowToPlay open={showHelp} onClose={() => setShowHelp(false)} activeGame={activeGame} />
 
       <StatsModal
         open={showStats}
         onClose={() => setShowStats(false)}
-        stats={game.stats}
+        stats={activeGame === '4word' ? wordle.stats : activeGame === 'tiles' ? tiles.stats : game.stats}
         onReset={handleReset}
+        isWordle={activeGame === '4word'}
+        isTiles={activeGame === 'tiles'}
+        hardMode={activeGame === 'chainword' ? hardMode : undefined}
       />
 
       <AuthModal
@@ -105,6 +164,14 @@ export default function App() {
       />
 
       <Analytics />
+      <ArchiveModal
+        open={showArchive}
+        onClose={() => setShowArchive(false)}
+        activeGame={activeGame}
+        hardMode={hardMode}
+        selectedDate={archiveDates[activeGame]}
+        onSelectDate={handleArchiveSelect}
+      />
     </div>
   );
 }

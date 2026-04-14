@@ -1,7 +1,7 @@
 import { useState } from 'react';
-import Modal from './Modal.jsx';
-import { buildShareText, shareOrCopy } from '../utils/sharing.js';
-import { getStars } from '../utils/wordUtils.js';
+import Modal from '../../../components/Modal.jsx';
+import { buildShareText, shareOrCopy } from '../../../utils/sharing.js';
+import { getStars } from '../../../utils/wordUtils.js';
 
 export default function ShareModal({ open, onClose, gameData }) {
   const [copied, setCopied] = useState(false);

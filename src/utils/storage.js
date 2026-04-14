@@ -30,9 +30,9 @@ export function saveDateProgress(dateStr, data) {
 
 // --- Statistics ---
 
-export function loadStats() {
+export function loadStats(key = STATS_KEY) {
   try {
-    return JSON.parse(localStorage.getItem(STATS_KEY) || 'null') || defaultStats();
+    return JSON.parse(localStorage.getItem(key) || 'null') || defaultStats();
   } catch {
     return defaultStats();
   }
@@ -50,14 +50,14 @@ function defaultStats() {
   };
 }
 
-export function saveStats(stats) {
+export function saveStats(stats, key = STATS_KEY) {
   try {
-    localStorage.setItem(STATS_KEY, JSON.stringify(stats));
+    localStorage.setItem(key, JSON.stringify(stats));
   } catch (_) {}
 }
 
-export function updateStatsOnWin(stars, dateStr) {
-  const stats = loadStats();
+export function updateStatsOnWin(stars, dateStr, key = STATS_KEY) {
+  const stats = loadStats(key);
   stats.played++;
   stats.won++;
 
@@ -73,22 +73,22 @@ export function updateStatsOnWin(stars, dateStr) {
 
   // Distribution: extra steps = 3 - stars (0 extra means 3 stars)
   const extra = Math.max(0, 3 - stars);
-  const key = String(Math.min(extra, 3));
-  stats.distribution[key] = (stats.distribution[key] || 0) + 1;
+  const k = String(Math.min(extra, 3));
+  stats.distribution[k] = (stats.distribution[k] || 0) + 1;
 
-  saveStats(stats);
+  saveStats(stats, key);
   return stats;
 }
 
-export function updateStatsOnGiveUp(dateStr) {
-  const stats = loadStats();
+export function updateStatsOnGiveUp(dateStr, key = STATS_KEY) {
+  const stats = loadStats(key);
   stats.played++;
   // streak broken if not already played today
   if (stats.lastPlayedDate !== dateStr) {
     stats.currentStreak = 0;
     stats.lastPlayedDate = dateStr;
   }
-  saveStats(stats);
+  saveStats(stats, key);
   return stats;
 }
 
@@ -96,6 +96,118 @@ function getPreviousDateStr(dateStr) {
   const d = new Date(dateStr + 'T00:00:00Z');
   d.setUTCDate(d.getUTCDate() - 1);
   return d.toISOString().split('T')[0];
+}
+
+// --- Wordle Statistics ---
+
+const WORDLE_STATS_KEY = 'chainword_wordle_stats';
+
+export function loadWordleStats() {
+  try {
+    return JSON.parse(localStorage.getItem(WORDLE_STATS_KEY) || 'null') || defaultWordleStats();
+  } catch {
+    return defaultWordleStats();
+  }
+}
+
+function defaultWordleStats() {
+  return {
+    played: 0,
+    won: 0,
+    currentStreak: 0,
+    maxStreak: 0,
+    // distribution: 1 to 6 guesses
+    distribution: { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0 },
+    lastPlayedDate: null,
+  };
+}
+
+export function saveWordleStats(stats) {
+  try {
+    localStorage.setItem(WORDLE_STATS_KEY, JSON.stringify(stats));
+  } catch (_) {}
+}
+
+export function updateWordleStats(guessesCount, dateStr) {
+  const stats = loadWordleStats();
+  stats.played++;
+  
+  if (guessesCount > 0) {
+    stats.won++;
+    const yesterday = getPreviousDateStr(dateStr);
+    if (stats.lastPlayedDate === yesterday) {
+      stats.currentStreak++;
+    } else if (stats.lastPlayedDate !== dateStr) {
+      stats.currentStreak = 1;
+    }
+    stats.maxStreak = Math.max(stats.maxStreak, stats.currentStreak);
+    
+    // Add to distribution
+    const key = String(guessesCount);
+    stats.distribution[key] = (stats.distribution[key] || 0) + 1;
+  } else {
+    // broke streak
+    stats.currentStreak = 0;
+  }
+  
+  stats.lastPlayedDate = dateStr;
+  saveWordleStats(stats);
+  return stats;
+}
+
+
+// --- Tiles Statistics ---
+
+const TILES_STATS_KEY = 'chainword_tiles_stats';
+
+export function loadTilesStats() {
+  try {
+    return JSON.parse(localStorage.getItem(TILES_STATS_KEY) || 'null') || defaultTilesStats();
+  } catch {
+    return defaultTilesStats();
+  }
+}
+
+function defaultTilesStats() {
+  return {
+    played: 0,
+    optimalAchieved: 0,
+    bestScore: 0,
+    lastPlayedDate: null,
+    // history: [{dateStr, score, optimalScore, isOptimal}], most recent first, capped at 30
+    history: [],
+  };
+}
+
+export function saveTilesStats(stats) {
+  try {
+    localStorage.setItem(TILES_STATS_KEY, JSON.stringify(stats));
+  } catch (_) {}
+}
+
+// Called every time the user achieves a new best score for the day.
+export function updateTilesStats(dateStr, score, optimalScore) {
+  const stats = loadTilesStats();
+  const isOptimal = score >= optimalScore;
+  const existingIdx = stats.history.findIndex(h => h.dateStr === dateStr);
+
+  if (existingIdx === -1) {
+    // First submission today
+    stats.played++;
+    if (isOptimal) stats.optimalAchieved++;
+    stats.history.unshift({ dateStr, score, optimalScore, isOptimal });
+    if (stats.history.length > 30) stats.history.pop();
+  } else {
+    const prev = stats.history[existingIdx];
+    // If newly achieved optimal this session, count it
+    if (isOptimal && !prev.isOptimal) stats.optimalAchieved++;
+    stats.history[existingIdx] = { dateStr, score, optimalScore, isOptimal };
+  }
+
+  stats.bestScore = Math.max(stats.bestScore, score);
+  stats.lastPlayedDate = dateStr;
+  saveTilesStats(stats);
+  return stats;
 }
 
 // --- Theme ---

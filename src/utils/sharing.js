@@ -1,4 +1,4 @@
-import { getStars, getScoreLabel } from './wordUtils.js';
+import { getStars, getScoreLabel, formatDate } from './wordUtils.js';
 
 // Build a shareable text without revealing the actual words used
 export function buildShareText({ gameNumber, dateStr, start, end, userSteps, parSteps, chain, hintsUsed, gaveUp }) {
@@ -30,10 +30,10 @@ export function buildShareText({ gameNumber, dateStr, start, end, userSteps, par
 
   return (
     `Chainword #${gameNumber} 🔗\n` +
-    `${dateStr}  •  ${start.toUpperCase()} → ${end.toUpperCase()}\n` +
+    `${formatDate(dateStr)}  •  ${start.toUpperCase()} → ${end.toUpperCase()}\n` +
     `${starEmojis}  ${label}  (${stepInfo})` +
     chainViz +
-    `\n\nPlay at chainword.app`
+    `\n\nPlay at https://chainword-five.vercel.app`
   );
 }
 
@@ -65,7 +65,7 @@ export async function shareOrCopy(text, onCopied) {
 
 export function buildWordleShareText({ gameNumber, dateStr, guesses, status }) {
   const result = status === 'won' ? guesses.length : 'X';
-  let text = `4word #${gameNumber} 🔤\n${dateStr}  •  ${result}/6\n\n`;
+  let text = `4word #${gameNumber} 🔤\n${formatDate(dateStr)}  •  ${result}/6\n\n`;
 
   for (const guess of guesses) {
     let row = '';

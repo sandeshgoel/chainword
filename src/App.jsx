@@ -124,12 +124,6 @@ export default function App() {
     };
   }, []);
 
-  // Show stats after completing today's chainword
-  useEffect(() => {
-    if (game.status === 'won' && !archiveDates.chainword) {
-      setTimeout(() => setShowStats(true), 1500);
-    }
-  }, [game.status]);
 
   function handleArchiveSelect(dateStr) {
     setArchiveDates(prev => ({ ...prev, [activeGame]: dateStr }));

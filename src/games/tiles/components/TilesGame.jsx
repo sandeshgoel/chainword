@@ -129,6 +129,11 @@ export default function TilesGame({ game, onArchive, archiveDate }) {
               />
             ))}
           </div>
+          {optimalScore > 0 && (
+            <p className="text-xs text-gray-400 dark:text-gray-500">
+              Best possible: <span className="font-semibold text-gray-500 dark:text-gray-400">{optimalScore} pts</span>
+            </p>
+          )}
           <div className="h-6 flex items-center">
             {filledCount === 4 ? (
               <p className="text-sm font-bold text-gray-700 dark:text-gray-300">

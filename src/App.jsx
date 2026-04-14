@@ -196,10 +196,11 @@ export default function App() {
       <StatsModal
         open={showStats}
         onClose={() => setShowStats(false)}
-        stats={activeGame === '4word' ? wordle.stats : activeGame === 'tiles' ? tiles.stats : game.stats}
+        stats={activeGame === '4word' ? wordle.stats : activeGame === 'tiles' ? tiles.stats : activeGame === 'squares' ? squares.stats : game.stats}
         onReset={handleReset}
         isWordle={activeGame === '4word'}
         isTiles={activeGame === 'tiles'}
+        isSquares={activeGame === 'squares'}
         hardMode={activeGame === 'chainword' ? hardMode : undefined}
       />
 

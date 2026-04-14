@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { getDailySquare } from '../data/dailySquares.js';
 import { getWordSet } from '../../../words.js';
+import { loadSquaresStats, updateSquaresStats } from '../../../utils/storage.js';
 
 function loadState(dateStr) {
   try {
@@ -20,6 +21,9 @@ export function useSquares(overrideDateStr = null) {
   const { square, dateStr, gameNumber } = getDailySquare(overrideDateStr);
   const [top, left, right, bottom] = square;
 
+  // Correct corner letters derived from puzzle: TL, TR, BL, BR
+  const answer = [top[0], top[3], bottom[0], bottom[3]];
+
   // slots[0..3] = TL, TR, BL, BR (each '' or a letter)
   const [slots, setSlots] = useState(() => loadState(dateStr)?.slots || [...EMPTY_SLOTS]);
   const [cursorPos, setCursorPos] = useState(0);
@@ -28,6 +32,10 @@ export function useSquares(overrideDateStr = null) {
   const [attempts, setAttempts] = useState(() => loadState(dateStr)?.attempts || 0);
   const [feedback, setFeedback] = useState(null);
   const [error, setError] = useState('');
+  // hintedCorners[i] = true if corner i was revealed by a hint
+  const [hintedCorners, setHintedCorners] = useState(() => loadState(dateStr)?.hintedCorners || [false, false, false, false]);
+  const [hintsUsed, setHintsUsed] = useState(() => loadState(dateStr)?.hintsUsed || 0);
+  const [stats, setStats] = useState(() => loadSquaresStats());
 
   // Reset state when date changes (archive navigation)
   useEffect(() => {
@@ -39,14 +47,18 @@ export function useSquares(overrideDateStr = null) {
     setAttempts(saved?.attempts || 0);
     setFeedback(null);
     setError('');
+    setHintedCorners(saved?.hintedCorners || [false, false, false, false]);
+    setHintsUsed(saved?.hintsUsed || 0);
   }, [dateStr]);
 
-  const persist = useCallback((newStatus, newWinLetters, newAttempts, newSlots) => {
+  const persist = useCallback((newStatus, newWinLetters, newAttempts, newSlots, newHintedCorners, newHintsUsed) => {
     saveState(dateStr, {
       status: newStatus,
       winLetters: newWinLetters || null,
       attempts: newAttempts,
       slots: newSlots,
+      hintedCorners: newHintedCorners,
+      hintsUsed: newHintsUsed,
     });
   }, [dateStr]);
 
@@ -59,6 +71,33 @@ export function useSquares(overrideDateStr = null) {
     }
     setCursorPos(pos);
     setError('');
+  }
+
+  // Reveal the correct letter for the current corner
+  function useHint() {
+    if (status !== 'playing') return;
+    const pos = Math.min(cursorPos, 3);
+    if (feedback) {
+      setFeedback(null);
+      setSlots([...EMPTY_SLOTS]);
+    }
+    const newSlots = feedback ? [...EMPTY_SLOTS] : [...slots];
+    newSlots[pos] = answer[pos];
+    setSlots(newSlots);
+
+    const newHintedCorners = [...hintedCorners];
+    let newHintsUsed = hintsUsed;
+    if (!newHintedCorners[pos]) {
+      newHintedCorners[pos] = true;
+      newHintsUsed = hintsUsed + 1;
+      setHintedCorners(newHintedCorners);
+      setHintsUsed(newHintsUsed);
+    }
+
+    const nextPos = Math.min(pos + 1, 3);
+    setCursorPos(nextPos);
+    setError('');
+    persist(status, null, attempts, newSlots, newHintedCorners, newHintsUsed);
   }
 
   function addLetter(letter) {
@@ -137,7 +176,9 @@ export function useSquares(overrideDateStr = null) {
       setWinLetters([tl, tr, bl, br]);
       setSlots([...EMPTY_SLOTS]);
       setFeedback(null);
-      persist('won', [tl, tr, bl, br], newAttempts, [...EMPTY_SLOTS]);
+      persist('won', [tl, tr, bl, br], newAttempts, [...EMPTY_SLOTS], hintedCorners, hintsUsed);
+      const newStats = updateSquaresStats(dateStr, hintsUsed);
+      setStats(newStats);
     } else {
       setFeedback({
         letters: [tl, tr, bl, br],
@@ -146,7 +187,7 @@ export function useSquares(overrideDateStr = null) {
       });
       setSlots([...EMPTY_SLOTS]);
       setCursorPos(0);
-      persist(status, null, newAttempts, [...EMPTY_SLOTS]);
+      persist(status, null, newAttempts, [...EMPTY_SLOTS], hintedCorners, hintsUsed);
     }
     setError('');
   }
@@ -162,10 +203,14 @@ export function useSquares(overrideDateStr = null) {
     feedback,
     status,
     error,
+    hintsUsed,
+    hintedCorners,
+    stats,
     addLetter,
     deleteLetter,
     submitGuess,
     setCursorAt,
+    useHint,
     setError,
   };
 }

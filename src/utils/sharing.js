@@ -37,6 +37,26 @@ export function buildShareText({ gameNumber, dateStr, start, end, userSteps, par
   );
 }
 
+export function buildSquaresShareText({ gameNumber, dateStr, hintedCorners }) {
+  // 2×2 grid: TL TR / BL BR
+  // 🟩 = guessed correctly, 🟥 = revealed via hint
+  const [tl, tr, bl, br] = hintedCorners;
+  const row1 = (tl ? '🟥' : '🟩') + (tr ? '🟥' : '🟩');
+  const row2 = (bl ? '🟥' : '🟩') + (br ? '🟥' : '🟩');
+  const hintsUsed = hintedCorners.filter(Boolean).length;
+  const stars = Math.max(0, 3 - hintsUsed);
+  const starEmojis = '⭐'.repeat(stars) + (stars < 3 ? '☆'.repeat(3 - stars) : '');
+  const label = stars === 3 ? 'Perfect!' : stars === 2 ? 'Great!' : stars === 1 ? 'Good!' : 'Completed';
+
+  return (
+    `Squares #${gameNumber} 🔲\n` +
+    `${formatDate(dateStr)}\n` +
+    `${starEmojis}  ${label}\n` +
+    `${row1}\n${row2}\n` +
+    `\nPlay at https://chainword-five.vercel.app`
+  );
+}
+
 export async function shareOrCopy(text, onCopied) {
   if (navigator.share) {
     try {

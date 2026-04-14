@@ -210,6 +210,57 @@ export function updateTilesStats(dateStr, score, optimalScore) {
   return stats;
 }
 
+// --- Squares Statistics ---
+
+const SQUARES_STATS_KEY = 'chainword_squares_stats';
+
+export function loadSquaresStats() {
+  try {
+    return JSON.parse(localStorage.getItem(SQUARES_STATS_KEY) || 'null') || defaultSquaresStats();
+  } catch {
+    return defaultSquaresStats();
+  }
+}
+
+function defaultSquaresStats() {
+  return {
+    played: 0,
+    won: 0,
+    currentStreak: 0,
+    maxStreak: 0,
+    // hintsDistribution: hints used (0–4) → count
+    hintsDistribution: { 0: 0, 1: 0, 2: 0, 3: 0, 4: 0 },
+    lastPlayedDate: null,
+  };
+}
+
+export function saveSquaresStats(stats) {
+  try {
+    localStorage.setItem(SQUARES_STATS_KEY, JSON.stringify(stats));
+  } catch (_) {}
+}
+
+export function updateSquaresStats(dateStr, hintsUsed) {
+  const stats = loadSquaresStats();
+  stats.played++;
+  stats.won++;
+
+  const yesterday = getPreviousDateStr(dateStr);
+  if (stats.lastPlayedDate === yesterday) {
+    stats.currentStreak++;
+  } else if (stats.lastPlayedDate !== dateStr) {
+    stats.currentStreak = 1;
+  }
+  stats.maxStreak = Math.max(stats.maxStreak, stats.currentStreak);
+  stats.lastPlayedDate = dateStr;
+
+  const k = String(Math.min(hintsUsed, 4));
+  stats.hintsDistribution[k] = (stats.hintsDistribution[k] || 0) + 1;
+
+  saveSquaresStats(stats);
+  return stats;
+}
+
 // --- Theme ---
 
 export function loadTheme() {

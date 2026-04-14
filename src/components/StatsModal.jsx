@@ -96,12 +96,66 @@ function TilesStats({ stats }) {
   );
 }
 
-export default function StatsModal({ open, onClose, stats, onReset, isWordle, isTiles, hardMode }) {
-  const { played, won, currentStreak, maxStreak, distribution } = isTiles ? {} : stats;
+function SquaresStats({ stats }) {
+  const { played, won, currentStreak, maxStreak, hintsDistribution } = stats;
+  const winRate = played > 0 ? Math.round((won / played) * 100) : 0;
+  const distKeys = [0, 1, 2, 3, 4];
+  const maxCount = Math.max(1, ...distKeys.map(k => hintsDistribution[k] || 0));
+  const labels = {
+    0: '⭐⭐⭐ No hints',
+    1: '⭐⭐ 1 hint',
+    2: '⭐ 2 hints',
+    3: '3 hints',
+    4: '4 hints',
+  };
 
-  const winRate = !isTiles && played > 0 ? Math.round((won / played) * 100) : 0;
+  return (
+    <div className="space-y-6">
+      <div className="grid grid-cols-4 gap-2">
+        <StatBox value={played} label="Played" />
+        <StatBox value={`${winRate}%`} label="Win Rate" />
+        <StatBox value={currentStreak} label="Streak" />
+        <StatBox value={maxStreak} label="Best" />
+      </div>
+
+      <div>
+        <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">Score Distribution</h3>
+        <div className="space-y-2">
+          {distKeys.map((k) => {
+            const count = hintsDistribution[k] || 0;
+            const pct = Math.round((count / maxCount) * 100);
+            return (
+              <div key={k} className="flex items-center gap-2 text-sm">
+                <span className="w-28 text-gray-600 dark:text-gray-400 shrink-0">{labels[k]}</span>
+                <div className="flex-1 bg-gray-100 dark:bg-gray-700 rounded-full h-5 overflow-hidden">
+                  <div
+                    className="h-full bg-indigo-500 dark:bg-indigo-400 rounded-full transition-all duration-700 flex items-center justify-end pr-2"
+                    style={{ width: `${Math.max(pct, count > 0 ? 10 : 0)}%` }}
+                  >
+                    {count > 0 && <span className="text-xs font-bold text-white">{count}</span>}
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      {played === 0 && (
+        <p className="text-center text-gray-500 dark:text-gray-400 text-sm">
+          No games played yet. Start today's puzzle!
+        </p>
+      )}
+    </div>
+  );
+}
+
+export default function StatsModal({ open, onClose, stats, onReset, isWordle, isTiles, isSquares, hardMode }) {
+  const { played, won, currentStreak, maxStreak, distribution } = (isTiles || isSquares) ? {} : stats;
+
+  const winRate = !isTiles && !isSquares && played > 0 ? Math.round((won / played) * 100) : 0;
   const distKeys = isWordle ? [1, 2, 3, 4, 5, 6] : [0, 1, 2, 3];
-  const maxCount = !isTiles ? Math.max(1, ...distKeys.map(k => distribution[k] || 0)) : 1;
+  const maxCount = (!isTiles && !isSquares) ? Math.max(1, ...distKeys.map(k => distribution[k] || 0)) : 1;
   const labels = isWordle ? {
     1: '1 Guess', 2: '2 Guesses', 3: '3 Guesses',
     4: '4 Guesses', 5: '5 Guesses', 6: '6 Guesses',
@@ -112,7 +166,7 @@ export default function StatsModal({ open, onClose, stats, onReset, isWordle, is
   return (
     <Modal open={open} onClose={onClose} title="Statistics">
       <div className="space-y-6">
-        {!isWordle && !isTiles && (
+        {!isWordle && !isTiles && !isSquares && (
           <div className="flex justify-center">
             <span className={`text-xs font-bold px-3 py-1 rounded-full ${
               hardMode
@@ -125,6 +179,8 @@ export default function StatsModal({ open, onClose, stats, onReset, isWordle, is
         )}
         {isTiles ? (
           <TilesStats stats={stats} />
+        ) : isSquares ? (
+          <SquaresStats stats={stats} />
         ) : (
           <>
             <div className="grid grid-cols-4 gap-2 text-center">

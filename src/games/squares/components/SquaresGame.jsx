@@ -1,5 +1,7 @@
+import { useEffect, useState } from 'react';
 import { formatDate } from '../../../utils/wordUtils.js';
 import { getWordSet } from '../../../words.js';
+import { buildSquaresShareText, shareOrCopy } from '../../../utils/sharing.js';
 
 const KEYBOARD_ROWS = [
   ['Q','W','E','R','T','Y','U','I','O','P'],
@@ -33,7 +35,7 @@ function Keyboard({ onKey }) {
 function GridCell({ letter, variant, cornerNum, onClick }) {
   // variant: 'letter' | 'letter-valid' | 'letter-invalid' |
   //          'corner-empty' | 'corner-cursor' | 'corner-typed' | 'corner-correct' | 'empty'
-  const base = 'w-12 h-12 flex items-center justify-center text-lg font-extrabold rounded-lg border-2 transition-all duration-150 select-none';
+  const base = 'relative w-12 h-12 flex items-center justify-center text-lg font-extrabold rounded-lg border-2 transition-all duration-150 select-none';
 
   const styles = {
     letter:           'border-gray-300 dark:border-gray-600 bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200',
@@ -50,7 +52,16 @@ function GridCell({ letter, variant, cornerNum, onClick }) {
   if (variant === 'corner-empty') {
     content = <span className="text-xs font-bold">{cornerNum}</span>;
   } else if (variant === 'corner-cursor') {
-    content = <span className="w-0.5 h-5 bg-indigo-500 dark:bg-indigo-400 animate-pulse inline-block rounded" />;
+    content = (
+      <>
+        {letter && (
+          <span className="absolute text-lg font-extrabold text-indigo-300 dark:text-indigo-600 select-none">
+            {letter.toUpperCase()}
+          </span>
+        )}
+        <span className="relative w-0.5 h-5 bg-indigo-500 dark:bg-indigo-400 animate-pulse inline-block rounded" />
+      </>
+    );
   } else if (letter) {
     content = letter.toUpperCase();
   }
@@ -158,8 +169,20 @@ export default function SquaresGame({ game, onArchive, archiveDate }) {
   const {
     square, dateStr, gameNumber,
     slots, cursorPos, winLetters, attempts, feedback, status, error,
-    addLetter, deleteLetter, submitGuess, setCursorAt,
+    hintsUsed, hintedCorners,
+    addLetter, deleteLetter, submitGuess, setCursorAt, useHint,
   } = game;
+
+  const [confirmingHint, setConfirmingHint] = useState(false);
+  const [copied, setCopied] = useState(false);
+
+  async function handleShare() {
+    const text = buildSquaresShareText({ gameNumber, dateStr, hintedCorners });
+    await shareOrCopy(text, () => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    });
+  }
 
   const isPlaying = status === 'playing';
   const isWon = status === 'won';
@@ -180,10 +203,36 @@ export default function SquaresGame({ game, onArchive, archiveDate }) {
   })();
 
   function handleKeyboardKey(key) {
+    setConfirmingHint(false);
     if (key === '⌫') deleteLetter();
     else if (key === 'ENTER') submitGuess();
     else addLetter(key);
   }
+
+  // Arrow-key navigation between corners:
+  //   TL(0) ←→ TR(1)      BL(2) ←→ BR(3)
+  //   TL(0) ↕  BL(2)      TR(1) ↕  BR(3)
+  const ARROW_MOVE = {
+    ArrowRight: [1, 3, 3, 3],   // from idx → target
+    ArrowLeft:  [0, 0, 2, 2],
+    ArrowDown:  [2, 3, 2, 3],
+    ArrowUp:    [0, 1, 0, 1],
+  };
+
+  useEffect(() => {
+    if (!isPlaying) return;
+    function onKeyDown(e) {
+      if (e.metaKey || e.ctrlKey || e.altKey) return;
+      if (ARROW_MOVE[e.key]) {
+        e.preventDefault();
+        setCursorAt(ARROW_MOVE[e.key][Math.min(cursorPos, 3)]);
+      } else if (e.key === 'Backspace') { e.preventDefault(); deleteLetter(); }
+      else if (e.key === 'Enter') { e.preventDefault(); submitGuess(); }
+      else if (/^[a-zA-Z]$/.test(e.key)) { e.preventDefault(); addLetter(e.key.toUpperCase()); }
+    }
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [isPlaying, cursorPos, setCursorAt, addLetter, deleteLetter, submitGuess]);
 
   return (
     <div className="h-full flex flex-col">
@@ -199,7 +248,6 @@ export default function SquaresGame({ game, onArchive, archiveDate }) {
 
           <p className="text-sm text-gray-500 dark:text-gray-400 text-center leading-relaxed">
             Guess the <span className="font-semibold">4 corners</span> so all four edge words are valid.
-            Order: <span className="font-semibold">①TL → ②TR → ③BL → ④BR</span>
           </p>
 
           {/* Archive banner */}
@@ -230,27 +278,78 @@ export default function SquaresGame({ game, onArchive, archiveDate }) {
             </p>
           )}
 
-          {attempts > 0 && !isWon && (
-            <p className="text-xs text-gray-400 dark:text-gray-500">
-              {attempts} {attempts === 1 ? 'attempt' : 'attempts'}
-            </p>
-          )}
-
-          {isWon && (
-            <div className="w-full rounded-2xl bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 px-4 py-4 text-center">
+          {isWon && (() => {
+            const stars = Math.max(0, 3 - hintsUsed);
+            const starEmojis = '⭐'.repeat(stars) + (stars < 3 ? '☆'.repeat(3 - stars) : '');
+            const label = stars === 3 ? 'Perfect!' : stars === 2 ? 'Great!' : stars === 1 ? 'Good!' : 'Completed';
+            return (
+            <div className="w-full rounded-2xl bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 px-4 py-4 flex flex-col items-center gap-3">
               <p className="text-xl font-extrabold text-emerald-700 dark:text-emerald-300">
                 All words valid — you win!
               </p>
-              <p className="text-sm text-emerald-600 dark:text-emerald-400 mt-1">
-                Solved in {attempts} {attempts === 1 ? 'attempt' : 'attempts'}
-              </p>
+              <div className="flex flex-col items-center gap-1">
+                <p className="text-2xl">{starEmojis}</p>
+                <p className="text-sm font-bold text-emerald-700 dark:text-emerald-300">{label}</p>
+                {hintsUsed > 0 && (
+                  <p className="text-xs text-gray-500 dark:text-gray-400">{hintsUsed} hint{hintsUsed !== 1 ? 's' : ''} used</p>
+                )}
+              </div>
+              <div className="text-2xl leading-none tracking-widest">
+                <div>{hintedCorners[0] ? '🟥' : '🟩'}{hintedCorners[1] ? '🟥' : '🟩'}</div>
+                <div>{hintedCorners[2] ? '🟥' : '🟩'}{hintedCorners[3] ? '🟥' : '🟩'}</div>
+              </div>
+              <button
+                onClick={handleShare}
+                className="w-full py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-xl transition-colors flex items-center justify-center gap-2"
+              >
+                {copied ? '✓ Copied!' : '↗ Share Result'}
+              </button>
+            </div>
+            );
+          })()}
+
+          {/* Hint + Submit + Archive */}
+          {isPlaying && (
+            <div className="flex flex-col items-center gap-2 w-full">
+              {confirmingHint ? (
+                <div className="flex items-center gap-2">
+                  <span className="text-gray-500 dark:text-gray-400 text-xs">Reveal this corner?</span>
+                  <button
+                    onClick={() => setConfirmingHint(false)}
+                    className="px-2 py-1 text-xs rounded-lg border border-gray-300 dark:border-gray-600 text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={() => { useHint(); setConfirmingHint(false); }}
+                    className="px-2 py-1 text-xs rounded-lg bg-amber-500 hover:bg-amber-600 text-white font-semibold"
+                  >
+                    Reveal
+                  </button>
+                </div>
+              ) : (
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => setConfirmingHint(true)}
+                    className="px-4 py-2 text-sm font-semibold rounded-xl border border-amber-300 dark:border-amber-700 text-amber-600 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-900/20 transition-colors"
+                  >
+                    💡 Hint{hintsUsed > 0 ? ` (${hintsUsed})` : ''}
+                  </button>
+                  <button
+                    onClick={submitGuess}
+                    disabled={slots.some(s => !s)}
+                    className="px-6 py-2 text-sm font-semibold bg-indigo-600 hover:bg-indigo-700 disabled:opacity-40 disabled:cursor-not-allowed text-white rounded-xl transition-colors"
+                  >
+                    Submit
+                  </button>
+                </div>
+              )}
             </div>
           )}
 
-          {/* Archive button */}
           <button
             onClick={onArchive}
-            className="mt-2 px-4 py-2 text-xs font-bold rounded-xl bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-200 dark:border-indigo-700 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-100 dark:hover:bg-indigo-900/40 transition-colors flex items-center gap-2"
+            className="px-4 py-2 text-xs font-bold rounded-xl bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-200 dark:border-indigo-700 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-100 dark:hover:bg-indigo-900/40 transition-colors flex items-center gap-2"
           >
             Archives &nbsp;📅
           </button>
@@ -266,6 +365,7 @@ export default function SquaresGame({ game, onArchive, archiveDate }) {
                 {error}
               </p>
             )}
+
             <Keyboard onKey={handleKeyboardKey} />
           </div>
         </div>

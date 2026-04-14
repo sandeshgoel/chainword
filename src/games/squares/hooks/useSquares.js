@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { getDailySquare } from '../data/dailySquares.js';
 import { getWordSet } from '../../../words.js';
 
@@ -14,49 +14,98 @@ function saveState(dateStr, data) {
   localStorage.setItem(`chainword_squares_${dateStr}`, JSON.stringify(data));
 }
 
-export function useSquares() {
-  const { square, dateStr, gameNumber } = getDailySquare();
+const EMPTY_SLOTS = ['', '', '', ''];
+
+export function useSquares(overrideDateStr = null) {
+  const { square, dateStr, gameNumber } = getDailySquare(overrideDateStr);
   const [top, left, right, bottom] = square;
 
-  const [input, setInput] = useState('');
+  // slots[0..3] = TL, TR, BL, BR (each '' or a letter)
+  const [slots, setSlots] = useState(() => loadState(dateStr)?.slots || [...EMPTY_SLOTS]);
+  const [cursorPos, setCursorPos] = useState(0);
   const [winLetters, setWinLetters] = useState(() => loadState(dateStr)?.winLetters || null);
   const [status, setStatus] = useState(() => loadState(dateStr)?.status || 'playing');
   const [attempts, setAttempts] = useState(() => loadState(dateStr)?.attempts || 0);
-  // feedback: which of the 4 words are valid after a wrong guess
-  // { letters: string[4], topValid, leftValid, rightValid, bottomValid } | null
   const [feedback, setFeedback] = useState(null);
   const [error, setError] = useState('');
 
-  const persist = useCallback((newStatus, newWinLetters, newAttempts) => {
-    saveState(dateStr, { status: newStatus, winLetters: newWinLetters || null, attempts: newAttempts });
+  // Reset state when date changes (archive navigation)
+  useEffect(() => {
+    const saved = loadState(dateStr);
+    setSlots(saved?.slots || [...EMPTY_SLOTS]);
+    setCursorPos(0);
+    setWinLetters(saved?.winLetters || null);
+    setStatus(saved?.status || 'playing');
+    setAttempts(saved?.attempts || 0);
+    setFeedback(null);
+    setError('');
   }, [dateStr]);
 
-  function addLetter(letter) {
+  const persist = useCallback((newStatus, newWinLetters, newAttempts, newSlots) => {
+    saveState(dateStr, {
+      status: newStatus,
+      winLetters: newWinLetters || null,
+      attempts: newAttempts,
+      slots: newSlots,
+    });
+  }, [dateStr]);
+
+  // Jump cursor to a specific corner (e.g. on tap)
+  function setCursorAt(pos) {
     if (status !== 'playing') return;
     if (feedback) {
       setFeedback(null);
-      setInput(letter.toLowerCase());
-    } else {
-      if (input.length >= 4) return;
-      setInput(prev => prev + letter.toLowerCase());
+      setSlots([...EMPTY_SLOTS]);
     }
+    setCursorPos(pos);
+    setError('');
+  }
+
+  function addLetter(letter) {
+    if (status !== 'playing') return;
+
+    if (feedback) {
+      // clear board, start fresh at pos 0
+      const newSlots = [...EMPTY_SLOTS];
+      newSlots[0] = letter.toLowerCase();
+      setFeedback(null);
+      setSlots(newSlots);
+      setCursorPos(1);
+      setError('');
+      return;
+    }
+
+    if (cursorPos >= 4) return;
+    const newSlots = [...slots];
+    newSlots[cursorPos] = letter.toLowerCase();
+    setSlots(newSlots);
+    setCursorPos(Math.min(cursorPos + 1, 4));
     setError('');
   }
 
   function deleteLetter() {
     if (status !== 'playing') return;
+
     if (feedback) {
       setFeedback(null);
-      setInput('');
-    } else {
-      setInput(prev => prev.slice(0, -1));
+      setSlots([...EMPTY_SLOTS]);
+      setCursorPos(0);
+      setError('');
+      return;
     }
+
+    if (cursorPos === 0) return;
+    const newSlots = [...slots];
+    newSlots[cursorPos - 1] = '';
+    setSlots(newSlots);
+    setCursorPos(cursorPos - 1);
     setError('');
   }
 
   function submitGuess() {
     if (status !== 'playing') return;
-    if (input.length !== 4) {
+
+    if (slots.some(s => !s)) {
       setError('Enter all 4 corner letters');
       return;
     }
@@ -67,9 +116,8 @@ export function useSquares() {
       return;
     }
 
-    const [tl, tr, bl, br] = input.split('');
+    const [tl, tr, bl, br] = slots;
 
-    // Form the 4 words using the typed corners + the known middle letters
     const topWord    = tl + top[1]    + top[2]    + tr;
     const leftWord   = tl + left[1]   + left[2]   + bl;
     const rightWord  = tr + right[1]  + right[2]  + br;
@@ -87,17 +135,18 @@ export function useSquares() {
     if (isWon) {
       setStatus('won');
       setWinLetters([tl, tr, bl, br]);
-      setInput('');
+      setSlots([...EMPTY_SLOTS]);
       setFeedback(null);
-      persist('won', [tl, tr, bl, br], newAttempts);
+      persist('won', [tl, tr, bl, br], newAttempts, [...EMPTY_SLOTS]);
     } else {
       setFeedback({
         letters: [tl, tr, bl, br],
         topValid, leftValid, rightValid, bottomValid,
         topWord, leftWord, rightWord, bottomWord,
       });
-      setInput('');
-      persist(status, null, newAttempts);
+      setSlots([...EMPTY_SLOTS]);
+      setCursorPos(0);
+      persist(status, null, newAttempts, [...EMPTY_SLOTS]);
     }
     setError('');
   }
@@ -106,7 +155,8 @@ export function useSquares() {
     square,
     dateStr,
     gameNumber,
-    input,
+    slots,
+    cursorPos,
     winLetters,
     attempts,
     feedback,
@@ -115,6 +165,7 @@ export function useSquares() {
     addLetter,
     deleteLetter,
     submitGuess,
+    setCursorAt,
     setError,
   };
 }

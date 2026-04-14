@@ -11,8 +11,8 @@ import {
 import { getDailyInfo } from '../data/dailyPairs.js';
 import { getWordSet } from '../../../words.js';
 
-export function useGame(user, wordListReady, hardMode = false) {
-  const { pair, pairpath, dateStr, gameNumber } = getDailyInfo(hardMode);
+export function useGame(user, wordListReady, hardMode = false, overrideDateStr = null) {
+  const { pair, pairpath, dateStr, gameNumber } = getDailyInfo(hardMode, overrideDateStr);
   // Mode-specific keys so easy and hard progress/stats are stored separately
   const progressKey = hardMode ? `${dateStr}_hard` : dateStr;
   const statsKey = hardMode ? 'chainword_stats_hard' : 'chainword_stats';

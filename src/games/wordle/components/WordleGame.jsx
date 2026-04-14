@@ -5,7 +5,7 @@ import { formatDate } from '../../../utils/wordUtils.js';
 const KEYBOARD_ROWS = [
   ['Q','W','E','R','T','Y','U','I','O','P'],
   ['A','S','D','F','G','H','J','K','L'],
-  ['⌫','Z','X','C','V','B','N','M','ENTER'],
+  ['ENTER','Z','X','C','V','B','N','M','⌫'],
 ];
 
 function getLetterStates(guesses) {
@@ -75,7 +75,7 @@ function Tile({ char, color }) {
   } else if (color === 'active') {
     bgClass = 'border-indigo-400 bg-white dark:bg-gray-800 text-indigo-700 dark:text-indigo-300';
   } else if (color === 'next') {
-    bgClass = 'border-indigo-500 bg-indigo-50/50 dark:bg-indigo-900/20 text-indigo-900 dark:text-indigo-100 ring-4 ring-indigo-200 dark:ring-indigo-900/50 scale-105 shadow-sm z-10';
+    bgClass = 'border-indigo-500 bg-indigo-50/50 dark:bg-indigo-900/20 text-indigo-900 dark:text-indigo-100 ring-4 ring-indigo-200 dark:ring-indigo-900/50 scale-105 shadow-sm';
   } else if (color === 'empty') {
     bgClass = 'border-dashed border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100';
   }
@@ -108,7 +108,11 @@ function WordRow({ word, colors, isActive, inputLength }) {
   );
 }
 
-export default function WordleGame({ game, wordListReady }) {
+function getTodayIST() {
+  return new Date(Date.now() + 5.5 * 60 * 60 * 1000).toISOString().split('T')[0];
+}
+
+export default function WordleGame({ game, wordListReady, onArchive, archiveDate }) {
   const { target, dateStr, gameNumber, guesses, status, error, submitGuess, setError } = game;
   const [inputValue, setInputValue] = useState('');
   const [copied, setCopied] = useState(false);
@@ -199,7 +203,7 @@ export default function WordleGame({ game, wordListReady }) {
       <div className="flex-1 overflow-y-auto">
         <div className="flex flex-col items-center gap-4 px-4 py-6 max-w-sm mx-auto w-full">
           <div className="text-center mb-2">
-            <p className="text-sm text-gray-600 dark:text-gray-400">
+            <p className="text-xs font-bold text-gray-500 dark:text-gray-400">
               {formatDate(dateStr)} &nbsp;•&nbsp; Daily 4word #{gameNumber}
             </p>
           </div>
@@ -207,6 +211,14 @@ export default function WordleGame({ game, wordListReady }) {
           <div className="flex flex-col gap-2">
             {rows}
           </div>
+
+          {/* Archive banner */}
+          {archiveDate && archiveDate !== getTodayIST() && (
+            <div className="w-full flex items-center justify-between px-3 py-2 rounded-xl bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 text-xs">
+              <span className="text-amber-700 dark:text-amber-300 font-medium">Viewing past puzzle</span>
+              <button onClick={onArchive} className="text-amber-600 dark:text-amber-400 font-semibold hover:underline">Change date</button>
+            </div>
+          )}
 
           {status !== 'playing' && (
             <div className={`mt-4 p-6 rounded-2xl w-full flex flex-col items-center text-center ${status === 'won' ? 'bg-green-50 dark:bg-green-900/20' : 'bg-red-50 dark:bg-red-900/20'}`}>
@@ -238,6 +250,14 @@ export default function WordleGame({ game, wordListReady }) {
               </button>
             </div>
           )}
+          {/* Archive button */}
+          <button
+            onClick={onArchive}
+            className="mt-2 px-4 py-2 text-xs font-bold rounded-xl bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-200 dark:border-indigo-700 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-100 dark:hover:bg-indigo-900/40 transition-colors flex items-center gap-2"
+          >
+            Archives &nbsp;📅
+          </button>
+
         </div>
       </div>
 

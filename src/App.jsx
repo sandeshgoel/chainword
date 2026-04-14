@@ -9,6 +9,7 @@ import HowToPlay from './games/chainword/components/HowToPlay.jsx';
 import StatsModal from './components/StatsModal.jsx';
 import AuthModal from './components/AuthModal.jsx';
 import FriendsModal from './components/FriendsModal.jsx';
+import ArchiveModal from './components/ArchiveModal.jsx';
 import { useAuth } from './hooks/useAuth.js';
 import { useGame } from './games/chainword/hooks/useGame.js';
 import { useWordle } from './games/wordle/hooks/useWordle.js';
@@ -23,17 +24,23 @@ export default function App() {
   const [hardMode, setHardMode] = useState(() => localStorage.getItem('chainword_hard_mode') === 'true');
   const [wordListReady, setWordListReady] = useState(false);
 
+  // Per-game archive date overrides (null = today)
+  const [archiveDates, setArchiveDates] = useState({
+    chainword: null, '4word': null, tiles: null, squares: null,
+  });
+
   // Modals
   const [showHelp, setShowHelp] = useState(false);
   const [showStats, setShowStats] = useState(false);
   const [showAuth, setShowAuth] = useState(false);
   const [showFriends, setShowFriends] = useState(false);
+  const [showArchive, setShowArchive] = useState(false);
 
   const { user, signInWithGoogle, signOut } = useAuth();
-  const game = useGame(user, wordListReady, hardMode);
-  const wordle = useWordle(wordListReady);
-  const tiles = useTiles();
-  const squares = useSquares();
+  const game = useGame(user, wordListReady, hardMode, archiveDates.chainword);
+  const wordle = useWordle(wordListReady, archiveDates['4word']);
+  const tiles = useTiles(archiveDates.tiles);
+  const squares = useSquares(archiveDates.squares);
 
   // Apply dark mode to document
   useEffect(() => {
@@ -55,13 +62,17 @@ export default function App() {
     }
   }, []);
 
-  // Show stats after completing a game
+  // Show stats after completing today's chainword
   useEffect(() => {
-    if (game.status === 'won') {
+    if (game.status === 'won' && !archiveDates.chainword) {
       setTimeout(() => setShowStats(true), 1500);
     }
   }, [game.status]);
 
+  function handleArchiveSelect(dateStr) {
+    setArchiveDates(prev => ({ ...prev, [activeGame]: dateStr }));
+    setShowArchive(false);
+  }
 
   function handleReset() {
     Object.keys(localStorage)
@@ -98,18 +109,33 @@ export default function App() {
               setHardMode(next);
               localStorage.setItem('chainword_hard_mode', next ? 'true' : 'false');
             }}
+            onArchive={() => setShowArchive(true)}
+            archiveDate={archiveDates.chainword}
           />
         ) : activeGame === '4word' ? (
-          <WordleGame game={wordle} wordListReady={wordListReady} />
+          <WordleGame
+            game={wordle}
+            wordListReady={wordListReady}
+            onArchive={() => setShowArchive(true)}
+            archiveDate={archiveDates['4word']}
+          />
         ) : activeGame === 'squares' ? (
-          <SquaresGame game={squares} />
+          <SquaresGame
+            game={squares}
+            onArchive={() => setShowArchive(true)}
+            archiveDate={archiveDates.squares}
+          />
         ) : (
-          <TilesGame game={tiles} />
+          <TilesGame
+            game={tiles}
+            onArchive={() => setShowArchive(true)}
+            archiveDate={archiveDates.tiles}
+          />
         )}
       </main>
 
       {/* Modals */}
-      <HowToPlay open={showHelp} onClose={() => setShowHelp(false)} />
+      <HowToPlay open={showHelp} onClose={() => setShowHelp(false)} activeGame={activeGame} />
 
       <StatsModal
         open={showStats}
@@ -134,6 +160,15 @@ export default function App() {
         onClose={() => setShowFriends(false)}
         user={user}
         dateStr={game.dateStr}
+      />
+
+      <ArchiveModal
+        open={showArchive}
+        onClose={() => setShowArchive(false)}
+        activeGame={activeGame}
+        hardMode={hardMode}
+        selectedDate={archiveDates[activeGame]}
+        onSelectDate={handleArchiveSelect}
       />
     </div>
   );

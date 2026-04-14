@@ -82,7 +82,11 @@ function SlotCell({ tile, multiplier, onClick }) {
   );
 }
 
-export default function TilesGame({ game }) {
+function getTodayIST() {
+  return new Date(Date.now() + 5.5 * 60 * 60 * 1000).toISOString().split('T')[0];
+}
+
+export default function TilesGame({ game, onArchive, archiveDate }) {
   const {
     tiles, slots, dateStr, gameNumber,
     error, submissions, bestScore, optimalScore, optimalWord,
@@ -99,10 +103,18 @@ export default function TilesGame({ game }) {
 
         {/* Header */}
         <div className="text-center">
-          <p className="text-sm text-gray-600 dark:text-gray-400">
+          <p className="text-xs font-bold text-gray-500 dark:text-gray-400">
             {formatDate(dateStr)} &nbsp;•&nbsp; Daily Tiles #{gameNumber}
           </p>
         </div>
+
+        {/* Archive banner */}
+        {archiveDate && archiveDate !== getTodayIST() && (
+          <div className="w-full flex items-center justify-between px-3 py-2 rounded-xl bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 text-xs">
+            <span className="text-amber-700 dark:text-amber-300 font-medium">Viewing past puzzle</span>
+            <button onClick={onArchive} className="text-amber-600 dark:text-amber-400 font-semibold hover:underline">Change date</button>
+          </div>
+        )}
 
         {/* Template */}
         <div className="flex flex-col items-center gap-3 w-full">
@@ -230,6 +242,14 @@ export default function TilesGame({ game }) {
             Best possible score today: <span className="font-bold text-gray-600 dark:text-gray-300">{optimalScore} pts</span>
           </p>
         )}
+
+        {/* Archive button */}
+        <button
+          onClick={onArchive}
+          className="px-4 py-2 text-xs font-bold rounded-xl bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-200 dark:border-indigo-700 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-100 dark:hover:bg-indigo-900/40 transition-colors flex items-center gap-2"
+        >
+          Archives &nbsp;📅
+        </button>
 
         {/* All attempts */}
         {submissions.length > 0 && (

@@ -1,15 +1,20 @@
 import { SQUARES } from '../../../../util/squares.js';
 
-// Returns today's square based on IST date (UTC+5:30)
-// Changes at midnight IST
-export function getDailySquare() {
-  const now = new Date();
-  const istOffset = 5.5 * 60 * 60 * 1000;
-  const ist = new Date(now.getTime() + istOffset);
-  const dateStr = ist.toISOString().split('T')[0]; // "YYYY-MM-DD"
+const BASE_EPOCH_DAY = 20555; // same base as other games
 
-  const epochDay = Math.floor(ist.getTime() / (24 * 60 * 60 * 1000));
-  const BASE_EPOCH_DAY = 20555; // same base as other games
+// Returns daily square for today (IST) or a specific override date.
+export function getDailySquare(overrideDateStr = null) {
+  let dateStr, epochDay;
+  if (overrideDateStr) {
+    dateStr = overrideDateStr;
+    epochDay = Math.floor(new Date(dateStr + 'T00:00:00Z').getTime() / (24 * 60 * 60 * 1000));
+  } else {
+    const istOffset = 5.5 * 60 * 60 * 1000;
+    const ist = new Date(Date.now() + istOffset);
+    dateStr = ist.toISOString().split('T')[0];
+    epochDay = Math.floor(ist.getTime() / (24 * 60 * 60 * 1000));
+  }
+
   const gameNumber = Math.max(1, epochDay - BASE_EPOCH_DAY + 1);
 
   // square = [top, left, right, bottom]

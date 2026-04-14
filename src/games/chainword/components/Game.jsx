@@ -8,7 +8,7 @@ import { formatDate } from '../../../utils/wordUtils.js';
 const KEYBOARD_ROWS = [
   ['Q','W','E','R','T','Y','U','I','O','P'],
   ['A','S','D','F','G','H','J','K','L'],
-  ['⌫','Z','X','C','V','B','N','M','ENTER'],
+  ['ENTER','Z','X','C','V','B','N','M','⌫'],
 ];
 
 function Keyboard({ onKey }) {
@@ -69,34 +69,36 @@ function InputTiles({ value, currentWord, onClick }) {
 
 function DifficultyToggle({ hardMode, onToggle }) {
   return (
-    <div className="flex flex-col text-[10px] font-bold rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden select-none">
-      <button
-        onMouseDown={(e) => e.preventDefault()}
-        onClick={() => hardMode && onToggle()}
-        className={`px-2.5 py-1 transition-colors ${
-          !hardMode
-            ? 'bg-indigo-600 text-white'
-            : 'text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300'
-        }`}
-      >
-        Easy
-      </button>
-      <button
-        onMouseDown={(e) => e.preventDefault()}
-        onClick={() => !hardMode && onToggle()}
-        className={`px-2.5 py-1 transition-colors ${
+    <div
+      onMouseDown={(e) => e.preventDefault()}
+      onClick={onToggle}
+      title={hardMode ? 'Switch to Easy mode' : 'Switch to Hard mode'}
+      className="relative flex flex-col w-14 rounded-xl cursor-pointer select-none bg-gray-200 dark:bg-gray-700 p-0.5 shadow-inner"
+    >
+      {/* Sliding thumb */}
+      <div
+        className={`absolute left-0.5 right-0.5 h-[calc(50%-2px)] rounded-[10px] shadow-md transition-all duration-300 ${
           hardMode
-            ? 'bg-red-500 text-white'
-            : 'text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300'
+            ? 'top-[calc(50%+2px)] bg-red-500'
+            : 'top-0.5 bg-indigo-600'
         }`}
-      >
+      />
+      {/* Labels */}
+      <span className={`relative z-10 text-[10px] font-extrabold text-center py-1.5 transition-colors duration-300 ${!hardMode ? 'text-white' : 'text-gray-400 dark:text-gray-500'}`}>
+        Easy
+      </span>
+      <span className={`relative z-10 text-[10px] font-extrabold text-center py-1.5 transition-colors duration-300 ${hardMode ? 'text-white' : 'text-gray-400 dark:text-gray-500'}`}>
         Hard
-      </button>
+      </span>
     </div>
   );
 }
 
-export default function Game({ game, wordListReady, hardMode, onToggleHardMode }) {
+function getTodayIST() {
+  return new Date(Date.now() + 5.5 * 60 * 60 * 1000).toISOString().split('T')[0];
+}
+
+export default function Game({ game, wordListReady, hardMode, onToggleHardMode, onArchive, archiveDate }) {
   const {
     pair, dateStr, gameNumber,
     chain, optimalPath, parSteps, userSteps,
@@ -185,7 +187,7 @@ export default function Game({ game, wordListReady, hardMode, onToggleHardMode }
 
           {/* Today's info + difficulty toggle */}
           <div className="relative w-full text-center">
-            <p className="text-xs text-gray-400 dark:text-gray-500">
+            <p className="text-xs font-bold text-gray-500 dark:text-gray-400">
               {formatDate(dateStr)} &nbsp;•&nbsp; Daily Chainword #{gameNumber}
             </p>
             {parSteps !== null ? (
@@ -274,6 +276,14 @@ export default function Game({ game, wordListReady, hardMode, onToggleHardMode }
             </div>
           )}
 
+          {/* Archive banner when viewing a past puzzle */}
+          {archiveDate && archiveDate !== getTodayIST() && (
+            <div className="w-full flex items-center justify-between px-3 py-2 rounded-xl bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 text-xs">
+              <span className="text-amber-700 dark:text-amber-300 font-medium">Viewing past puzzle</span>
+              <button onClick={() => onArchive && onArchive()} className="text-amber-600 dark:text-amber-400 font-semibold hover:underline">Change date</button>
+            </div>
+          )}
+
           {/* Result banner */}
           {isFinished && (
             <ResultBanner
@@ -285,6 +295,14 @@ export default function Game({ game, wordListReady, hardMode, onToggleHardMode }
               onShare={() => setShowShare(true)}
             />
           )}
+
+          {/* Archive button */}
+          <button
+            onClick={onArchive}
+            className="mt-2 px-4 py-2 text-xs font-bold rounded-xl bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-200 dark:border-indigo-700 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-100 dark:hover:bg-indigo-900/40 transition-colors flex items-center gap-2"
+          >
+            Archives &nbsp;📅
+          </button>
 
           <ShareModal
             open={showShare}

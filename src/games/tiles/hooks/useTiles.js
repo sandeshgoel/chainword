@@ -51,8 +51,8 @@ function findOptimalPlay(tiles) {
   return { optimalScore, optimalWord };
 }
 
-export function useTiles() {
-  const { tiles: dailyTiles, dateStr, gameNumber } = getDailyTiles();
+export function useTiles(overrideDateStr = null) {
+  const { tiles: dailyTiles, dateStr, gameNumber } = getDailyTiles(overrideDateStr);
 
   const [tiles, setTiles] = useState(() => dailyTiles.map(t => ({ ...t, used: false })));
   const [slots, setSlots] = useState([null, null, null, null]);
@@ -63,8 +63,13 @@ export function useTiles() {
 
   const { optimalScore, optimalWord } = findOptimalPlay(dailyTiles);
 
-  // Restore saved submissions from localStorage
+  // Reset all state when date changes (archive navigation or day rollover)
   useEffect(() => {
+    const { tiles: newDailyTiles } = getDailyTiles(dateStr);
+    setTiles(newDailyTiles.map(t => ({ ...t, used: false })));
+    setSlots([null, null, null, null]);
+    setError('');
+
     const key = `chainword_tiles_${dateStr}`;
     const saved = localStorage.getItem(key);
     if (saved) {
@@ -72,8 +77,11 @@ export function useTiles() {
         const data = JSON.parse(saved);
         setSubmissions(data.submissions || []);
         setBestScore(data.bestScore || 0);
-      } catch (e) { /* ignore */ }
+        return;
+      } catch {}
     }
+    setSubmissions([]);
+    setBestScore(0);
   }, [dateStr]);
 
   const persist = useCallback((newSubmissions, newBest) => {
@@ -100,7 +108,6 @@ export function useTiles() {
     const tile = slots[slotIndex];
     if (!tile) return;
 
-    // Remove and compact remaining tiles left
     const remaining = slots.filter((_, i) => i !== slotIndex);
     while (remaining.length < 4) remaining.push(null);
 
@@ -150,7 +157,6 @@ export function useTiles() {
     setError('');
     persist(newSubmissions, newBest);
 
-    // Update stats whenever we have a new best for today
     if (score >= newBest) {
       setStats(updateTilesStats(dateStr, newBest, optimalScore));
     }

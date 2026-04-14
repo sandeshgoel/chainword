@@ -30,8 +30,8 @@ function evaluateGuess(guess, target) {
   return result;
 }
 
-export function useWordle(wordListReady) {
-  const { target, dateStr, gameNumber } = getDailyWordleTarget();
+export function useWordle(wordListReady, overrideDateStr = null) {
+  const { target, dateStr, gameNumber } = getDailyWordleTarget(overrideDateStr);
 
   const [guesses, setGuesses] = useState([]); // array of { word, colors }
   const [status, setStatus] = useState('playing'); // playing | won | lost

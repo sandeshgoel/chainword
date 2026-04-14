@@ -1,9 +1,10 @@
 import { formatDate } from '../../../utils/wordUtils.js';
+import { getWordSet } from '../../../words.js';
 
 const KEYBOARD_ROWS = [
   ['Q','W','E','R','T','Y','U','I','O','P'],
   ['A','S','D','F','G','H','J','K','L'],
-  ['⌫','Z','X','C','V','B','N','M','ENTER'],
+  ['ENTER','Z','X','C','V','B','N','M','⌫'],
 ];
 
 function Keyboard({ onKey }) {
@@ -29,7 +30,7 @@ function Keyboard({ onKey }) {
   );
 }
 
-function GridCell({ letter, variant, cornerNum }) {
+function GridCell({ letter, variant, cornerNum, onClick }) {
   // variant: 'letter' | 'letter-valid' | 'letter-invalid' |
   //          'corner-empty' | 'corner-cursor' | 'corner-typed' | 'corner-correct' | 'empty'
   const base = 'w-12 h-12 flex items-center justify-center text-lg font-extrabold rounded-lg border-2 transition-all duration-150 select-none';
@@ -55,13 +56,16 @@ function GridCell({ letter, variant, cornerNum }) {
   }
 
   return (
-    <div className={`${base} ${styles[variant] || styles.empty}`}>
+    <div
+      className={`${base} ${styles[variant] || styles.empty} ${onClick ? 'cursor-pointer active:scale-95' : ''}`}
+      onClick={onClick}
+    >
       {content}
     </div>
   );
 }
 
-function SquareGrid({ square, input, winLetters, feedback, status }) {
+function SquareGrid({ square, slots, cursorPos, winLetters, feedback, status, liveValidity, onCornerClick }) {
   const [top, left, right, bottom] = square;
 
   // Corner cell info: letter + variant
@@ -70,15 +74,18 @@ function SquareGrid({ square, input, winLetters, feedback, status }) {
       return { letter: winLetters?.[idx] ?? '?', variant: 'corner-correct' };
     }
     if (feedback) return { letter: feedback.letters[idx], variant: 'corner-typed' };
-    if (input.length > idx) return { letter: input[idx], variant: 'corner-typed' };
-    if (input.length === idx) return { letter: null, variant: 'corner-cursor' };
+    if (slots[idx]) return { letter: slots[idx], variant: cursorPos === idx ? 'corner-cursor' : 'corner-typed' };
+    if (cursorPos === idx) return { letter: null, variant: 'corner-cursor' };
     return { letter: null, variant: 'corner-empty' };
   }
 
-  // Middle letter cells: colored by word validity when feedback is present
-  function letterVariant(wordValid) {
+  // Middle letter cells: post-submit feedback → live typing check → neutral
+  function letterVariant(feedbackValid, liveKey) {
     if (status === 'won') return 'letter-valid';
-    if (feedback !== null) return wordValid ? 'letter-valid' : 'letter-invalid';
+    if (feedback !== null) return feedbackValid ? 'letter-valid' : 'letter-invalid';
+    const live = liveValidity?.[liveKey];
+    if (live === true)  return 'letter-valid';
+    if (live === false) return 'letter-invalid';
     return 'letter';
   }
 
@@ -87,18 +94,20 @@ function SquareGrid({ square, input, winLetters, feedback, status }) {
   const bl = getCornerInfo(2);
   const br = getCornerInfo(3);
 
-  const topV    = letterVariant(feedback?.topValid);
-  const leftV   = letterVariant(feedback?.leftValid);
-  const rightV  = letterVariant(feedback?.rightValid);
-  const bottomV = letterVariant(feedback?.bottomValid);
+  const topV    = letterVariant(feedback?.topValid,    'top');
+  const leftV   = letterVariant(feedback?.leftValid,   'left');
+  const rightV  = letterVariant(feedback?.rightValid,  'right');
+  const bottomV = letterVariant(feedback?.bottomValid, 'bottom');
+
+  const cornerClick = (idx) => onCornerClick ? () => onCornerClick(idx) : undefined;
 
   return (
     <div className="grid grid-cols-4 gap-2">
       {/* Row 0 */}
-      <GridCell letter={tl.letter} variant={tl.variant} cornerNum={1} />
+      <GridCell letter={tl.letter} variant={tl.variant} cornerNum={1} onClick={cornerClick(0)} />
       <GridCell letter={top[1]}    variant={topV} />
       <GridCell letter={top[2]}    variant={topV} />
-      <GridCell letter={tr.letter} variant={tr.variant} cornerNum={2} />
+      <GridCell letter={tr.letter} variant={tr.variant} cornerNum={2} onClick={cornerClick(1)} />
 
       {/* Row 1 */}
       <GridCell letter={left[1]}  variant={leftV} />
@@ -113,10 +122,10 @@ function SquareGrid({ square, input, winLetters, feedback, status }) {
       <GridCell letter={right[2]} variant={rightV} />
 
       {/* Row 3 */}
-      <GridCell letter={bl.letter} variant={bl.variant} cornerNum={3} />
+      <GridCell letter={bl.letter} variant={bl.variant} cornerNum={3} onClick={cornerClick(2)} />
       <GridCell letter={bottom[1]} variant={bottomV} />
       <GridCell letter={bottom[2]} variant={bottomV} />
-      <GridCell letter={br.letter} variant={br.variant} cornerNum={4} />
+      <GridCell letter={br.letter} variant={br.variant} cornerNum={4} onClick={cornerClick(3)} />
     </div>
   );
 }
@@ -141,15 +150,34 @@ function InvalidWords({ feedback }) {
   );
 }
 
-export default function SquaresGame({ game }) {
+function getTodayIST() {
+  return new Date(Date.now() + 5.5 * 60 * 60 * 1000).toISOString().split('T')[0];
+}
+
+export default function SquaresGame({ game, onArchive, archiveDate }) {
   const {
     square, dateStr, gameNumber,
-    input, winLetters, attempts, feedback, status, error,
-    addLetter, deleteLetter, submitGuess,
+    slots, cursorPos, winLetters, attempts, feedback, status, error,
+    addLetter, deleteLetter, submitGuess, setCursorAt,
   } = game;
 
   const isPlaying = status === 'playing';
   const isWon = status === 'won';
+  const [top, left, right, bottom] = square;
+
+  // Compute live word validity as the user types each corner
+  const liveValidity = (() => {
+    if (!isPlaying || feedback !== null) return null;
+    const ws = getWordSet();
+    if (!ws || slots.every(s => !s)) return null;
+    const [tl, tr, bl, br] = slots;
+    const result = {};
+    if (tl && tr) result.top    = ws.has(tl + top[1]    + top[2]    + tr);
+    if (tl && bl) result.left   = ws.has(tl + left[1]   + left[2]   + bl);
+    if (tr && br) result.right  = ws.has(tr + right[1]  + right[2]  + br);
+    if (bl && br) result.bottom = ws.has(bl + bottom[1] + bottom[2] + br);
+    return result;
+  })();
 
   function handleKeyboardKey(key) {
     if (key === '⌫') deleteLetter();
@@ -164,7 +192,7 @@ export default function SquaresGame({ game }) {
         <div className="flex flex-col items-center gap-5 px-4 py-6 max-w-sm mx-auto w-full">
 
           <div className="text-center">
-            <p className="text-xs text-gray-400 dark:text-gray-500">
+            <p className="text-xs font-bold text-gray-500 dark:text-gray-400">
               {formatDate(dateStr)} &nbsp;•&nbsp; Daily Squares #{gameNumber}
             </p>
           </div>
@@ -174,12 +202,23 @@ export default function SquaresGame({ game }) {
             Order: <span className="font-semibold">①TL → ②TR → ③BL → ④BR</span>
           </p>
 
+          {/* Archive banner */}
+          {archiveDate && archiveDate !== getTodayIST() && (
+            <div className="w-full flex items-center justify-between px-3 py-2 rounded-xl bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 text-xs">
+              <span className="text-amber-700 dark:text-amber-300 font-medium">Viewing past puzzle</span>
+              <button onClick={onArchive} className="text-amber-600 dark:text-amber-400 font-semibold hover:underline">Change date</button>
+            </div>
+          )}
+
           <SquareGrid
             square={square}
-            input={input}
+            slots={slots}
+            cursorPos={cursorPos}
             winLetters={winLetters}
             feedback={feedback}
             status={status}
+            liveValidity={liveValidity}
+            onCornerClick={isPlaying ? setCursorAt : null}
           />
 
           {/* Invalid word badges after a wrong guess */}
@@ -207,6 +246,14 @@ export default function SquaresGame({ game }) {
               </p>
             </div>
           )}
+
+          {/* Archive button */}
+          <button
+            onClick={onArchive}
+            className="mt-2 px-4 py-2 text-xs font-bold rounded-xl bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-200 dark:border-indigo-700 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-100 dark:hover:bg-indigo-900/40 transition-colors flex items-center gap-2"
+          >
+            Archives &nbsp;📅
+          </button>
 
         </div>
       </div>

@@ -27,7 +27,7 @@ export default function Header({
 
   return (
     <header className="flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 sticky top-0 z-10">
-      {/* Left: menu */}
+      {/* Left: menu + how to play */}
       <div className="flex items-center gap-1 relative" ref={menuRef}>
         <button
           onClick={() => setIsMenuOpen(!isMenuOpen)}
@@ -37,6 +37,13 @@ export default function Header({
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16M4 18h16" />
           </svg>
+        </button>
+        <button
+          onClick={onHowToPlay}
+          className="w-7 h-7 rounded-full border-2 border-gray-400 dark:border-gray-500 text-gray-400 dark:text-gray-500 hover:border-indigo-500 hover:text-indigo-500 dark:hover:border-indigo-400 dark:hover:text-indigo-400 flex items-center justify-center text-[11px] font-extrabold leading-none transition-colors"
+          aria-label="How to play"
+        >
+          ?
         </button>
 
         {isMenuOpen && (
@@ -83,16 +90,6 @@ export default function Header({
               </button>
               <div className="border-t border-gray-100 dark:border-gray-700 my-1"></div>
               <button
-                onClick={() => { onHowToPlay(); setIsMenuOpen(false); }}
-                className="w-full flex items-center gap-3 px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors text-left"
-              >
-                <svg className="w-5 h-5 text-gray-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <circle cx="12" cy="12" r="10" strokeWidth="2" />
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3M12 17h.01" />
-                </svg>
-                <span className="text-sm font-medium text-gray-900 dark:text-white">How to play</span>
-              </button>
-              <button
                 onClick={() => { onToggleDark(); setIsMenuOpen(false); }}
                 className="w-full flex items-center gap-3 px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors text-left"
               >
@@ -115,7 +112,7 @@ export default function Header({
       </div>
 
       {/* Center: title */}
-      <div className="text-center absolute left-1/2 -translate-x-1/2">
+      <div className="absolute left-1/2 -translate-x-1/2">
         <h1 className="text-xl font-extrabold tracking-tight text-gray-900 dark:text-white leading-none">
           {activeGame === '4word' ? '🔤 4word' : activeGame === 'tiles' ? '🎯 Tiles' : activeGame === 'squares' ? '🔲 Squares' : '🔗 Chainword'}
         </h1>

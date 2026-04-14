@@ -18,20 +18,22 @@ export async function loadWordList() {
   return wordSet;
 }
 
-// Returns today's Wordle target word based on IST date (UTC+5:30)
-// Uses the same epoch calculation as Chainword.
-export function getDailyWordleTarget() {
-  const now = new Date();
-  const istOffset = 5.5 * 60 * 60 * 1000;
-  const ist = new Date(now.getTime() + istOffset);
-  const epochDay = Math.floor(ist.getTime() / (24 * 60 * 60 * 1000));
+const BASE_EPOCH_DAY = 20555; // 2026-04-12
 
-  // Choose only from the common dictionary words
+// Returns daily Wordle target for today (IST) or a specific override date.
+export function getDailyWordleTarget(overrideDateStr = null) {
+  let dateStr, epochDay;
+  if (overrideDateStr) {
+    dateStr = overrideDateStr;
+    epochDay = Math.floor(new Date(dateStr + 'T00:00:00Z').getTime() / (24 * 60 * 60 * 1000));
+  } else {
+    const istOffset = 5.5 * 60 * 60 * 1000;
+    const ist = new Date(Date.now() + istOffset);
+    epochDay = Math.floor(ist.getTime() / (24 * 60 * 60 * 1000));
+    dateStr = ist.toISOString().split('T')[0];
+  }
+
   const target = COMMON_WORDS[epochDay % COMMON_WORDS.length];
-
-  const BASE_EPOCH_DAY = 20555; // 2026-04-12 in IST
   const gameNumber = Math.max(1, epochDay - BASE_EPOCH_DAY + 1);
-  const dateStr = ist.toISOString().split('T')[0];
-
   return { target, dateStr, gameNumber };
 }

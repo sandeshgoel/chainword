@@ -19,6 +19,17 @@ import { useSquares } from './games/squares/hooks/useSquares.js';
 import { loadTheme, saveTheme } from './utils/storage.js';
 import { loadWordList } from './words.js';
 
+function getTodayIST() {
+  return new Date(Date.now() + 5.5 * 60 * 60 * 1000).toISOString().split('T')[0];
+}
+
+function msUntilMidnightIST() {
+  const istOffset = 5.5 * 60 * 60 * 1000;
+  const nowIST = Date.now() + istOffset;
+  const nextMidnightIST = (Math.floor(nowIST / 86400000) + 1) * 86400000;
+  return nextMidnightIST - nowIST;
+}
+
 export default function App() {
   const [activeGame, setActiveGame] = useState('chainword');
   const [darkMode, setDarkMode] = useState(() => loadTheme() === 'dark');
@@ -61,6 +72,56 @@ export default function App() {
       setShowHelp(true);
       localStorage.setItem('chainword_seen_help', '1');
     }
+  }, []);
+
+  // Reload when the IST day rolls over (handles long-open tabs)
+  useEffect(() => {
+    const startDate = getTodayIST();
+
+    function checkAndReload() {
+      if (getTodayIST() !== startDate) window.location.reload();
+    }
+
+    // Fire precisely at midnight IST
+    const midnightTimeout = setTimeout(() => window.location.reload(), msUntilMidnightIST());
+    // Check every 5 minutes as a fallback (handles browser throttling of long timeouts)
+    const minuteInterval = setInterval(checkAndReload, 5 * 60_000);
+    // Check immediately when the tab becomes visible again
+    document.addEventListener('visibilitychange', checkAndReload);
+
+    return () => {
+      clearTimeout(midnightTimeout);
+      clearInterval(minuteInterval);
+      document.removeEventListener('visibilitychange', checkAndReload);
+    };
+  }, []);
+
+  // Reload when a new build is deployed (Vite content-hashes change on every build)
+  useEffect(() => {
+    const currentScripts = [...document.querySelectorAll('script[src]')]
+      .map(s => s.getAttribute('src'))
+      .sort()
+      .join(',');
+
+    async function checkForNewVersion() {
+      try {
+        const res = await fetch('/?_v=' + Date.now(), { cache: 'no-store' });
+        const html = await res.text();
+        const srcs = [...html.matchAll(/src="([^"]*\.js[^"]*)"/g)]
+          .map(m => m[1])
+          .sort()
+          .join(',');
+        if (srcs && srcs !== currentScripts) window.location.reload();
+      } catch {}
+    }
+
+    const interval = setInterval(checkForNewVersion, 5 * 60_000);
+    document.addEventListener('visibilitychange', checkForNewVersion);
+
+    return () => {
+      clearInterval(interval);
+      document.removeEventListener('visibilitychange', checkForNewVersion);
+    };
   }, []);
 
   // Show stats after completing today's chainword

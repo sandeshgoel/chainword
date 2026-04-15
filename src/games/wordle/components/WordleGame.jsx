@@ -50,7 +50,7 @@ function Keyboard({ letterStates, onKey }) {
               <button
                 key={key}
                 onMouseDown={(e) => {
-                  e.preventDefault(); // keep hidden input focused
+                  e.preventDefault();
                   onKey(key);
                 }}
                 className={`${isWide ? 'px-2 min-w-[46px]' : 'w-8'} h-12 rounded text-xs font-bold flex items-center justify-center transition-colors select-none touch-manipulation ${keyClass}`}
@@ -65,31 +65,50 @@ function Keyboard({ letterStates, onKey }) {
   );
 }
 
-function Tile({ char, color }) {
-  let bgClass = 'border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-gray-100'; // empty
+// revealPhase: undefined (normal) | null (not yet) | 'out' (flip out) | 'in' (flip in) | 'done'
+function Tile({ char, color, revealPhase }) {
+  // When animating: before flip = uncolored, after flip midpoint = colored
+  const useReveal = revealPhase !== undefined;
+  const showColor = !useReveal || revealPhase === 'in' || revealPhase === 'done';
 
-  if (color === 'green') {
+  const effectiveColor = (() => {
+    if (!showColor) return char ? 'active' : 'empty';
+    return color;
+  })();
+
+  let bgClass = 'border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-gray-100';
+  if (effectiveColor === 'green') {
     bgClass = 'border-green-500 bg-green-500 text-white';
-  } else if (color === 'orange') {
+  } else if (effectiveColor === 'orange') {
     bgClass = 'border-orange-400 bg-orange-400 text-white';
-  } else if (color === 'gray') {
+  } else if (effectiveColor === 'gray') {
     bgClass = 'border-gray-500 bg-gray-500 text-white dark:border-gray-600 dark:bg-gray-600';
-  } else if (color === 'active') {
+  } else if (effectiveColor === 'active') {
     bgClass = 'border-indigo-400 bg-white dark:bg-gray-800 text-indigo-700 dark:text-indigo-300';
-  } else if (color === 'next') {
+  } else if (effectiveColor === 'next') {
     bgClass = 'border-indigo-500 bg-indigo-50/50 dark:bg-indigo-900/20 text-indigo-900 dark:text-indigo-100 ring-4 ring-indigo-200 dark:ring-indigo-900/50 scale-105 shadow-sm';
-  } else if (color === 'empty') {
+  } else if (effectiveColor === 'empty') {
     bgClass = 'border-dashed border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100';
   }
 
+  let tileStyle = {};
+  if (revealPhase === 'out') {
+    tileStyle = { transform: 'scaleY(0)', transition: 'transform 250ms ease-in' };
+  } else if (revealPhase === 'in') {
+    tileStyle = { transform: 'scaleY(1)', transition: 'transform 250ms ease-out' };
+  }
+
   return (
-    <div className={`w-11 h-11 flex items-center justify-center rounded-lg text-xl font-extrabold border-2 transition-all duration-200 transform ${bgClass}`}>
+    <div
+      className={`w-11 h-11 flex items-center justify-center rounded-lg text-xl font-extrabold border-2 ${bgClass}`}
+      style={tileStyle}
+    >
       {char ? char.toUpperCase() : ''}
     </div>
   );
 }
 
-function WordRow({ word, colors, isActive, inputLength }) {
+function WordRow({ word, colors, isActive, inputLength, revealPhases }) {
   const letters = word.padEnd(4, ' ').split('');
   return (
     <div className="flex gap-2">
@@ -103,8 +122,14 @@ function WordRow({ word, colors, isActive, inputLength }) {
         } else if (isActive && i === inputLength) {
           color = 'next';
         }
-
-        return <Tile key={i} char={filled ? ch : ''} color={color} />;
+        return (
+          <Tile
+            key={i}
+            char={filled ? ch : ''}
+            color={color}
+            revealPhase={revealPhases ? revealPhases[i] : undefined}
+          />
+        );
       })}
     </div>
   );
@@ -122,7 +147,48 @@ export default function WordleGame({ game, wordListReady, onArchive, archiveDate
   const inputRef = useRef(null);
   const currentRowRef = useRef(null);
 
+  // Reveal animation state
+  // { rowIndex, phases: Array<null|'out'|'in'|'done'> }
+  const [revealState, setRevealState] = useState(null);
+  const prevGuessCount = useRef(guesses.length); // skip animating pre-loaded guesses
+  const revealTimers = useRef([]);
+
   const isPlaying = status === 'playing';
+
+  function startReveal(rowIndex) {
+    revealTimers.current.forEach(clearTimeout);
+    revealTimers.current = [];
+    setRevealState({ rowIndex, phases: [null, null, null, null] });
+
+    for (let i = 0; i < 4; i++) {
+      // Flip out (scaleY → 0), uncolored
+      revealTimers.current.push(setTimeout(() => {
+        setRevealState(prev => prev ? { ...prev, phases: prev.phases.map((p, j) => j === i ? 'out' : p) } : null);
+      }, i * 500));
+      // Flip in (scaleY → 1), colored
+      revealTimers.current.push(setTimeout(() => {
+        setRevealState(prev => prev ? { ...prev, phases: prev.phases.map((p, j) => j === i ? 'in' : p) } : null);
+      }, i * 500 + 250));
+      // Done
+      revealTimers.current.push(setTimeout(() => {
+        setRevealState(prev => prev ? { ...prev, phases: prev.phases.map((p, j) => j === i ? 'done' : p) } : null);
+      }, i * 500 + 500));
+    }
+    // Clear reveal state after all letters done
+    revealTimers.current.push(setTimeout(() => setRevealState(null), 3 * 500 + 550));
+  }
+
+  // Detect new guess and start reveal
+  useEffect(() => {
+    if (guesses.length > prevGuessCount.current) {
+      prevGuessCount.current = guesses.length;
+      startReveal(guesses.length - 1);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [guesses.length]);
+
+  // Cleanup timers on unmount
+  useEffect(() => () => revealTimers.current.forEach(clearTimeout), []);
 
   useEffect(() => {
     if (!isPlaying || !wordListReady) return;
@@ -144,8 +210,6 @@ export default function WordleGame({ game, wordListReady, onArchive, archiveDate
     const raw = e.target.value.replace(/[^a-zA-Z]/g, '').toLowerCase().slice(0, 4);
     setInputValue(raw);
     if (error) setError('');
-
-    // Ensure active row stays in view
     setTimeout(() => {
       currentRowRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     }, 10);
@@ -190,8 +254,16 @@ export default function WordleGame({ game, wordListReady, onArchive, archiveDate
   const rows = [];
   const maxRows = status === 'won' ? guesses.length : 6;
   for (let i = 0; i < maxRows; i++) {
+    const isRevealingRow = revealState?.rowIndex === i;
     if (i < guesses.length) {
-      rows.push(<WordRow key={i} word={guesses[i].word} colors={guesses[i].colors} />);
+      rows.push(
+        <WordRow
+          key={i}
+          word={guesses[i].word}
+          colors={guesses[i].colors}
+          revealPhases={isRevealingRow ? revealState.phases : undefined}
+        />
+      );
     } else if (i === guesses.length && isPlaying) {
       rows.push(
         <div key={i} onClick={refocus} className="cursor-text" ref={currentRowRef}>
@@ -205,16 +277,13 @@ export default function WordleGame({ game, wordListReady, onArchive, archiveDate
 
   return (
     <div className="h-full flex flex-col">
-      {/* Scrollable area: title + word grid + result card */}
       <div className="flex-1 overflow-y-auto">
         <div className="flex flex-col items-center gap-4 px-4 py-6 max-w-sm mx-auto w-full">
-
 
           <div className="flex flex-col gap-2">
             {rows}
           </div>
 
-          {/* Archive banner */}
           {archiveDate && archiveDate !== getTodayIST() && (
             <div className="w-full flex items-center justify-between px-3 py-2 rounded-xl bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 text-xs">
               <span className="text-amber-700 dark:text-amber-300 font-medium">Viewing past puzzle</span>
@@ -229,17 +298,18 @@ export default function WordleGame({ game, wordListReady, onArchive, archiveDate
                 title={status === 'won' ? 'You got it!' : 'Game Over'}
                 details={status === 'won' ? `In ${guesses.length} / 6` : `The word was ${target.toUpperCase()}`}
               >
-                <button
-                  onClick={() => setShowShare(true)}
-                  className="w-full py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-xl transition-colors flex items-center justify-center gap-2 text-sm"
-                >
-                  Share Result
-                </button>
+                {(!archiveDate || archiveDate === getTodayIST()) && (
+                  <button
+                    onClick={() => setShowShare(true)}
+                    className="w-full py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-xl transition-colors flex items-center justify-center gap-2 text-sm"
+                  >
+                    Share Result
+                  </button>
+                )}
               </ResultBanner>
             </div>
           )}
 
-          {/* Share modal */}
           {status !== 'playing' && (() => {
             const tier = wordleTier(status === 'won', guesses.length);
             const cfg = TIER_CONFIG[tier];
@@ -248,9 +318,7 @@ export default function WordleGame({ game, wordListReady, onArchive, archiveDate
                 <div className="space-y-4">
                   <div className="text-center space-y-1">
                     <div className="text-3xl">{cfg.emoji}</div>
-                    <p className="text-lg font-bold text-gray-900 dark:text-white">
-                      4word #{gameNumber}
-                    </p>
+                    <p className="text-lg font-bold text-gray-900 dark:text-white">4word #{gameNumber}</p>
                     <p className="text-sm text-gray-500 dark:text-gray-400">
                       {status === 'won'
                         ? `Solved in ${guesses.length} / 6`
@@ -270,7 +338,7 @@ export default function WordleGame({ game, wordListReady, onArchive, archiveDate
               </Modal>
             );
           })()}
-          {/* Archive button */}
+
           <button
             onClick={onArchive}
             className="mt-2 px-4 py-2 text-xs font-bold rounded-xl bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-200 dark:border-indigo-700 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-100 dark:hover:bg-indigo-900/40 transition-colors flex items-center gap-2"
@@ -281,7 +349,6 @@ export default function WordleGame({ game, wordListReady, onArchive, archiveDate
         </div>
       </div>
 
-      {/* Pinned keyboard footer — only while playing */}
       {isPlaying && (
         <div className="flex-shrink-0 border-t border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900 px-3 pt-2 pb-4">
           <div className="max-w-sm mx-auto">

@@ -119,7 +119,7 @@ function HistoryTable({ history, isChainword, isWordle, isTiles, isSquares, hard
   );
 }
 
-function ResetButton({ onReset, onClose }) {
+function ResetButton({ onReset, onClose, gameName }) {
   const [confirming, setConfirming] = useState(false);
   function handleReset() {
     if (!confirming) { setConfirming(true); return; }
@@ -137,7 +137,7 @@ function ResetButton({ onReset, onClose }) {
             : 'text-gray-400 dark:text-gray-600 hover:text-red-500 dark:hover:text-red-400 hover:bg-gray-50 dark:hover:bg-gray-700/50',
         ].join(' ')}
       >
-        {confirming ? '⚠ Tap again to confirm reset' : 'Reset all game data'}
+        {confirming ? '⚠ Tap again to confirm reset' : `Reset ${gameName} stats`}
       </button>
     </div>
   );
@@ -275,6 +275,7 @@ function SquaresStats({ stats, hintsDistribution }) {
 export default function StatsModal({ open, onClose, stats, onReset, isWordle, isTiles, isSquares, hardMode }) {
   const [view, setView] = useState('stats');
   const isChainword = !isWordle && !isTiles && !isSquares;
+  const gameName = isWordle ? '4word' : isTiles ? 'Tiles' : isSquares ? 'Squares' : 'Chainword';
   const history = stats.history || [];
   const played = (isTiles || isSquares) ? 0 : history.length;
   const won = history.filter(h => h.won).length;
@@ -426,7 +427,7 @@ export default function StatsModal({ open, onClose, stats, onReset, isWordle, is
           </>
         )}
 
-        <ResetButton onReset={onReset} onClose={onClose} />
+        <ResetButton onReset={onReset} onClose={onClose} gameName={gameName} />
       </div>
     </Modal>
   );

@@ -95,6 +95,21 @@ function DifficultyToggle({ hardMode, onToggle }) {
   );
 }
 
+function EmptyRow() {
+  return (
+    <div className="flex justify-center">
+      <div className="flex gap-1.5">
+        {[0, 1, 2, 3].map(i => (
+          <div
+            key={i}
+            className="w-11 h-11 flex items-center justify-center rounded-lg border-2 border-dashed border-gray-200 dark:border-gray-700"
+          />
+        ))}
+      </div>
+    </div>
+  );
+}
+
 function getTodayIST() {
   return new Date(Date.now() + 5.5 * 60 * 60 * 1000).toISOString().split('T')[0];
 }
@@ -128,6 +143,15 @@ export default function Game({ game, wordListReady, hardMode, onToggleHardMode, 
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
   }, [chain.length]);
+
+  // Auto-submit when 4th letter typed and word is valid
+  useEffect(() => {
+    if (!isPlaying || !wordListReady || inputValue.length !== 4) return;
+    const ok = submitWord(inputValue);
+    if (ok) setInputValue('');
+    refocus();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [inputValue]);
 
   function refocus() {
     setTimeout(() => inputRef.current?.focus(), 0);
@@ -213,11 +237,17 @@ export default function Game({ game, wordListReady, hardMode, onToggleHardMode, 
             ))}
 
             {isPlaying && (
-              <InputTiles
-                value={inputValue}
-                currentWord={currentWord}
-                onClick={() => inputRef.current?.focus()}
-              />
+              <>
+                <InputTiles
+                  value={inputValue}
+                  currentWord={currentWord}
+                  onClick={() => inputRef.current?.focus()}
+                />
+                {/* Placeholder rows: start with 2 (3 total incl. input), always keep ≥1 after input */}
+                {Array.from({ length: Math.max(1, 3 - chain.length) }).map((_, i) => (
+                  <EmptyRow key={i} />
+                ))}
+              </>
             )}
 
             {isPlaying && <WordRow word={pair.end} variant="end" />}
@@ -293,12 +323,14 @@ export default function Game({ game, wordListReady, hardMode, onToggleHardMode, 
                     </div>
                   </div>
                 )}
-                <button
-                  onClick={() => setShowShare(true)}
-                  className="px-5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-xl text-sm transition-colors"
-                >
-                  Share Result
-                </button>
+                {(!archiveDate || archiveDate === getTodayIST()) && (
+                  <button
+                    onClick={() => setShowShare(true)}
+                    className="px-5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-xl text-sm transition-colors"
+                  >
+                    Share Result
+                  </button>
+                )}
               </ResultBanner>
             );
           })()}

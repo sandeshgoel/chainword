@@ -307,12 +307,14 @@ export default function SquaresGame({ game, onArchive, archiveDate }) {
                 tier={tier}
                 title={hintsUsed === 0 ? 'No hints used!' : `${hintsUsed} hint${hintsUsed !== 1 ? 's' : ''} used`}
               >
-                <button
-                  onClick={() => setShowShare(true)}
-                  className="w-full py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-xl transition-colors text-sm"
-                >
-                  Share Result
-                </button>
+                {(!archiveDate || archiveDate === getTodayIST()) && (
+                  <button
+                    onClick={() => setShowShare(true)}
+                    className="w-full py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-xl transition-colors text-sm"
+                  >
+                    Share Result
+                  </button>
+                )}
               </ResultBanner>
 
               <Modal open={showShare} onClose={() => setShowShare(false)} title="Share Your Result">

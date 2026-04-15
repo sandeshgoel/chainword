@@ -20,7 +20,7 @@ import { useWordle } from './games/wordle/hooks/useWordle.js';
 import { useTiles } from './games/tiles/hooks/useTiles.js';
 import { useSquares } from './games/squares/hooks/useSquares.js';
 import { loadTheme, saveTheme } from './utils/storage.js';
-import { clearAllCloudStats, clearAllCloudProgress } from './utils/cloudStats.js';
+import { pushCloudStats } from './utils/cloudStats.js';
 import { loadWordList } from './words.js';
 
 function getTodayIST() {
@@ -137,15 +137,39 @@ export default function App() {
   }
 
   async function handleReset() {
-    Object.keys(localStorage)
-      .filter(k => k.startsWith('chainword') || k.startsWith('braingym'))
-      .forEach(k => localStorage.removeItem(k));
+    // Local storage keys per game
+    const localStatKeys = {
+      chainword: ['braingym_chainword_stats', 'braingym_chainword_stats_hard', 'chainword_progress'],
+      '4word':   ['braingym_4word_stats'],
+      tiles:     ['braingym_tiles_stats'],
+      squares:   ['braingym_squares_stats'],
+    };
+    const localPrefixes = {
+      chainword: null, // progress stored in single key above
+      '4word':   'chainword_wordle_',
+      tiles:     'chainword_tiles_',
+      squares:   'chainword_squares_',
+    };
+    const cloudKeys = {
+      chainword: ['chainword', 'chainword_hard'],
+      '4word':   ['4word'],
+      tiles:     ['tiles'],
+      squares:   ['squares'],
+    };
+
+    // Remove stat keys
+    (localStatKeys[activeGame] || []).forEach(k => localStorage.removeItem(k));
+    // Remove per-day progress keys
+    const prefix = localPrefixes[activeGame];
+    if (prefix) {
+      Object.keys(localStorage).filter(k => k.startsWith(prefix)).forEach(k => localStorage.removeItem(k));
+    }
     sessionStorage.removeItem('braingym_synced');
+
     if (user) {
-      await Promise.all([
-        clearAllCloudStats(user.uid),
-        clearAllCloudProgress(user.uid),
-      ]).catch(console.error);
+      await Promise.all(
+        (cloudKeys[activeGame] || []).map(k => pushCloudStats(user.uid, k, []))
+      ).catch(console.error);
     }
     window.location.reload();
   }

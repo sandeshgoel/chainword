@@ -5,22 +5,152 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <meta name="theme-color" content="#4f46e5" />
 
-    <title>Chainword — Daily Word Ladder</title>
-    <meta name="description" content="Connect two 4-letter words by changing one letter at a time. A free daily word ladder puzzle." />
+    <title>Brain Gym — Free Daily Word Puzzles</title>
+    <meta name="description" content="Four free daily word puzzles: Chainword (word ladder), 4word (Wordle-style), Tiles (Scrabble scoring), and Squares (word square). New puzzles every day." />
+    <meta name="keywords" content="word puzzle, daily word game, wordle, word ladder, chainword, scrabble, free word games" />
+    <link rel="canonical" href="https://chainword-five.vercel.app/" />
 
     <!-- PWA / mobile meta -->
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-    <meta name="apple-mobile-web-app-title" content="Chainword" />
+    <meta name="apple-mobile-web-app-title" content="Brain Gym" />
+    <link rel="manifest" href="/site.webmanifest" />
 
     <!-- Open Graph -->
-    <meta property="og:title" content="Chainword — Daily Word Ladder" />
-    <meta property="og:description" content="Connect two words, one letter at a time! New puzzle every day at midnight IST." />
+    <meta property="og:site_name" content="Brain Gym" />
+    <meta property="og:title" content="Brain Gym — Free Daily Word Puzzles" />
+    <meta property="og:description" content="Four free daily word puzzles: Chainword, 4word, Tiles, and Squares. New challenges every day at midnight IST." />
     <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://chainword-five.vercel.app/" />
+    <meta property="og:image" content="https://chainword-five.vercel.app/og-image.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="Brain Gym — Four daily word puzzles" />
+    <meta property="og:locale" content="en_US" />
 
-    <!-- Favicon: simple chain emoji rendered as SVG -->
-    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔗</text></svg>" />
+    <!-- Twitter / X cards -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Brain Gym — Free Daily Word Puzzles" />
+    <meta name="twitter:description" content="Four free daily word puzzles. New challenges every day." />
+    <meta name="twitter:image" content="https://chainword-five.vercel.app/og-image.png" />
+    <meta name="twitter:image:alt" content="Brain Gym — Four daily word puzzles" />
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🧠</text></svg>" />
+
+    <!-- Structured data: WebApplication -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebApplication",
+      "name": "Brain Gym",
+      "url": "https://chainword-five.vercel.app",
+      "description": "Four free daily word puzzles: Chainword (word ladder), 4word (Wordle variant), Tiles (Scrabble-style scoring), and Squares (word square).",
+      "applicationCategory": "GameApplication",
+      "genre": "Word Game",
+      "operatingSystem": "Any",
+      "browserRequirements": "Requires JavaScript",
+      "inLanguage": "en",
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "USD"
+      },
+      "author": {
+        "@type": "Person",
+        "name": "Sandesh Goel"
+      },
+      "hasPart": [
+        {
+          "@type": "Game",
+          "name": "Chainword",
+          "url": "https://chainword-five.vercel.app/chainword",
+          "description": "Link two 4-letter words by changing one letter at a time — a daily word ladder puzzle.",
+          "genre": "Word Puzzle"
+        },
+        {
+          "@type": "Game",
+          "name": "4word",
+          "url": "https://chainword-five.vercel.app/4word",
+          "description": "Guess the hidden 4-letter word in 6 tries. Green means right letter, right place; orange means right letter, wrong place.",
+          "genre": "Word Puzzle"
+        },
+        {
+          "@type": "Game",
+          "name": "Tiles",
+          "url": "https://chainword-five.vercel.app/tiles",
+          "description": "Build the highest-scoring 4-letter word from 7 Scrabble-style letter tiles with double and triple letter bonuses.",
+          "genre": "Word Puzzle"
+        },
+        {
+          "@type": "Game",
+          "name": "Squares",
+          "url": "https://chainword-five.vercel.app/squares",
+          "description": "Fill the four corners of a square so that all four 4-letter words — top, bottom, left, right — are valid.",
+          "genre": "Word Puzzle"
+        }
+      ]
+    }
+    </script>
+
+    <!-- Structured data: FAQPage -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "FAQPage",
+      "mainEntity": [
+        {
+          "@type": "Question",
+          "name": "What is Brain Gym?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Brain Gym is a free daily word puzzle app with four games: Chainword (word ladder), 4word (Wordle-style), Tiles (Scrabble scoring), and Squares (word square). New puzzles are released every day."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "How often do the puzzles reset?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "New puzzles are released every day at midnight IST (Indian Standard Time)."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Is Brain Gym free to play?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Yes, all four daily puzzles are completely free with no ads or subscriptions."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Can I play past puzzles?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Yes. Use the Archives button inside any game to browse and play any past puzzle."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "What is Chainword?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Chainword is a daily word ladder puzzle. You are given a start word and an end word (both 4 letters), and must connect them by changing one letter at a time, where each step must be a valid English word."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "How is Tiles different from Scrabble?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "In Tiles, you are dealt 7 letter tiles and must form the highest-scoring 4-letter word. The slots have double-letter and triple-letter bonuses. Unlike Scrabble, there is no board — you simply find the best word from your rack."
+          }
+        }
+      ]
+    }
+    </script>
   </head>
   <body>
     <div id="root"></div>

@@ -1,0 +1,21 @@
+{
+  "name": "Brain Gym — Daily Word Puzzles",
+  "short_name": "Brain Gym",
+  "description": "Four free daily word puzzles: Chainword, 4word, Tiles, and Squares. New challenges every day.",
+  "start_url": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "theme_color": "#6366f1",
+  "background_color": "#ffffff",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["games", "education", "entertainment"],
+  "screenshots": [],
+  "lang": "en"
+}

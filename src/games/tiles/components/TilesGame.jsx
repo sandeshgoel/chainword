@@ -280,12 +280,14 @@ export default function TilesGame({ game, onArchive, archiveDate }) {
               title={tierTitles[tier]}
               details={`${best.score} / ${optimalScore} pts`}
             >
-              <button
-                onClick={() => setShowShare(true)}
-                className="w-full py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-xl transition-colors text-sm"
-              >
-                Share Result
-              </button>
+              {(!archiveDate || archiveDate === getTodayIST()) && (
+                <button
+                  onClick={() => setShowShare(true)}
+                  className="w-full py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-xl transition-colors text-sm"
+                >
+                  Share Result
+                </button>
+              )}
             </ResultBanner>
 
             <Modal open={showShare} onClose={() => setShowShare(false)} title="Share Your Result">

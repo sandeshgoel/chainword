@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { formatDate } from '../utils/wordUtils.js';
+import Modal from './Modal.jsx';
 
 export default function Header({
   activeGame,
@@ -16,6 +17,7 @@ export default function Header({
   user,
 }) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [showAbout, setShowAbout] = useState(false);
   const menuRef = useRef(null);
 
   useEffect(() => {
@@ -101,6 +103,14 @@ export default function Header({
               </button>
               <div className="border-t border-gray-100 dark:border-gray-700 my-1"></div>
               <button
+                onClick={() => { setShowAbout(true); setIsMenuOpen(false); }}
+                className="w-full flex items-center gap-3 px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors text-left"
+              >
+                <span className="text-xl flex-shrink-0">ℹ️</span>
+                <span className="text-sm font-medium text-gray-900 dark:text-white">About</span>
+              </button>
+              <div className="border-t border-gray-100 dark:border-gray-700 my-1"></div>
+              <button
                 onClick={() => { onToggleDark(); setIsMenuOpen(false); }}
                 className="w-full flex items-center gap-3 px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors text-left"
               >
@@ -180,6 +190,37 @@ export default function Header({
           )}
         </button>
       </div>
+      <Modal open={showAbout} onClose={() => setShowAbout(false)} title="About">
+        <div className="space-y-5 text-sm text-gray-700 dark:text-gray-300">
+          <div className="flex items-center justify-between">
+            <span className="font-medium text-gray-500 dark:text-gray-400">Version</span>
+            <span className="font-bold text-gray-900 dark:text-white">v1.0.0</span>
+          </div>
+          <div className="border-t border-gray-100 dark:border-gray-700" />
+          <a
+            href="https://sites.google.com/view/chainword/home"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center justify-between py-1 text-indigo-600 dark:text-indigo-400 hover:underline font-medium"
+          >
+            <span>Blog</span>
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+            </svg>
+          </a>
+          <a
+            href="https://sites.google.com/view/chainword/privacy"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center justify-between py-1 text-indigo-600 dark:text-indigo-400 hover:underline font-medium"
+          >
+            <span>View License</span>
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+            </svg>
+          </a>
+        </div>
+      </Modal>
     </header>
   );
 }

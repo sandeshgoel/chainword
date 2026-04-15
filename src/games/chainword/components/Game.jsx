@@ -3,7 +3,7 @@ import WordRow from './WordRow.jsx';
 import ResultBanner from './ResultBanner.jsx';
 import ShareModal from './ShareModal.jsx';
 import Modal from '../../../components/Modal.jsx';
-import { formatDate } from '../../../utils/wordUtils.js';
+
 
 const KEYBOARD_ROWS = [
   ['Q','W','E','R','T','Y','U','I','O','P'],
@@ -187,9 +187,6 @@ export default function Game({ game, wordListReady, hardMode, onToggleHardMode, 
 
           {/* Today's info + difficulty toggle */}
           <div className="relative w-full text-center">
-            <p className="text-xs font-bold text-gray-500 dark:text-gray-400">
-              {formatDate(dateStr)} &nbsp;•&nbsp; Daily Chainword #{gameNumber}
-            </p>
             {parSteps !== null ? (
               <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">
                 Par: {parSteps - 1} guess{parSteps - 1 !== 1 ? 'es' : ''}

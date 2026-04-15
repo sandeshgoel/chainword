@@ -50,7 +50,7 @@ function GridCell({ letter, variant, cornerNum, onClick }) {
 
   let content;
   if (variant === 'corner-empty') {
-    content = <span className="text-xs font-bold">{cornerNum}</span>;
+    content = null;
   } else if (variant === 'corner-cursor') {
     content = (
       <>
@@ -239,12 +239,6 @@ export default function SquaresGame({ game, onArchive, archiveDate }) {
 
       <div className="flex-1 overflow-y-auto">
         <div className="flex flex-col items-center gap-5 px-4 py-6 max-w-sm mx-auto w-full">
-
-          <div className="text-center">
-            <p className="text-xs font-bold text-gray-500 dark:text-gray-400">
-              {formatDate(dateStr)} &nbsp;•&nbsp; Daily Squares #{gameNumber}
-            </p>
-          </div>
 
           <p className="text-sm text-gray-500 dark:text-gray-400 text-center leading-relaxed">
             Guess the <span className="font-semibold">4 corners</span> so all four edge words are valid.

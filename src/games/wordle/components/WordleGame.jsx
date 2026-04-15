@@ -1,6 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
 import { buildWordleShareText, shareOrCopy } from '../../../utils/sharing.js';
-import { formatDate } from '../../../utils/wordUtils.js';
 
 const KEYBOARD_ROWS = [
   ['Q','W','E','R','T','Y','U','I','O','P'],
@@ -202,11 +201,7 @@ export default function WordleGame({ game, wordListReady, onArchive, archiveDate
       {/* Scrollable area: title + word grid + result card */}
       <div className="flex-1 overflow-y-auto">
         <div className="flex flex-col items-center gap-4 px-4 py-6 max-w-sm mx-auto w-full">
-          <div className="text-center mb-2">
-            <p className="text-xs font-bold text-gray-500 dark:text-gray-400">
-              {formatDate(dateStr)} &nbsp;•&nbsp; Daily 4word #{gameNumber}
-            </p>
-          </div>
+
 
           <div className="flex flex-col gap-2">
             {rows}

@@ -1,9 +1,12 @@
 import { useState, useRef, useEffect } from 'react';
+import { formatDate } from '../utils/wordUtils.js';
 
 export default function Header({
   activeGame,
   onSelectGame,
+  onHome,
   gameNumber,
+  dateStr,
   darkMode,
   onToggleDark,
   onHowToPlay,
@@ -111,12 +114,19 @@ export default function Header({
         )}
       </div>
 
-      {/* Center: title */}
-      <div className="absolute left-1/2 -translate-x-1/2">
-        <h1 className="text-xl font-extrabold tracking-tight text-gray-900 dark:text-white leading-none">
+      {/* Center: title (tapping goes home) */}
+      <button onClick={onHome} className="absolute left-1/2 -translate-x-1/2 flex flex-col items-center leading-none hover:opacity-70 transition-opacity">
+        <span className="text-xl font-extrabold tracking-tight text-gray-900 dark:text-white">
           {activeGame === '4word' ? '🔤 4word' : activeGame === 'tiles' ? '🎯 Tiles' : activeGame === 'squares' ? '🔲 Squares' : '🔗 Chainword'}
-        </h1>
-      </div>
+        </span>
+        {(gameNumber || dateStr) && (
+          <span className="text-[10px] font-semibold text-gray-400 dark:text-gray-500">
+            {dateStr ? formatDate(dateStr) : ''}
+            {gameNumber && dateStr ? '  •  ' : ''}
+            {gameNumber ? `#${gameNumber}` : ''}
+          </span>
+        )}
+      </button>
 
       {/* Right: controls */}
       <div className="flex items-center gap-1">

@@ -1,11 +1,6 @@
 import { calcScore, SLOT_MULTIPLIERS } from '../hooks/useTiles.js';
-import { formatDate } from '../../../utils/wordUtils.js';
 
 const MULTIPLIER_LABEL = { 2: 'DL', 3: 'TL' };
-const MULTIPLIER_COLOR = {
-  2: 'text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30',
-  3: 'text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/30',
-};
 const MULTIPLIER_TEXT = {
   2: 'text-blue-500 dark:text-blue-400',
   3: 'text-red-500 dark:text-red-400',
@@ -19,7 +14,7 @@ function ScrabbleTile({ letter, points, used, onClick }) {
       className={`relative w-10 h-10 rounded-lg text-base font-extrabold flex items-center justify-center select-none transition-[transform,box-shadow]
         ${used
           ? 'bg-gray-100 dark:bg-gray-800 text-gray-300 dark:text-gray-600 border border-gray-200 dark:border-gray-700 cursor-not-allowed opacity-50'
-          : 'text-amber-900 dark:text-amber-100 cursor-pointer active:translate-y-[3px]'
+          : 'text-amber-900 cursor-pointer active:translate-y-[3px]'
         }`}
       style={used ? {} : {
         background: 'linear-gradient(170deg, #fef9c3 0%, #fde68a 55%, #fbbf24 100%)',
@@ -54,7 +49,7 @@ function SlotCell({ tile, multiplier, onClick }) {
       onClick={onClick}
       className={`relative w-11 h-11 rounded-xl flex flex-col items-center justify-center text-lg font-extrabold transition-[transform,box-shadow]
         ${tile
-          ? 'text-amber-900 dark:text-amber-100 cursor-pointer active:translate-y-[3px]'
+          ? 'text-amber-900 cursor-pointer active:translate-y-[3px]'
           : 'border-2 border-dashed bg-white dark:bg-gray-800 cursor-default'
         } ${!tile && label === 'DL' ? 'border-blue-300 dark:border-blue-700'
           : !tile && label === 'TL' ? 'border-red-300 dark:border-red-700'
@@ -68,7 +63,7 @@ function SlotCell({ tile, multiplier, onClick }) {
       {tile ? (
         <>
           {tile.letter}
-          <span className="absolute bottom-0.5 right-1 text-[9px] font-bold leading-none text-amber-600 dark:text-amber-400">
+          <span className="absolute bottom-0.5 right-1 text-[9px] font-bold leading-none text-amber-700">
             {tile.points}
           </span>
           {label && (
@@ -88,8 +83,8 @@ function getTodayIST() {
 
 export default function TilesGame({ game, onArchive, archiveDate }) {
   const {
-    tiles, slots, dateStr, gameNumber,
-    error, submissions, bestScore, optimalScore, optimalWord,
+    tiles, slots,
+    error, submissions, bestScore, optimalScore,
     placeTile, removeFromSlot, clearSlots, shuffleTiles, submitWord,
   } = game;
 
@@ -102,12 +97,6 @@ export default function TilesGame({ game, onArchive, archiveDate }) {
       <div className="flex flex-col items-center gap-6 px-4 py-6 max-w-sm mx-auto w-full">
 
         {/* Header */}
-        <div className="text-center">
-          <p className="text-xs font-bold text-gray-500 dark:text-gray-400">
-            {formatDate(dateStr)} &nbsp;•&nbsp; Daily Tiles #{gameNumber}
-          </p>
-        </div>
-
         {/* Archive banner */}
         {archiveDate && archiveDate !== getTodayIST() && (
           <div className="w-full flex items-center justify-between px-3 py-2 rounded-xl bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 text-xs">

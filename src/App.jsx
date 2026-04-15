@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { Routes, Route, useLocation, useNavigate } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import { Analytics } from '@vercel/analytics/react';
 import Header from './components/Header.jsx';
@@ -11,6 +12,7 @@ import StatsModal from './components/StatsModal.jsx';
 import AuthModal from './components/AuthModal.jsx';
 import FriendsModal from './components/FriendsModal.jsx';
 import ArchiveModal from './components/ArchiveModal.jsx';
+import LandingPage from './pages/LandingPage.jsx';
 import { useAuth } from './hooks/useAuth.js';
 import { useGame } from './games/chainword/hooks/useGame.js';
 import { useWordle } from './games/wordle/hooks/useWordle.js';
@@ -30,8 +32,19 @@ function msUntilMidnightIST() {
   return nextMidnightIST - nowIST;
 }
 
+function pathToGame(pathname) {
+  if (pathname.startsWith('/chainword')) return 'chainword';
+  if (pathname.startsWith('/4word')) return '4word';
+  if (pathname.startsWith('/tiles')) return 'tiles';
+  if (pathname.startsWith('/squares')) return 'squares';
+  return null;
+}
+
 export default function App() {
-  const [activeGame, setActiveGame] = useState('chainword');
+  const location = useLocation();
+  const navigate = useNavigate();
+  const activeGame = pathToGame(location.pathname);
+
   const [darkMode, setDarkMode] = useState(() => loadTheme() === 'dark');
   const [hardMode, setHardMode] = useState(() => localStorage.getItem('chainword_hard_mode') === 'true');
   const [wordListReady, setWordListReady] = useState(false);
@@ -82,11 +95,8 @@ export default function App() {
       if (getTodayIST() !== startDate) window.location.reload();
     }
 
-    // Fire precisely at midnight IST
     const midnightTimeout = setTimeout(() => window.location.reload(), msUntilMidnightIST());
-    // Check every 5 minutes as a fallback (handles browser throttling of long timeouts)
     const minuteInterval = setInterval(checkAndReload, 30 * 60_000);
-    // Check immediately when the tab becomes visible again
     document.addEventListener('visibilitychange', checkAndReload);
 
     return () => {
@@ -96,7 +106,7 @@ export default function App() {
     };
   }, []);
 
-  // Reload when a new build is deployed (Vite content-hashes change on every build)
+  // Reload when a new build is deployed
   useEffect(() => {
     const currentScripts = [...document.querySelectorAll('script[src]')]
       .map(s => s.getAttribute('src'))
@@ -124,7 +134,6 @@ export default function App() {
     };
   }, []);
 
-
   function handleArchiveSelect(dateStr) {
     setArchiveDates(prev => ({ ...prev, [activeGame]: dateStr }));
     setShowArchive(false);
@@ -137,14 +146,40 @@ export default function App() {
     window.location.reload();
   }
 
+  // Landing page — no header/modals chrome
+  if (activeGame === null) {
+    return (
+      <div className="bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 transition-colors">
+        <Toaster position="top-center" />
+        <LandingPage
+          darkMode={darkMode}
+          onToggleDark={() => setDarkMode(d => !d)}
+          onAuth={() => setShowAuth(true)}
+          user={user}
+        />
+        <AuthModal
+          open={showAuth}
+          onClose={() => setShowAuth(false)}
+          user={user}
+          onSignIn={signInWithGoogle}
+          onSignOut={signOut}
+        />
+        <Analytics />
+      </div>
+    );
+  }
+
+  // Game pages
   return (
     <div className="h-dvh flex flex-col bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 transition-colors">
       <Toaster position="top-center" />
 
       <Header
         activeGame={activeGame}
-        onSelectGame={setActiveGame}
-        gameNumber={activeGame === 'chainword' ? game.gameNumber : wordle.gameNumber}
+        onSelectGame={g => navigate('/' + g)}
+        onHome={() => navigate('/')}
+        gameNumber={activeGame === '4word' ? wordle.gameNumber : activeGame === 'tiles' ? tiles.gameNumber : activeGame === 'squares' ? squares.gameNumber : game.gameNumber}
+        dateStr={activeGame === '4word' ? wordle.dateStr : activeGame === 'tiles' ? tiles.dateStr : activeGame === 'squares' ? squares.dateStr : game.dateStr}
         darkMode={darkMode}
         onToggleDark={() => setDarkMode(d => !d)}
         onHowToPlay={() => setShowHelp(true)}
@@ -155,39 +190,44 @@ export default function App() {
       />
 
       <main className="flex-1 overflow-hidden">
-        {activeGame === 'chainword' ? (
-          <Game
-            game={game}
-            wordListReady={wordListReady}
-            hardMode={hardMode}
-            onToggleHardMode={() => {
-              const next = !hardMode;
-              setHardMode(next);
-              localStorage.setItem('chainword_hard_mode', next ? 'true' : 'false');
-            }}
-            onArchive={() => setShowArchive(true)}
-            archiveDate={archiveDates.chainword}
-          />
-        ) : activeGame === '4word' ? (
-          <WordleGame
-            game={wordle}
-            wordListReady={wordListReady}
-            onArchive={() => setShowArchive(true)}
-            archiveDate={archiveDates['4word']}
-          />
-        ) : activeGame === 'squares' ? (
-          <SquaresGame
-            game={squares}
-            onArchive={() => setShowArchive(true)}
-            archiveDate={archiveDates.squares}
-          />
-        ) : (
-          <TilesGame
-            game={tiles}
-            onArchive={() => setShowArchive(true)}
-            archiveDate={archiveDates.tiles}
-          />
-        )}
+        <Routes>
+          <Route path="/chainword" element={
+            <Game
+              game={game}
+              wordListReady={wordListReady}
+              hardMode={hardMode}
+              onToggleHardMode={() => {
+                const next = !hardMode;
+                setHardMode(next);
+                localStorage.setItem('chainword_hard_mode', next ? 'true' : 'false');
+              }}
+              onArchive={() => setShowArchive(true)}
+              archiveDate={archiveDates.chainword}
+            />
+          } />
+          <Route path="/4word" element={
+            <WordleGame
+              game={wordle}
+              wordListReady={wordListReady}
+              onArchive={() => setShowArchive(true)}
+              archiveDate={archiveDates['4word']}
+            />
+          } />
+          <Route path="/tiles" element={
+            <TilesGame
+              game={tiles}
+              onArchive={() => setShowArchive(true)}
+              archiveDate={archiveDates.tiles}
+            />
+          } />
+          <Route path="/squares" element={
+            <SquaresGame
+              game={squares}
+              onArchive={() => setShowArchive(true)}
+              archiveDate={archiveDates.squares}
+            />
+          } />
+        </Routes>
       </main>
 
       {/* Modals */}

@@ -52,6 +52,14 @@ export default function Header({
         {isMenuOpen && (
           <div className="absolute top-full left-0 mt-2 w-56 bg-white dark:bg-gray-800 rounded-xl shadow-xl border border-gray-100 dark:border-gray-700 overflow-hidden z-20">
             <div className="py-2">
+              <button
+                onClick={() => { onHome(); setIsMenuOpen(false); }}
+                className="w-full flex items-center gap-3 px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors text-left"
+              >
+                <span className="text-xl flex-shrink-0">🏠</span>
+                <span className="text-sm font-medium text-gray-900 dark:text-white">Home</span>
+              </button>
+              <div className="border-t border-gray-100 dark:border-gray-700 my-1"></div>
               <div className="px-4 py-2 text-xs font-semibold text-gray-400 uppercase tracking-wider">
                 Games
               </div>

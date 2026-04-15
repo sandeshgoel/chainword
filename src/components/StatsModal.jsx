@@ -1,8 +1,11 @@
 import { useState } from 'react';
 import Modal from './Modal.jsx';
-import { getStars } from '../utils/wordUtils.js';
 import { getParStepsForDate } from '../games/chainword/data/dailyPairs.js';
 import { computeStreaks } from '../utils/storage.js';
+import {
+  chainwordHistTier, wordleTier, tilesTier, squaresTier,
+  TIER_CONFIG,
+} from '../utils/awards.js';
 
 function formatDate(dateStr) {
   // "2025-04-15" → "Apr 15, 2025"
@@ -26,23 +29,23 @@ function HistoryTable({ history, isChainword, isWordle, isTiles, isSquares, hard
           <tr className="bg-gray-100 dark:bg-gray-700/80 text-gray-600 dark:text-gray-300 sticky top-0">
             <th className="text-left px-3 py-2 font-semibold">Date</th>
             {isChainword && <>
-              <th className="text-center px-2 py-2 font-semibold">Stars</th>
+              <th className="text-center px-2 py-2 font-semibold">Award</th>
               <th className="text-center px-2 py-2 font-semibold">Guesses</th>
               <th className="text-center px-2 py-2 font-semibold">Hints</th>
               <th className="text-center px-2 py-2 font-semibold">Result</th>
             </>}
             {isWordle && <>
-              <th className="text-center px-2 py-2 font-semibold">Result</th>
+              <th className="text-center px-2 py-2 font-semibold">Award</th>
               <th className="text-center px-2 py-2 font-semibold">Guesses</th>
             </>}
             {isTiles && <>
+              <th className="text-center px-2 py-2 font-semibold">Award</th>
               <th className="text-center px-2 py-2 font-semibold">Score</th>
               <th className="text-center px-2 py-2 font-semibold">Optimal</th>
-              <th className="text-center px-2 py-2 font-semibold">%</th>
             </>}
             {isSquares && <>
+              <th className="text-center px-2 py-2 font-semibold">Award</th>
               <th className="text-center px-2 py-2 font-semibold">Hints Used</th>
-              <th className="text-center px-2 py-2 font-semibold">Stars</th>
             </>}
           </tr>
         </thead>
@@ -64,50 +67,47 @@ function HistoryTable({ history, isChainword, isWordle, isTiles, isSquares, hard
 
                 {isChainword && (() => {
                   const parSteps = getParStepsForDate(h.dateStr, hardMode);
-                  const stars = h.gaveUp ? 0 : getStars((h.guesses ?? 0) + (h.hintsUsed ?? 0), parSteps);
+                  const tier = chainwordHistTier(h.won, h.guesses, h.hintsUsed, parSteps);
                   return (<>
-                    <td className="text-center px-2 py-2">
-                      {h.gaveUp ? '—' : '★'.repeat(stars) + '☆'.repeat(3 - stars)}
-                    </td>
+                    <td className="text-center px-2 py-2 text-base">{TIER_CONFIG[tier].emoji}</td>
                     <td className="text-center px-2 py-2 text-gray-700 dark:text-gray-300">{h.guesses ?? '—'}</td>
                     <td className="text-center px-2 py-2 text-gray-700 dark:text-gray-300">{h.hintsUsed ?? 0}</td>
                     <td className="text-center px-2 py-2">
-                      {h.gaveUp
-                        ? <span className="text-red-500 font-medium">Gave up</span>
-                        : <span className="text-emerald-600 dark:text-emerald-400 font-medium">Won</span>}
+                      {h.won
+                        ? <span className="text-emerald-600 dark:text-emerald-400 font-medium">Won</span>
+                        : <span className="text-red-500 font-medium">Lost</span>}
                     </td>
                   </>);
                 })()}
 
-                {isWordle && (<>
-                  <td className="text-center px-2 py-2">
-                    {h.won
-                      ? <span className="text-emerald-600 dark:text-emerald-400 font-medium">Won</span>
-                      : <span className="text-red-500 font-medium">Lost</span>}
-                  </td>
-                  <td className="text-center px-2 py-2 text-gray-700 dark:text-gray-300">
-                    {h.won ? h.guesses : '—'}
-                  </td>
-                </>)}
+                {isWordle && (() => {
+                  const tier = wordleTier(h.won, h.guesses);
+                  return (<>
+                    <td className="text-center px-2 py-2 text-base">{TIER_CONFIG[tier].emoji}</td>
+                    <td className="text-center px-2 py-2 text-gray-700 dark:text-gray-300">
+                      {h.won ? h.guesses : '—'}
+                    </td>
+                  </>);
+                })()}
 
                 {isTiles && (() => {
-                  const pct = h.optimalScore > 0 ? Math.round((h.score / h.optimalScore) * 100) : 0;
                   const isOptimal = h.score >= h.optimalScore;
+                  const tier = tilesTier(h.score, h.optimalScore);
                   return (<>
+                    <td className="text-center px-2 py-2 text-base">{TIER_CONFIG[tier].emoji}</td>
                     <td className={`text-center px-2 py-2 font-medium ${isOptimal ? 'text-emerald-600 dark:text-emerald-400' : 'text-gray-700 dark:text-gray-300'}`}>
-                      {h.score}{isOptimal && ' ★'}
+                      {h.score}
                     </td>
                     <td className="text-center px-2 py-2 text-gray-500 dark:text-gray-400">{h.optimalScore}</td>
-                    <td className="text-center px-2 py-2 text-gray-700 dark:text-gray-300">{pct}%</td>
                   </>);
                 })()}
 
                 {isSquares && (() => {
                   const hints = h.hintsUsed ?? 0;
-                  const stars = Math.max(0, 3 - hints);
+                  const tier = squaresTier(hints);
                   return (<>
+                    <td className="text-center px-2 py-2 text-base">{TIER_CONFIG[tier].emoji}</td>
                     <td className="text-center px-2 py-2 text-gray-700 dark:text-gray-300">{hints}</td>
-                    <td className="text-center px-2 py-2">{'★'.repeat(stars)}{'☆'.repeat(3 - stars)}</td>
                   </>);
                 })()}
               </tr>
@@ -167,8 +167,8 @@ function TilesStats({ stats }) {
       <div className="grid grid-cols-4 gap-2">
         <StatBox value={played} label="Played" />
         <StatBox value={`${optimalRate}%`} label="Optimal" />
-        <StatBox value={currentStreak} label="Streak" />
-        <StatBox value={maxStreak} label="Best" />
+        <StatBox value={currentStreak} label="Cur Streak" />
+        <StatBox value={maxStreak} label="Best Streak" />
       </div>
 
       {recent.length > 0 && (
@@ -182,7 +182,7 @@ function TilesStats({ stats }) {
                 <div key={h.dateStr} className="flex items-center gap-2 text-sm">
                   <span className="w-24 text-xs text-gray-500 dark:text-gray-400 shrink-0 tabular-nums">
                     {h.dateStr.slice(5)}
-                    {h.score >= h.optimalScore && ' ★'}
+                    {h.score >= h.optimalScore && ' 🥇'}
                   </span>
                   <div className="flex-1 bg-gray-100 dark:bg-gray-700 rounded-full h-5 overflow-hidden">
                     <div
@@ -200,7 +200,7 @@ function TilesStats({ stats }) {
             })}
           </div>
           <p className="text-xs text-gray-400 dark:text-gray-500 mt-2 text-center">
-            Bar and % show score vs day's optimal. ★ = optimal achieved.
+            Bar shows score vs day's optimal. 🥇 = optimal achieved.
           </p>
         </div>
       )}
@@ -223,20 +223,21 @@ function SquaresStats({ stats, hintsDistribution }) {
   const distKeys = [0, 1, 2, 3, 4];
   const maxCount = Math.max(1, ...distKeys.map(k => hintsDistribution[k] || 0));
   const labels = {
-    0: '⭐⭐⭐ No hints',
-    1: '⭐⭐ 1 hint',
-    2: '⭐ 2 hints',
+    0: '🥇 No hints',
+    1: '🥈 1 hint',
+    2: '🥉 2 hints',
     3: '3 hints',
     4: '4 hints',
   };
+  const barColors = ['bg-yellow-400', 'bg-slate-400', 'bg-orange-400', 'bg-red-400', 'bg-red-400'];
 
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-4 gap-2">
         <StatBox value={played} label="Played" />
         <StatBox value={`${winRate}%`} label="Win Rate" />
-        <StatBox value={currentStreak} label="Streak" />
-        <StatBox value={maxStreak} label="Best" />
+        <StatBox value={currentStreak} label="Cur Streak" />
+        <StatBox value={maxStreak} label="Best Streak" />
       </div>
 
       <div>
@@ -250,7 +251,7 @@ function SquaresStats({ stats, hintsDistribution }) {
                 <span className="w-28 text-gray-600 dark:text-gray-400 shrink-0">{labels[k]}</span>
                 <div className="flex-1 bg-gray-100 dark:bg-gray-700 rounded-full h-5 overflow-hidden">
                   <div
-                    className="h-full bg-indigo-500 dark:bg-indigo-400 rounded-full transition-all duration-700 flex items-center justify-end pr-2"
+                    className={`h-full rounded-full transition-all duration-700 flex items-center justify-end pr-2 ${barColors[k]}`}
                     style={{ width: `${Math.max(pct, count > 0 ? 10 : 0)}%` }}
                   >
                     {count > 0 && <span className="text-xs font-bold text-white">{count}</span>}
@@ -276,24 +277,20 @@ export default function StatsModal({ open, onClose, stats, onReset, isWordle, is
   const isChainword = !isWordle && !isTiles && !isSquares;
   const history = stats.history || [];
   const played = (isTiles || isSquares) ? 0 : history.length;
-  const won = isChainword ? history.filter(h => !h.gaveUp).length
-            : isWordle    ? history.filter(h => h.won).length
-            : 0;
+  const won = history.filter(h => h.won).length;
   const { currentStreak, maxStreak } = (isTiles || isSquares) ? { currentStreak: 0, maxStreak: 0 }
-    : computeStreaks(history, isChainword ? (h => !h.gaveUp) : (h => h.won));
+    : computeStreaks(history, h => h.won);
 
   const winRate = isChainword || isWordle ? (played > 0 ? Math.round((won / played) * 100) : 0) : 0;
 
-  // Chainword: compute distribution from history in real time
+  // Chainword: compute tier distribution from history in real time
   const distribution = (() => {
     if (!isChainword) return null;
-    const dist = { 0: 0, 1: 0, 2: 0, 3: 0 };
+    const dist = { gold: 0, silver: 0, bronze: 0, unsolved: 0 };
     for (const h of (stats.history || [])) {
-      if (h.gaveUp) continue;
       const parSteps = getParStepsForDate(h.dateStr, hardMode);
-      const stars = getStars((h.guesses ?? 0) + (h.hintsUsed ?? 0), parSteps);
-      const extra = String(Math.min(Math.max(0, 3 - stars), 3));
-      dist[extra] = (dist[extra] || 0) + 1;
+      const tier = chainwordHistTier(h.won, h.guesses, h.hintsUsed, parSteps);
+      dist[tier] = (dist[tier] || 0) + 1;
     }
     return dist;
   })();
@@ -319,14 +316,21 @@ export default function StatsModal({ open, onClose, stats, onReset, isWordle, is
     return dist;
   })();
 
-  const distKeys = isWordle ? [1, 2, 3, 4, 5, 6] : [0, 1, 2, 3];
+  const TIER_KEYS = ['gold', 'silver', 'bronze', 'unsolved'];
+  const distKeys = isWordle ? [1, 2, 3, 4, 5, 6] : TIER_KEYS;
   const distData = isWordle ? wordleDistribution : distribution;
   const maxCount = (isChainword || isWordle) ? Math.max(1, ...distKeys.map(k => distData[k] || 0)) : 1;
+  const distBarColor = isWordle
+    ? k => k <= 4 ? 'bg-yellow-400' : k === 5 ? 'bg-slate-400' : 'bg-orange-400'
+    : k => ({ gold: 'bg-yellow-400', silver: 'bg-slate-400', bronze: 'bg-orange-400', unsolved: 'bg-red-400' }[k]);
   const labels = isWordle ? {
     1: '1 Guess', 2: '2 Guesses', 3: '3 Guesses',
     4: '4 Guesses', 5: '5 Guesses', 6: '6 Guesses',
   } : {
-    0: '⭐⭐⭐ Optimal', 1: '⭐⭐ Great', 2: '⭐ Good', 3: 'Completed',
+    gold: `${TIER_CONFIG.gold.emoji} Gold`,
+    silver: `${TIER_CONFIG.silver.emoji} Silver`,
+    bronze: `${TIER_CONFIG.bronze.emoji} Bronze`,
+    unsolved: `${TIER_CONFIG.unsolved.emoji} Unsolved`,
   };
 
   return (
@@ -382,8 +386,8 @@ export default function StatsModal({ open, onClose, stats, onReset, isWordle, is
                   {[
                     { value: played, label: 'Played' },
                     { value: `${winRate}%`, label: 'Win Rate' },
-                    { value: currentStreak, label: 'Streak' },
-                    { value: maxStreak, label: 'Best' },
+                    { value: currentStreak, label: 'Cur Streak' },
+                    { value: maxStreak, label: 'Best Streak' },
                   ].map(({ value, label }) => (
                     <StatBox key={label} value={value} label={label} />
                   ))}
@@ -400,7 +404,7 @@ export default function StatsModal({ open, onClose, stats, onReset, isWordle, is
                           <span className="w-28 text-gray-600 dark:text-gray-400 shrink-0">{labels[k]}</span>
                           <div className="flex-1 bg-gray-100 dark:bg-gray-700 rounded-full h-5 overflow-hidden">
                             <div
-                              className="h-full bg-indigo-500 dark:bg-indigo-400 rounded-full transition-all duration-700 flex items-center justify-end pr-2"
+                              className={`h-full rounded-full transition-all duration-700 flex items-center justify-end pr-2 ${distBarColor(k)}`}
                               style={{ width: `${Math.max(pct, count > 0 ? 10 : 0)}%` }}
                             >
                               {count > 0 && <span className="text-xs font-bold text-white">{count}</span>}

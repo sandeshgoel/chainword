@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react';
-import { formatDate } from '../../../utils/wordUtils.js';
 import { getWordSet } from '../../../words.js';
 import { buildSquaresShareText, shareOrCopy } from '../../../utils/sharing.js';
+import ResultBanner from '../../../components/ResultBanner.jsx';
+import Modal from '../../../components/Modal.jsx';
+import { squaresTier, TIER_CONFIG } from '../../../utils/awards.js';
 
 const KEYBOARD_ROWS = [
   ['Q','W','E','R','T','Y','U','I','O','P'],
@@ -174,11 +176,13 @@ export default function SquaresGame({ game, onArchive, archiveDate }) {
   } = game;
 
   const [confirmingHint, setConfirmingHint] = useState(false);
+  const [showShare, setShowShare] = useState(false);
   const [copied, setCopied] = useState(false);
 
+  const shareText = buildSquaresShareText({ gameNumber, dateStr, hintedCorners, square });
+
   async function handleShare() {
-    const text = buildSquaresShareText({ gameNumber, dateStr, hintedCorners });
-    await shareOrCopy(text, () => {
+    await shareOrCopy(shareText, () => {
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     });
@@ -273,33 +277,66 @@ export default function SquaresGame({ game, onArchive, archiveDate }) {
           )}
 
           {isWon && (() => {
-            const stars = Math.max(0, 3 - hintsUsed);
-            const starEmojis = '⭐'.repeat(stars) + (stars < 3 ? '☆'.repeat(3 - stars) : '');
-            const label = stars === 3 ? 'Perfect!' : stars === 2 ? 'Great!' : stars === 1 ? 'Good!' : 'Completed';
-            return (
-            <div className="w-full rounded-2xl bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 px-4 py-4 flex flex-col items-center gap-3">
-              <p className="text-xl font-extrabold text-emerald-700 dark:text-emerald-300">
-                All words valid — you win!
-              </p>
-              <div className="flex flex-col items-center gap-1">
-                <p className="text-2xl">{starEmojis}</p>
-                <p className="text-sm font-bold text-emerald-700 dark:text-emerald-300">{label}</p>
-                {hintsUsed > 0 && (
-                  <p className="text-xs text-gray-500 dark:text-gray-400">{hintsUsed} hint{hintsUsed !== 1 ? 's' : ''} used</p>
-                )}
-              </div>
-              <div className="text-2xl leading-none tracking-widest">
-                <div>{hintedCorners[0] ? '🟥' : '🟩'}{hintedCorners[1] ? '🟥' : '🟩'}</div>
-                <div>{hintedCorners[2] ? '🟥' : '🟩'}{hintedCorners[3] ? '🟥' : '🟩'}</div>
-              </div>
-              <button
-                onClick={handleShare}
-                className="w-full py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-xl transition-colors flex items-center justify-center gap-2"
-              >
-                {copied ? '✓ Copied!' : '↗ Share Result'}
-              </button>
-            </div>
+            const tier = squaresTier(hintsUsed);
+            const cfg = TIER_CONFIG[tier];
+            const [topW, leftW, rightW, bottomW] = square;
+            const ce = (i) => hintedCorners[i] ? '🟥' : '🟩';
+            const edgeLetter = (ch) => (
+              <span className="text-gray-600 dark:text-gray-400 text-sm font-bold">{ch.toUpperCase()}</span>
             );
+            const ResultGrid = () => (
+              <div className="grid grid-cols-4 gap-x-2 gap-y-1 text-center items-center justify-items-center font-mono leading-none">
+                <span className="text-xl">{ce(0)}</span>
+                {edgeLetter(topW[1])}
+                {edgeLetter(topW[2])}
+                <span className="text-xl">{ce(1)}</span>
+                {edgeLetter(leftW[1])}
+                <span /><span />
+                {edgeLetter(rightW[1])}
+                {edgeLetter(leftW[2])}
+                <span /><span />
+                {edgeLetter(rightW[2])}
+                <span className="text-xl">{ce(2)}</span>
+                {edgeLetter(bottomW[1])}
+                {edgeLetter(bottomW[2])}
+                <span className="text-xl">{ce(3)}</span>
+              </div>
+            );
+            return (<>
+              <ResultBanner
+                tier={tier}
+                title={hintsUsed === 0 ? 'No hints used!' : `${hintsUsed} hint${hintsUsed !== 1 ? 's' : ''} used`}
+              >
+                <button
+                  onClick={() => setShowShare(true)}
+                  className="w-full py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-xl transition-colors text-sm"
+                >
+                  Share Result
+                </button>
+              </ResultBanner>
+
+              <Modal open={showShare} onClose={() => setShowShare(false)} title="Share Your Result">
+                <div className="space-y-4">
+                  <div className="text-center space-y-2">
+                    <div className="text-3xl">{cfg.emoji}</div>
+                    <p className="text-lg font-bold text-gray-900 dark:text-white">Squares #{gameNumber}</p>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">
+                      {hintsUsed === 0 ? 'No hints used!' : `${hintsUsed} hint${hintsUsed !== 1 ? 's' : ''} used`}
+                    </p>
+                    <div className="flex justify-center pt-1"><ResultGrid /></div>
+                  </div>
+                  <div className="bg-gray-50 dark:bg-gray-700/50 rounded-xl p-4 font-mono text-xs whitespace-pre-wrap text-gray-700 dark:text-gray-300 leading-relaxed">
+                    {shareText}
+                  </div>
+                  <button
+                    onClick={handleShare}
+                    className="w-full py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-xl transition-colors"
+                  >
+                    {copied ? 'Copied!' : 'Share Result'}
+                  </button>
+                </div>
+              </Modal>
+            </>);
           })()}
 
           {/* Hint + Submit + Archive */}

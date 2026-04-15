@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import Modal from '../../../components/Modal.jsx';
 import { buildShareText, shareOrCopy } from '../../../utils/sharing.js';
-import { getStars } from '../../../utils/wordUtils.js';
+import { chainwordTier, TIER_CONFIG } from '../../../utils/awards.js';
 
 export default function ShareModal({ open, onClose, gameData }) {
   const [copied, setCopied] = useState(false);
@@ -18,16 +18,15 @@ export default function ShareModal({ open, onClose, gameData }) {
   }
 
   const guesses = userSteps - 1;
-  const stars = gaveUp ? 0 : getStars(userSteps + (hintsUsed || 0), parSteps);
+  const tier = chainwordTier(!gaveUp, userSteps, hintsUsed || 0, parSteps);
+  const cfg = TIER_CONFIG[tier];
 
   return (
     <Modal open={open} onClose={onClose} title="Share Your Result">
       <div className="space-y-4">
         {/* Result summary */}
         <div className="text-center space-y-1">
-          <div className="text-3xl">
-            {gaveUp ? '❌' : '⭐'.repeat(stars) + '☆'.repeat(3 - stars)}
-          </div>
+          <div className="text-3xl">{cfg.emoji}</div>
           <p className="text-lg font-bold text-gray-900 dark:text-white">
             {start.toUpperCase()} → {end.toUpperCase()}
           </p>

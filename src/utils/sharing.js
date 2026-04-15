@@ -1,10 +1,12 @@
-import { getStars, getScoreLabel, formatDate } from './wordUtils.js';
+import { formatDate } from './wordUtils.js';
+import { chainwordTier, squaresTier, TIER_CONFIG } from './awards.js';
+import { SLOT_MULTIPLIERS } from '../games/tiles/hooks/useTiles.js';
 
 // Build a shareable text without revealing the actual words used
 export function buildShareText({ gameNumber, dateStr, start, end, userSteps, parSteps, chain, hintsUsed, gaveUp }) {
-  const stars = gaveUp ? 0 : getStars(userSteps + (hintsUsed || 0), parSteps);
-  const starEmojis = gaveUp ? '❌' : '⭐'.repeat(stars) + (stars < 3 ? '☆'.repeat(3 - stars) : '');
-  const label = gaveUp ? 'Gave up' : getScoreLabel(stars);
+  const tier = chainwordTier(!gaveUp, userSteps, hintsUsed || 0, parSteps);
+  const cfg = TIER_CONFIG[tier];
+  const label = gaveUp ? 'Gave up' : cfg.label;
 
   // Show visual chain: each row is a word's worth of blocks.
   // 🟩 = letter unchanged from previous word, 🟨 = letter changed.
@@ -30,28 +32,38 @@ export function buildShareText({ gameNumber, dateStr, start, end, userSteps, par
   return (
     `Chainword #${gameNumber} 🔗\n` +
     `${formatDate(dateStr)}  •  ${start.toUpperCase()} → ${end.toUpperCase()}\n` +
-    `${starEmojis}  ${label}  (${stepInfo})` +
+    `${cfg.emoji}  ${label}  (${stepInfo})` +
     chainViz +
     `\n\nPlay at https://chainword-five.vercel.app`
   );
 }
 
-export function buildSquaresShareText({ gameNumber, dateStr, hintedCorners }) {
-  // 2×2 grid: TL TR / BL BR
-  // 🟩 = guessed correctly, 🟥 = revealed via hint
+export function buildSquaresShareText({ gameNumber, dateStr, hintedCorners, square }) {
   const [tl, tr, bl, br] = hintedCorners;
-  const row1 = (tl ? '🟥' : '🟩') + (tr ? '🟥' : '🟩');
-  const row2 = (bl ? '🟥' : '🟩') + (br ? '🟥' : '🟩');
+  const ce = (h) => h ? '🟥' : '🟩';
   const hintsUsed = hintedCorners.filter(Boolean).length;
-  const stars = Math.max(0, 3 - hintsUsed);
-  const starEmojis = '⭐'.repeat(stars) + (stars < 3 ? '☆'.repeat(3 - stars) : '');
-  const label = stars === 3 ? 'Perfect!' : stars === 2 ? 'Great!' : stars === 1 ? 'Good!' : 'Completed';
+  const tier = squaresTier(hintsUsed);
+  const cfg = TIER_CONFIG[tier];
+  const label = hintsUsed === 0 ? 'Perfect!' : hintsUsed === 1 ? 'Great!' : 'Completed';
+
+  let grid;
+  if (square) {
+    const [top, left, right, bottom] = square;
+    const u = (s) => s.toUpperCase();
+    grid =
+      `${ce(tl)} ${u(top[1])} ${u(top[2])} ${ce(tr)}\n` +
+      `${u(left[1])}      ${u(right[1])}\n` +
+      `${u(left[2])}      ${u(right[2])}\n` +
+      `${ce(bl)} ${u(bottom[1])} ${u(bottom[2])} ${ce(br)}`;
+  } else {
+    grid = `${ce(tl)}${ce(tr)}\n${ce(bl)}${ce(br)}`;
+  }
 
   return (
     `Squares #${gameNumber} 🔲\n` +
     `${formatDate(dateStr)}\n` +
-    `${starEmojis}  ${label}\n` +
-    `${row1}\n${row2}\n` +
+    `${cfg.emoji}  ${label}\n` +
+    `${grid}\n` +
     `\nPlay at https://chainword-five.vercel.app`
   );
 }
@@ -80,6 +92,24 @@ export async function shareOrCopy(text, onCopied) {
     document.body.removeChild(el);
     onCopied?.();
   }
+}
+
+export function buildTilesShareText({ gameNumber, dateStr, bestScore, optimalScore, bestWord }) {
+  const isOptimal = bestScore >= optimalScore;
+  const tier = isOptimal ? 'gold' : (optimalScore > 0 && bestScore / optimalScore >= 0.75) ? 'silver' : 'bronze';
+  const cfg = TIER_CONFIG[tier];
+  const label = isOptimal ? 'Optimal!' : cfg.label;
+
+  // Visual: show multiplier squares for the 4 slots
+  const slotViz = SLOT_MULTIPLIERS.map(m => m === 3 ? '🟥' : m === 2 ? '🟦' : '⬜').join('');
+
+  return (
+    `Tiles #${gameNumber} 🎯\n` +
+    `${formatDate(dateStr)}\n` +
+    `${cfg.emoji}  ${label}  (${bestScore} / ${optimalScore} pts)\n` +
+    `${slotViz}  ${bestWord}\n` +
+    `\nPlay at https://chainword-five.vercel.app`
+  );
 }
 
 export function buildWordleShareText({ gameNumber, dateStr, guesses, status }) {

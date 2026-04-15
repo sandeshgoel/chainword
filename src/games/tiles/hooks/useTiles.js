@@ -92,6 +92,18 @@ export function useTiles(overrideDateStr = null, user = null, statsVersion = 0) 
     localStorage.setItem(key, JSON.stringify({ submissions: newSubmissions, bestScore: newBest }));
   }, [dateStr]);
 
+  // Clear a single slot without compacting (for animated tile removal)
+  function clearSlotAt(index) {
+    setSlots(prev => {
+      const tile = prev[index];
+      if (!tile) return prev;
+      setTiles(t => t.map(t2 => t2.id === tile.id ? { ...t2, used: false } : t2));
+      const next = [...prev];
+      next[index] = null;
+      return next;
+    });
+  }
+
   function placeTile(tileId) {
     const emptySlot = slots.findIndex(s => s === null);
     if (emptySlot === -1) return;
@@ -150,6 +162,10 @@ export function useTiles(overrideDateStr = null, user = null, statsVersion = 0) 
       return false;
     }
 
+    if (submissions.some(s => s.word === word.toUpperCase())) {
+      return 'duplicate';
+    }
+
     const score = calcScore(slots);
     const newSub = { word: word.toUpperCase(), score, slots: slots.map(t => ({ ...t })) };
     const newSubmissions = [...submissions, newSub];
@@ -185,6 +201,7 @@ export function useTiles(overrideDateStr = null, user = null, statsVersion = 0) 
     clearSlots,
     shuffleTiles,
     submitWord,
+    clearSlotAt,
     setError,
   };
 }

@@ -1,5 +1,8 @@
 import { useState, useRef, useEffect } from 'react';
 import { buildWordleShareText, shareOrCopy } from '../../../utils/sharing.js';
+import ResultBanner from '../../../components/ResultBanner.jsx';
+import Modal from '../../../components/Modal.jsx';
+import { wordleTier, TIER_CONFIG } from '../../../utils/awards.js';
 
 const KEYBOARD_ROWS = [
   ['Q','W','E','R','T','Y','U','I','O','P'],
@@ -114,6 +117,7 @@ function getTodayIST() {
 export default function WordleGame({ game, wordListReady, onArchive, archiveDate }) {
   const { target, dateStr, gameNumber, guesses, status, error, submitGuess, setError } = game;
   const [inputValue, setInputValue] = useState('');
+  const [showShare, setShowShare] = useState(false);
   const [copied, setCopied] = useState(false);
   const inputRef = useRef(null);
   const currentRowRef = useRef(null);
@@ -172,9 +176,12 @@ export default function WordleGame({ game, wordListReady, onArchive, archiveDate
 
   const letterStates = getLetterStates(guesses);
 
+  const shareText = status !== 'playing'
+    ? buildWordleShareText({ gameNumber, dateStr, guesses, status })
+    : '';
+
   async function handleShare() {
-    const text = buildWordleShareText({ gameNumber, dateStr, guesses, status });
-    await shareOrCopy(text, () => {
+    await shareOrCopy(shareText, () => {
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     });
@@ -216,35 +223,53 @@ export default function WordleGame({ game, wordListReady, onArchive, archiveDate
           )}
 
           {status !== 'playing' && (
-            <div className={`mt-4 p-6 rounded-2xl w-full flex flex-col items-center text-center ${status === 'won' ? 'bg-green-50 dark:bg-green-900/20' : 'bg-red-50 dark:bg-red-900/20'}`}>
-              <h2 className={`text-2xl font-black mb-2 ${status === 'won' ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
-                {status === 'won' ? 'You got it!' : 'Game Over'}
-              </h2>
-              <p className="text-gray-600 dark:text-gray-300 font-medium mb-4">
-                {status === 'won' ? `Number of guesses: ${guesses.length} / 6` : `The word was ${target.toUpperCase()}`}
-              </p>
-              <button
-                onClick={handleShare}
-                className={`w-full py-3 ${status === 'won' ? 'bg-green-600 hover:bg-green-700' : 'bg-red-600 hover:bg-red-700'} text-white font-semibold rounded-xl transition-colors flex items-center justify-center gap-2`}
+            <div className="mt-4 w-full">
+              <ResultBanner
+                tier={wordleTier(status === 'won', guesses.length)}
+                title={status === 'won' ? 'You got it!' : 'Game Over'}
+                details={status === 'won' ? `In ${guesses.length} / 6` : `The word was ${target.toUpperCase()}`}
               >
-                {copied ? (
-                  <>
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                    </svg>
-                    Copied!
-                  </>
-                ) : (
-                  <>
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
-                    </svg>
-                    Share Result
-                  </>
-                )}
-              </button>
+                <button
+                  onClick={() => setShowShare(true)}
+                  className="w-full py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-xl transition-colors flex items-center justify-center gap-2 text-sm"
+                >
+                  Share Result
+                </button>
+              </ResultBanner>
             </div>
           )}
+
+          {/* Share modal */}
+          {status !== 'playing' && (() => {
+            const tier = wordleTier(status === 'won', guesses.length);
+            const cfg = TIER_CONFIG[tier];
+            return (
+              <Modal open={showShare} onClose={() => setShowShare(false)} title="Share Your Result">
+                <div className="space-y-4">
+                  <div className="text-center space-y-1">
+                    <div className="text-3xl">{cfg.emoji}</div>
+                    <p className="text-lg font-bold text-gray-900 dark:text-white">
+                      4word #{gameNumber}
+                    </p>
+                    <p className="text-sm text-gray-500 dark:text-gray-400">
+                      {status === 'won'
+                        ? `Solved in ${guesses.length} / 6`
+                        : `The word was ${target.toUpperCase()}`}
+                    </p>
+                  </div>
+                  <div className="bg-gray-50 dark:bg-gray-700/50 rounded-xl p-4 font-mono text-xs whitespace-pre-wrap text-gray-700 dark:text-gray-300 leading-relaxed">
+                    {shareText}
+                  </div>
+                  <button
+                    onClick={handleShare}
+                    className="w-full py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-xl transition-colors flex items-center justify-center gap-2"
+                  >
+                    {copied ? 'Copied!' : 'Share Result'}
+                  </button>
+                </div>
+              </Modal>
+            );
+          })()}
           {/* Archive button */}
           <button
             onClick={onArchive}

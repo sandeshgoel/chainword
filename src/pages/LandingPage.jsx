@@ -1,5 +1,7 @@
 import { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { chainwordHistTier, wordleTier, tilesTier, squaresTier, TIER_CONFIG } from '../utils/awards.js';
+import { getParStepsForDate } from '../games/chainword/data/dailyPairs.js';
 
 const GAMES = [
   {
@@ -52,34 +54,45 @@ function getTodayIST() {
   return new Date(Date.now() + 5.5 * 60 * 60 * 1000).toISOString().split('T')[0];
 }
 
-// Returns 'done' | 'started' | 'new'
+// Returns a tier string ('gold'|'silver'|'bronze'|'unsolved') for finished games,
+// or 'started' | 'new'
 function getGameStatus(gameId, dateStr) {
   try {
     if (gameId === 'chainword') {
+      // Check easy stats first, then hard
+      const stats = JSON.parse(localStorage.getItem('braingym_chainword_stats') || 'null');
+      const entry = stats?.history?.find(h => h.dateStr === dateStr);
+      if (entry) return chainwordHistTier(entry.won, entry.guesses, entry.hintsUsed, getParStepsForDate(dateStr, false));
+      const hardStats = JSON.parse(localStorage.getItem('braingym_chainword_hard_stats') || 'null');
+      const hardEntry = hardStats?.history?.find(h => h.dateStr === dateStr);
+      if (hardEntry) return chainwordHistTier(hardEntry.won, hardEntry.guesses, hardEntry.hintsUsed, getParStepsForDate(dateStr, true));
+      // Not finished — check if in progress
       const all = JSON.parse(localStorage.getItem('chainword_progress') || '{}');
-      const easy = all[dateStr];
-      const hard = all[dateStr + '_hard'];
-      if (easy?.status === 'won' || easy?.status === 'gaveUp' ||
-          hard?.status === 'won' || hard?.status === 'gaveUp') return 'done';
-      if (easy?.chain?.length > 1 || hard?.chain?.length > 1) return 'started';
+      if (all[dateStr]?.chain?.length > 1 || all[dateStr + '_hard']?.chain?.length > 1) return 'started';
     } else if (gameId === '4word') {
+      const stats = JSON.parse(localStorage.getItem('braingym_wordle_stats') || 'null');
+      const entry = stats?.history?.find(h => h.dateStr === dateStr);
+      if (entry) return wordleTier(entry.won, entry.guesses);
       const saved = JSON.parse(localStorage.getItem('chainword_wordle_' + dateStr) || 'null');
-      if (saved?.status === 'won' || saved?.status === 'lost') return 'done';
       if (saved?.guesses?.length > 0) return 'started';
     } else if (gameId === 'tiles') {
       const stats = JSON.parse(localStorage.getItem('braingym_tiles_stats') || 'null');
       const entry = stats?.history?.find(h => h.dateStr === dateStr);
-      if (entry?.score >= entry?.optimalScore) return 'done';
+      if (entry) return tilesTier(entry.score, entry.optimalScore);
       const saved = JSON.parse(localStorage.getItem('chainword_tiles_' + dateStr) || 'null');
       if (saved?.submissions?.length > 0) return 'started';
     } else if (gameId === 'squares') {
+      const stats = JSON.parse(localStorage.getItem('braingym_squares_stats') || 'null');
+      const entry = stats?.history?.find(h => h.dateStr === dateStr);
+      if (entry) return squaresTier(entry.hintsUsed ?? 0);
       const saved = JSON.parse(localStorage.getItem('chainword_squares_' + dateStr) || 'null');
-      if (saved?.status === 'won') return 'done';
       if (saved?.attempts > 0) return 'started';
     }
   } catch {}
   return 'new';
 }
+
+const TIER_KEYS = new Set(['gold', 'silver', 'bronze', 'unsolved']);
 
 function BrainGraphic() {
   return (
@@ -127,7 +140,7 @@ function GameTile({ game, status, onClick }) {
       style={{ perspective: '800px' }}
     >
       <div
-        className="relative rounded-2xl p-5 transition-all duration-300 ease-out"
+        className="relative rounded-2xl px-2.5 py-2.5 transition-all duration-300 ease-out"
         style={{
           background: `linear-gradient(135deg, ${game.from} 0%, ${game.to} 100%)`,
           boxShadow: `0 8px 0 ${game.shadow}, 0 12px 24px rgba(0,0,0,0.25)`,
@@ -152,11 +165,9 @@ function GameTile({ game, status, onClick }) {
         }}
       >
         {/* Status indicator */}
-        {status === 'done' && (
-          <div className="absolute top-3 right-3 w-6 h-6 rounded-full bg-white/30 flex items-center justify-center">
-            <svg className="w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" strokeWidth="3" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-            </svg>
+        {TIER_KEYS.has(status) && (
+          <div className="absolute top-3 right-5 text-xl leading-none">
+            {TIER_CONFIG[status].emoji}
           </div>
         )}
         {status === 'started' && (
@@ -172,7 +183,7 @@ function GameTile({ game, status, onClick }) {
         </span>
 
         {/* Emoji + Name */}
-        <div className="flex items-center gap-2 mb-2">
+        <div className="flex items-center gap-2 mb-2 pr-8">
           <span className="text-3xl">{game.emoji}</span>
           <span className="text-xl font-black text-white tracking-tight">{game.name}</span>
         </div>

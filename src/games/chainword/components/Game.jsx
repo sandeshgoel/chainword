@@ -1,8 +1,9 @@
 import { useState, useRef, useEffect } from 'react';
 import WordRow from './WordRow.jsx';
-import ResultBanner from './ResultBanner.jsx';
+import ResultBanner from '../../../components/ResultBanner.jsx';
 import ShareModal from './ShareModal.jsx';
 import Modal from '../../../components/Modal.jsx';
+import { chainwordTier } from '../../../utils/awards.js';
 
 
 const KEYBOARD_ROWS = [
@@ -266,16 +267,41 @@ export default function Game({ game, wordListReady, hardMode, onToggleHardMode, 
           )}
 
           {/* Result banner */}
-          {isFinished && (
-            <ResultBanner
-              status={status}
-              userSteps={userSteps}
-              parSteps={parSteps}
-              hintsUsed={hintsUsed}
-              optimalPath={status === 'gaveUp' ? optimalPath : null}
-              onShare={() => setShowShare(true)}
-            />
-          )}
+          {isFinished && (() => {
+            const tier = chainwordTier(status === 'won', userSteps, hintsUsed, parSteps);
+            const detailParts = [];
+            if (status === 'won') {
+              const steps = userSteps - 1;
+              detailParts.push(`${steps} guess${steps !== 1 ? 'es' : ''}`);
+              if (hintsUsed > 0) detailParts.push(`${hintsUsed} hint${hintsUsed !== 1 ? 's' : ''}`);
+            }
+            return (
+              <ResultBanner
+                tier={tier}
+                title={status === 'won' ? 'Well done!' : "Couldn't solve it"}
+                details={detailParts.join(' · ')}
+              >
+                {status === 'gaveUp' && optimalPath && (
+                  <div className="text-sm text-gray-600 dark:text-gray-400">
+                    <p className="font-medium mb-1">Optimal solution ({optimalPath.length - 2} step{optimalPath.length - 2 !== 1 ? 's' : ''}):</p>
+                    <div className="flex flex-wrap justify-center gap-1">
+                      {optimalPath.map((w, i) => (
+                        <span key={i} className="font-mono font-bold text-sm">
+                          {w.toUpperCase()}{i < optimalPath.length - 1 ? ' →' : ''}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                <button
+                  onClick={() => setShowShare(true)}
+                  className="px-5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-xl text-sm transition-colors"
+                >
+                  Share Result
+                </button>
+              </ResultBanner>
+            );
+          })()}
 
           {/* Archive button */}
           <button

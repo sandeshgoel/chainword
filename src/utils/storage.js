@@ -124,14 +124,14 @@ export function saveStats({ history }, key = CHAINWORD_STATS_KEY) {
 
 export function updateStatsOnWin(guesses, hintsUsed, dateStr, key = CHAINWORD_STATS_KEY) {
   const { history } = loadStats(key);
-  upsertHistory(history, { dateStr, guesses, hintsUsed, gaveUp: false, playedDate: getTodayIST() });
+  upsertHistory(history, { dateStr, guesses, hintsUsed, won: true, playedDate: getTodayIST() });
   saveStats({ history }, key);
   return { history };
 }
 
 export function updateStatsOnGiveUp(guesses, hintsUsed, dateStr, key = CHAINWORD_STATS_KEY) {
   const { history } = loadStats(key);
-  upsertHistory(history, { dateStr, guesses, hintsUsed, gaveUp: true, playedDate: getTodayIST() });
+  upsertHistory(history, { dateStr, guesses, hintsUsed, won: false, playedDate: getTodayIST() });
   saveStats({ history }, key);
   return { history };
 }

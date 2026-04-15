@@ -52,8 +52,8 @@ export function buildSquaresShareText({ gameNumber, dateStr, hintedCorners, squa
     const u = (s) => s.toUpperCase();
     grid =
       `${ce(tl)} ${u(top[1])} ${u(top[2])} ${ce(tr)}\n` +
-      `${u(left[1])}      ${u(right[1])}\n` +
-      `${u(left[2])}      ${u(right[2])}\n` +
+      `${u(left[1])}` + "\u00A0".repeat(6) + `${u(right[1])}\n` +
+      `${u(left[2])}` + "\u00A0".repeat(6) + `${u(right[2])}\n` +
       `${ce(bl)} ${u(bottom[1])} ${u(bottom[2])} ${ce(br)}`;
   } else {
     grid = `${ce(tl)}${ce(tr)}\n${ce(bl)}${ce(br)}`;

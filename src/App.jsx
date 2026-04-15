@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Toaster, toast } from 'react-hot-toast';
+import { Toaster } from 'react-hot-toast';
 import { Analytics } from '@vercel/analytics/react';
 import Header from './components/Header.jsx';
 import Game from './games/chainword/components/Game.jsx';
@@ -85,7 +85,7 @@ export default function App() {
     // Fire precisely at midnight IST
     const midnightTimeout = setTimeout(() => window.location.reload(), msUntilMidnightIST());
     // Check every 5 minutes as a fallback (handles browser throttling of long timeouts)
-    const minuteInterval = setInterval(checkAndReload, 5 * 60_000);
+    const minuteInterval = setInterval(checkAndReload, 30 * 60_000);
     // Check immediately when the tab becomes visible again
     document.addEventListener('visibilitychange', checkAndReload);
 
@@ -115,7 +115,7 @@ export default function App() {
       } catch {}
     }
 
-    const interval = setInterval(checkForNewVersion, 5 * 60_000);
+    const interval = setInterval(checkForNewVersion, 30 * 60_000);
     document.addEventListener('visibilitychange', checkForNewVersion);
 
     return () => {

@@ -1,4 +1,4 @@
-import { SQUARES } from '../../../../util/squares.js';
+import { SQUARES } from './squares.js';
 
 const BASE_EPOCH_DAY = 20555; // same base as other games
 

@@ -301,6 +301,10 @@ export default function LandingPage({ darkMode, onToggleDark, onAuth, user }) {
       {/* About modal */}
       <Modal open={showAbout} onClose={() => setShowAbout(false)} title="About">
         <div className="space-y-5 text-sm text-gray-700 dark:text-gray-300">
+          <p className="text-gray-600 dark:text-gray-400 leading-relaxed">
+            Brain Gym is a growing suite of daily word puzzles. Chainword was our first.
+          </p>
+          <div className="border-t border-gray-100 dark:border-gray-700" />
           <div className="flex items-center justify-between">
             <span className="font-medium text-gray-500 dark:text-gray-400">Version</span>
             <span className="font-bold text-gray-900 dark:text-white">v1.0.0</span>
@@ -341,12 +345,15 @@ export default function LandingPage({ darkMode, onToggleDark, onAuth, user }) {
       </div>
 
       {/* Game tiles */}
-      <div className="flex-1 px-4 pb-10 max-w-sm mx-auto w-full">
+      <div className="flex-1 px-4 pb-6 max-w-sm mx-auto w-full">
         <div className="grid grid-cols-2 gap-4">
           {GAMES.map(game => (
             <GameTile key={game.id} game={game} status={statuses[game.id]} onClick={() => navigate(game.route)} />
           ))}
         </div>
+        <p className="text-center text-xs text-gray-400 dark:text-gray-500 mt-6 pb-2">
+          Brain Gym · Free daily word puzzles
+        </p>
       </div>
 
     </div>

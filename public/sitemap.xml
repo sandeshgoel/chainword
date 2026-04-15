@@ -1,27 +1,27 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
-    <loc>https://chainword-five.vercel.app/</loc>
+    <loc>https://www.chainword.in/</loc>
     <changefreq>daily</changefreq>
     <priority>1.0</priority>
   </url>
   <url>
-    <loc>https://chainword-five.vercel.app/chainword</loc>
+    <loc>https://www.chainword.in/chainword</loc>
     <changefreq>daily</changefreq>
     <priority>0.9</priority>
   </url>
   <url>
-    <loc>https://chainword-five.vercel.app/4word</loc>
+    <loc>https://www.chainword.in/4word</loc>
     <changefreq>daily</changefreq>
     <priority>0.9</priority>
   </url>
   <url>
-    <loc>https://chainword-five.vercel.app/tiles</loc>
+    <loc>https://www.chainword.in/tiles</loc>
     <changefreq>daily</changefreq>
     <priority>0.9</priority>
   </url>
   <url>
-    <loc>https://chainword-five.vercel.app/squares</loc>
+    <loc>https://www.chainword.in/squares</loc>
     <changefreq>daily</changefreq>
     <priority>0.9</priority>
   </url>

@@ -34,7 +34,7 @@ export function buildShareText({ gameNumber, dateStr, start, end, userSteps, par
     `${formatDate(dateStr)}  •  ${start.toUpperCase()} → ${end.toUpperCase()}\n` +
     `${cfg.emoji}  ${label}  (${stepInfo})` +
     chainViz +
-    `\n\nPlay at https://chainword-five.vercel.app`
+    `\n\nPlay at https://www.chainword.in`
   );
 }
 
@@ -64,7 +64,7 @@ export function buildSquaresShareText({ gameNumber, dateStr, hintedCorners, squa
     `${formatDate(dateStr)}\n` +
     `${cfg.emoji}  ${label}\n` +
     `${grid}\n` +
-    `\nPlay at https://chainword-five.vercel.app`
+    `\nPlay at https://www.chainword.in`
   );
 }
 
@@ -108,7 +108,7 @@ export function buildTilesShareText({ gameNumber, dateStr, bestScore, optimalSco
     `${formatDate(dateStr)}\n` +
     `${cfg.emoji}  ${label}  (${bestScore} / ${optimalScore} pts)\n` +
     `${slotViz}  ${bestWord}\n` +
-    `\nPlay at https://chainword-five.vercel.app`
+    `\nPlay at https://www.chainword.in`
   );
 }
 
@@ -126,6 +126,6 @@ export function buildWordleShareText({ gameNumber, dateStr, guesses, status }) {
     text += row + '\n';
   }
 
-  text += `\nPlay at https://chainword-five.vercel.app/`;
+  text += `\nPlay at https://www.chainword.in/`;
   return text;
 }

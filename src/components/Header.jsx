@@ -192,6 +192,10 @@ export default function Header({
       </div>
       <Modal open={showAbout} onClose={() => setShowAbout(false)} title="About">
         <div className="space-y-5 text-sm text-gray-700 dark:text-gray-300">
+          <p className="text-gray-600 dark:text-gray-400 leading-relaxed">
+            Brain Gym is a growing suite of daily word puzzles. Chainword was our first.
+          </p>
+          <div className="border-t border-gray-100 dark:border-gray-700" />
           <div className="flex items-center justify-between">
             <span className="font-medium text-gray-500 dark:text-gray-400">Version</span>
             <span className="font-bold text-gray-900 dark:text-white">v1.0.0</span>

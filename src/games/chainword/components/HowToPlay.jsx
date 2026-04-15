@@ -30,15 +30,15 @@ function ChainwordHelp() {
       <ul className="space-y-1 list-disc list-inside">
         <li>Change <strong>exactly one letter</strong> per step.</li>
         <li>Every word must be valid.</li>
-        <li>Fewer steps = better score. Each puzzle has a <strong>par</strong>.</li>
+        <li>Fewer steps = better score.</li>
         <li>Use a <strong>💡 Hint</strong> to reveal the next optimal word (+1 to score).</li>
       </ul>
 
       <div className="bg-indigo-50 dark:bg-indigo-900/30 rounded-xl p-3 space-y-1">
         <p className="font-semibold text-gray-900 dark:text-white">Scoring</p>
-        <p>⭐⭐⭐ Par or better</p>
-        <p>⭐⭐ +1 step over par</p>
-        <p>⭐ +2 steps over par</p>
+        <p>⭐⭐⭐ Optimal</p>
+        <p>⭐⭐ +1 step</p>
+        <p>⭐ +2 steps</p>
         <p>Completed: +3 or more</p>
       </div>
 

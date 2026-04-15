@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { getDailySquare } from '../data/dailySquares.js';
 import { getWordSet } from '../../../words.js';
 import { loadSquaresStats, updateSquaresStats } from '../../../utils/storage.js';
+import { pushCloudStats } from '../../../utils/cloudStats.js';
 
 function loadState(dateStr) {
   try {
@@ -17,7 +18,7 @@ function saveState(dateStr, data) {
 
 const EMPTY_SLOTS = ['', '', '', ''];
 
-export function useSquares(overrideDateStr = null) {
+export function useSquares(overrideDateStr = null, user = null, statsVersion = 0) {
   const { square, dateStr, gameNumber } = getDailySquare(overrideDateStr);
   const [top, left, right, bottom] = square;
 
@@ -36,6 +37,8 @@ export function useSquares(overrideDateStr = null) {
   const [hintedCorners, setHintedCorners] = useState(() => loadState(dateStr)?.hintedCorners || [false, false, false, false]);
   const [hintsUsed, setHintsUsed] = useState(() => loadState(dateStr)?.hintsUsed || 0);
   const [stats, setStats] = useState(() => loadSquaresStats());
+
+  useEffect(() => { setStats(loadSquaresStats()); }, [statsVersion]);
 
   // Reset state when date changes (archive navigation)
   useEffect(() => {
@@ -179,6 +182,7 @@ export function useSquares(overrideDateStr = null) {
       persist('won', [tl, tr, bl, br], newAttempts, [...EMPTY_SLOTS], hintedCorners, hintsUsed);
       const newStats = updateSquaresStats(dateStr, hintsUsed);
       setStats(newStats);
+      if (user) pushCloudStats(user.uid, 'squares', newStats.history).catch(console.error);
     } else {
       setFeedback({
         letters: [tl, tr, bl, br],

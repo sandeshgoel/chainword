@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { getDailyTiles } from '../data/dailyTiles.js';
 import { getWordSet } from '../../../words.js';
 import { loadTilesStats, updateTilesStats } from '../../../utils/storage.js';
+import { pushCloudStats } from '../../../utils/cloudStats.js';
 
 // Slot multipliers: positions 0-3 → ×1, ×2 (DL), ×1, ×3 (TL)
 export const SLOT_MULTIPLIERS = [1, 2, 1, 3];
@@ -51,7 +52,7 @@ function findOptimalPlay(tiles) {
   return { optimalScore, optimalWord };
 }
 
-export function useTiles(overrideDateStr = null) {
+export function useTiles(overrideDateStr = null, user = null, statsVersion = 0) {
   const { tiles: dailyTiles, dateStr, gameNumber } = getDailyTiles(overrideDateStr);
 
   const [tiles, setTiles] = useState(() => dailyTiles.map(t => ({ ...t, used: false })));
@@ -60,6 +61,8 @@ export function useTiles(overrideDateStr = null) {
   const [submissions, setSubmissions] = useState([]);
   const [bestScore, setBestScore] = useState(0);
   const [stats, setStats] = useState(loadTilesStats());
+
+  useEffect(() => { setStats(loadTilesStats()); }, [statsVersion]);
 
   const { optimalScore, optimalWord } = findOptimalPlay(dailyTiles);
 
@@ -158,7 +161,9 @@ export function useTiles(overrideDateStr = null) {
     persist(newSubmissions, newBest);
 
     if (score >= newBest) {
-      setStats(updateTilesStats(dateStr, newBest, optimalScore));
+      const newStats = updateTilesStats(dateStr, newBest, optimalScore);
+      setStats(newStats);
+      if (user) pushCloudStats(user.uid, 'tiles', newStats.history).catch(console.error);
     }
 
     return true;

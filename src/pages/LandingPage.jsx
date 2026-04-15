@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 const GAMES = [
@@ -47,6 +48,39 @@ const GAMES = [
   },
 ];
 
+function getTodayIST() {
+  return new Date(Date.now() + 5.5 * 60 * 60 * 1000).toISOString().split('T')[0];
+}
+
+// Returns 'done' | 'started' | 'new'
+function getGameStatus(gameId, dateStr) {
+  try {
+    if (gameId === 'chainword') {
+      const all = JSON.parse(localStorage.getItem('chainword_progress') || '{}');
+      const easy = all[dateStr];
+      const hard = all[dateStr + '_hard'];
+      if (easy?.status === 'won' || easy?.status === 'gaveUp' ||
+          hard?.status === 'won' || hard?.status === 'gaveUp') return 'done';
+      if (easy?.chain?.length > 1 || hard?.chain?.length > 1) return 'started';
+    } else if (gameId === '4word') {
+      const saved = JSON.parse(localStorage.getItem('chainword_wordle_' + dateStr) || 'null');
+      if (saved?.status === 'won' || saved?.status === 'lost') return 'done';
+      if (saved?.guesses?.length > 0) return 'started';
+    } else if (gameId === 'tiles') {
+      const stats = JSON.parse(localStorage.getItem('braingym_tiles_stats') || 'null');
+      const entry = stats?.history?.find(h => h.dateStr === dateStr);
+      if (entry?.score >= entry?.optimalScore) return 'done';
+      const saved = JSON.parse(localStorage.getItem('chainword_tiles_' + dateStr) || 'null');
+      if (saved?.submissions?.length > 0) return 'started';
+    } else if (gameId === 'squares') {
+      const saved = JSON.parse(localStorage.getItem('chainword_squares_' + dateStr) || 'null');
+      if (saved?.status === 'won') return 'done';
+      if (saved?.attempts > 0) return 'started';
+    }
+  } catch {}
+  return 'new';
+}
+
 function BrainGraphic() {
   return (
     <svg viewBox="0 0 120 100" className="w-32 h-28" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -85,7 +119,7 @@ function BrainGraphic() {
   );
 }
 
-function GameTile({ game, onClick }) {
+function GameTile({ game, status, onClick }) {
   return (
     <button
       onClick={onClick}
@@ -117,6 +151,20 @@ function GameTile({ game, onClick }) {
           e.currentTarget.style.boxShadow = `0 12px 0 ${game.shadow}, 0 18px 32px rgba(0,0,0,0.3)`;
         }}
       >
+        {/* Status indicator */}
+        {status === 'done' && (
+          <div className="absolute top-3 right-3 w-6 h-6 rounded-full bg-white/30 flex items-center justify-center">
+            <svg className="w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" strokeWidth="3" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+            </svg>
+          </div>
+        )}
+        {status === 'started' && (
+          <div className="absolute top-3 right-3 w-6 h-6 flex items-center justify-center">
+            <span className="w-2.5 h-2.5 rounded-full bg-white/70 animate-pulse" />
+          </div>
+        )}
+
         {/* Badge */}
         <span className="inline-block text-[10px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-full mb-3"
           style={{ background: 'rgba(255,255,255,0.2)', color: 'rgba(255,255,255,0.9)' }}>
@@ -141,6 +189,11 @@ function GameTile({ game, onClick }) {
 
 export default function LandingPage({ darkMode, onToggleDark, onAuth, user }) {
   const navigate = useNavigate();
+  const todayIST = useMemo(() => getTodayIST(), []);
+  const statuses = useMemo(
+    () => Object.fromEntries(GAMES.map(g => [g.id, getGameStatus(g.id, todayIST)])),
+    [todayIST]
+  );
 
   return (
     <div className="min-h-dvh bg-gradient-to-b from-indigo-50 to-white dark:from-gray-900 dark:to-gray-800 flex flex-col">
@@ -189,7 +242,7 @@ export default function LandingPage({ darkMode, onToggleDark, onAuth, user }) {
       <div className="flex-1 px-4 pb-10 max-w-sm mx-auto w-full">
         <div className="grid grid-cols-2 gap-4">
           {GAMES.map(game => (
-            <GameTile key={game.id} game={game} onClick={() => navigate(game.route)} />
+            <GameTile key={game.id} game={game} status={statuses[game.id]} onClick={() => navigate(game.route)} />
           ))}
         </div>
       </div>

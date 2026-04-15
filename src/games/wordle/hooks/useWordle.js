@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { getDailyWordleTarget, getWordSet } from '../../../words.js';
 import { loadWordleStats, updateWordleStats } from '../../../utils/storage.js';
+import { pushCloudStats } from '../../../utils/cloudStats.js';
 
 function evaluateGuess(guess, target) {
   const result = Array(4).fill('gray');
@@ -30,13 +31,15 @@ function evaluateGuess(guess, target) {
   return result;
 }
 
-export function useWordle(wordListReady, overrideDateStr = null) {
+export function useWordle(wordListReady, overrideDateStr = null, user = null, statsVersion = 0) {
   const { target, dateStr, gameNumber } = getDailyWordleTarget(overrideDateStr);
 
   const [guesses, setGuesses] = useState([]); // array of { word, colors }
   const [status, setStatus] = useState('playing'); // playing | won | lost
   const [error, setError] = useState('');
   const [stats, setStats] = useState(loadWordleStats());
+
+  useEffect(() => { setStats(loadWordleStats()); }, [statsVersion]);
 
   // Load from local storage
   useEffect(() => {
@@ -93,10 +96,10 @@ export function useWordle(wordListReady, overrideDateStr = null) {
     setStatus(newStatus);
     persist(newGuesses, newStatus);
 
-    if (newStatus === 'won') {
-      setStats(updateWordleStats(newGuesses.length, dateStr));
-    } else if (newStatus === 'lost') {
-      setStats(updateWordleStats(0, dateStr));
+    if (newStatus === 'won' || newStatus === 'lost') {
+      const newStats = updateWordleStats(newStatus === 'won' ? newGuesses.length : 0, dateStr);
+      setStats(newStats);
+      if (user) pushCloudStats(user.uid, '4word', newStats.history).catch(console.error);
     }
 
     return true;

@@ -1,0 +1,119 @@
+import { doc, getDoc, setDoc, deleteDoc, collection, getDocs, serverTimestamp } from 'firebase/firestore';
+import { db, firebaseConfigured } from '../firebase.js';
+import { getGameHistory, setGameHistory } from './storage.js';
+
+// Maps Firestore game key → localStorage key
+export const CLOUD_TO_LOCAL = {
+  chainword:      'braingym_chainword_stats',
+  chainword_hard: 'braingym_chainword_stats_hard',
+  '4word':        'braingym_4word_stats',
+  tiles:          'braingym_tiles_stats',
+  squares:        'braingym_squares_stats',
+};
+
+export const CLOUD_GAME_KEYS = Object.keys(CLOUD_TO_LOCAL);
+
+export const GAME_DISPLAY_NAMES = {
+  chainword:      'Chainword (Easy)',
+  chainword_hard: 'Chainword (Hard)',
+  '4word':        '4word',
+  tiles:          'Tiles',
+  squares:        'Squares',
+};
+
+function cloudRef(uid, gameKey) {
+  return doc(db, 'users', uid, 'stats', gameKey);
+}
+
+async function fetchCloudHistory(uid, gameKey) {
+  const snap = await getDoc(cloudRef(uid, gameKey));
+  return snap.exists() ? (snap.data().history || []) : [];
+}
+
+// Merge local + cloud histories. Local wins on conflicting dateStr.
+// Returns { merged, conflicts: [{dateStr, local, cloud}] }
+export function mergeHistories(localHistory, cloudHistory) {
+  const localMap = new Map((localHistory || []).map(e => [e.dateStr, e]));
+  const cloudMap = new Map((cloudHistory || []).map(e => [e.dateStr, e]));
+
+  const conflicts = [];
+  for (const [dateStr, localEntry] of localMap) {
+    const cloudEntry = cloudMap.get(dateStr);
+    if (cloudEntry && JSON.stringify(localEntry) !== JSON.stringify(cloudEntry)) {
+      conflicts.push({ dateStr, local: localEntry, cloud: cloudEntry });
+    }
+  }
+
+  const allDates = new Set([...localMap.keys(), ...cloudMap.keys()]);
+  const merged = Array.from(allDates).map(d => localMap.get(d) || cloudMap.get(d));
+  merged.sort((a, b) => b.dateStr.localeCompare(a.dateStr));
+  if (merged.length > 100) merged.length = 100;
+
+  return { merged, conflicts };
+}
+
+// Compute what merging cloud into local would look like, without saving.
+// Returns { mergeResult, conflictsByGame, cloudAddedCount }
+// mergeResult[gameKey] = { localKey, localHistory, cloudHistory, merged, conflicts }
+export async function computeMerge(uid) {
+  if (!firebaseConfigured) return { mergeResult: {}, conflictsByGame: {}, cloudAddedCount: 0 };
+
+  const mergeResult = {};
+  const conflictsByGame = {};
+  let cloudAddedCount = 0;
+
+  await Promise.all(CLOUD_GAME_KEYS.map(async (gameKey) => {
+    const localKey = CLOUD_TO_LOCAL[gameKey];
+    const localHistory = getGameHistory(localKey);
+    const cloudHistory = await fetchCloudHistory(uid, gameKey);
+    const { merged, conflicts } = mergeHistories(localHistory, cloudHistory);
+    mergeResult[gameKey] = { localKey, localHistory, cloudHistory, merged, conflicts };
+    if (conflicts.length > 0) conflictsByGame[gameKey] = conflicts.length;
+    // Count entries added from cloud that weren't in local
+    cloudAddedCount += Math.max(0, merged.length - localHistory.length);
+  }));
+
+  return { mergeResult, conflictsByGame, cloudAddedCount };
+}
+
+// Apply computed merge: only write when data actually changed.
+export async function applyMerge(uid, mergeResult) {
+  if (!firebaseConfigured) return;
+  await Promise.all(
+    Object.entries(mergeResult).map(async ([gameKey, { localKey, localHistory, cloudHistory, merged }]) => {
+      const mergedJson = JSON.stringify(merged);
+      // Only update localStorage if merged differs from what was there
+      if (mergedJson !== JSON.stringify(localHistory)) {
+        setGameHistory(localKey, merged);
+      }
+      // Only push to cloud if merged differs from what cloud had
+      if (mergedJson !== JSON.stringify(cloudHistory)) {
+        await setDoc(cloudRef(uid, gameKey), { history: merged, updatedAt: serverTimestamp() });
+      }
+    })
+  );
+}
+
+// Push local history for one game to cloud (ongoing sync after game completion).
+export async function pushCloudStats(uid, gameKey, history) {
+  if (!firebaseConfigured) return;
+  await setDoc(cloudRef(uid, gameKey), { history, updatedAt: serverTimestamp() });
+}
+
+// Clear all cloud stats (called when user resets while signed in).
+export async function clearAllCloudStats(uid) {
+  if (!firebaseConfigured) return;
+  await Promise.all(
+    CLOUD_GAME_KEYS.map(gameKey =>
+      setDoc(cloudRef(uid, gameKey), { history: [], updatedAt: serverTimestamp() })
+    )
+  );
+}
+
+// Clear all cloud game progress (in-progress chains stored in users/{uid}/games/).
+export async function clearAllCloudProgress(uid) {
+  if (!firebaseConfigured) return;
+  const gamesCol = collection(db, 'users', uid, 'games');
+  const snap = await getDocs(gamesCol);
+  await Promise.all(snap.docs.map(d => deleteDoc(d.ref)));
+}

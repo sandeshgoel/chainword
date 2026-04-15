@@ -33,8 +33,8 @@ export default function ShareModal({ open, onClose, gameData }) {
           </p>
           <p className="text-sm text-gray-500 dark:text-gray-400">
             {gaveUp
-              ? `Gave up (optimal: ${parSteps - 1} guess${parSteps - 1 !== 1 ? 'es' : ''})`
-              : `Solved in ${guesses} guess${guesses !== 1 ? 'es' : ''} (par: ${parSteps - 1})`}
+              ? 'Gave up'
+              : `Solved in ${guesses} guess${guesses !== 1 ? 'es' : ''}`}
             {!gaveUp && hintsUsed > 0 && ` • 💡 ${hintsUsed} hint${hintsUsed !== 1 ? 's' : ''}`}
           </p>
         </div>

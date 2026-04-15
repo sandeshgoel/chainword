@@ -170,9 +170,9 @@ export default function Game({ game, wordListReady, hardMode, onToggleHardMode, 
 
   function confirmHint() {
     setShowHintModal(false);
-    const hint = useHint();
+    const { hint, newCount } = useHint();
     if (hint) {
-      submitWord(hint);
+      submitWord(hint, newCount);
       setInputValue('');
     }
     refocus();
@@ -187,15 +187,11 @@ export default function Game({ game, wordListReady, hardMode, onToggleHardMode, 
 
           {/* Today's info + difficulty toggle */}
           <div className="relative w-full text-center">
-            {parSteps !== null ? (
-              <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">
-                Par: {parSteps - 1} guess{parSteps - 1 !== 1 ? 'es' : ''}
-              </p>
-            ) : wordListReady ? (
+            {!parSteps && wordListReady && (
               <p className="text-xs text-amber-500 mt-0.5">
                 ⚠ No path found for today's pair (try again tomorrow)
               </p>
-            ) : null}
+            )}
             <div className="absolute top-0 right-0">
               <DifficultyToggle hardMode={hardMode} onToggle={onToggleHardMode} />
             </div>
@@ -252,23 +248,11 @@ export default function Game({ game, wordListReady, hardMode, onToggleHardMode, 
                     💡 Hint
                   </button>
                 )}
-                <button
-                  onMouseDown={(e) => e.preventDefault()}
-                  onClick={giveUp}
-                  className="px-4 py-2 text-sm text-red-500 dark:text-red-400 border border-red-300 dark:border-red-700 rounded-xl hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
-                >
-                  Give Up
-                </button>
               </div>
 
               <p className="text-sm text-gray-500 dark:text-gray-400">
                 {userSteps} guess{userSteps !== 1 ? 'es' : ''}
                 {hintsUsed > 0 && <span className="text-amber-500 dark:text-amber-400"> • 💡 {hintsUsed} hint{hintsUsed !== 1 ? 's' : ''}</span>}
-                {parSteps !== null && (
-                  <span className={userSteps >= parSteps ? ' text-amber-500' : ''}>
-                    {userSteps < parSteps ? ' — on track!' : ` (+${userSteps - parSteps + 1} over par)`}
-                  </span>
-                )}
               </p>
             </div>
           )}

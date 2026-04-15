@@ -24,7 +24,6 @@ export default function ResultBanner({ status, userSteps, parSteps, hintsUsed, o
       {!gaveUp && (
         <p className="text-sm text-gray-600 dark:text-gray-400">
           {guesses} guess{guesses !== 1 ? 'es' : ''}
-          {parSteps !== null && ` (par: ${parSteps - 1})`}
           {hintsUsed > 0 && ` • 💡 ${hintsUsed} hint${hintsUsed !== 1 ? 's' : ''}`}
         </p>
       )}

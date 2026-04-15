@@ -10,6 +10,7 @@ import SquaresGame from './games/squares/components/SquaresGame.jsx';
 import HowToPlay from './games/chainword/components/HowToPlay.jsx';
 import StatsModal from './components/StatsModal.jsx';
 import AuthModal from './components/AuthModal.jsx';
+import StatsConflictModal from './components/StatsConflictModal.jsx';
 import FriendsModal from './components/FriendsModal.jsx';
 import ArchiveModal from './components/ArchiveModal.jsx';
 import LandingPage from './pages/LandingPage.jsx';
@@ -19,6 +20,7 @@ import { useWordle } from './games/wordle/hooks/useWordle.js';
 import { useTiles } from './games/tiles/hooks/useTiles.js';
 import { useSquares } from './games/squares/hooks/useSquares.js';
 import { loadTheme, saveTheme } from './utils/storage.js';
+import { clearAllCloudStats, clearAllCloudProgress } from './utils/cloudStats.js';
 import { loadWordList } from './words.js';
 
 function getTodayIST() {
@@ -48,6 +50,7 @@ export default function App() {
   const [darkMode, setDarkMode] = useState(() => loadTheme() === 'dark');
   const [hardMode, setHardMode] = useState(() => localStorage.getItem('chainword_hard_mode') === 'true');
   const [wordListReady, setWordListReady] = useState(false);
+  const [statsVersion, setStatsVersion] = useState(0);
 
   // Per-game archive date overrides (null = today)
   const [archiveDates, setArchiveDates] = useState({
@@ -61,11 +64,13 @@ export default function App() {
   const [showFriends, setShowFriends] = useState(false);
   const [showArchive, setShowArchive] = useState(false);
 
-  const { user, signInWithGoogle, signOut } = useAuth();
-  const game = useGame(user, wordListReady, hardMode, archiveDates.chainword);
-  const wordle = useWordle(wordListReady, archiveDates['4word']);
-  const tiles = useTiles(archiveDates.tiles);
-  const squares = useSquares(archiveDates.squares);
+  const { user, signInWithGoogle, signOut, pendingSync, acceptSync, declineSync } = useAuth(
+    () => setStatsVersion(v => v + 1)
+  );
+  const game = useGame(user, wordListReady, hardMode, archiveDates.chainword, statsVersion);
+  const wordle = useWordle(wordListReady, archiveDates['4word'], user, statsVersion);
+  const tiles = useTiles(archiveDates.tiles, user, statsVersion);
+  const squares = useSquares(archiveDates.squares, user, statsVersion);
 
   // Apply dark mode to document
   useEffect(() => {
@@ -78,14 +83,6 @@ export default function App() {
     loadWordList().then(() => setWordListReady(true));
   }, []);
 
-  // Show how-to-play on very first visit
-  useEffect(() => {
-    const seen = localStorage.getItem('chainword_seen_help');
-    if (!seen) {
-      setShowHelp(true);
-      localStorage.setItem('chainword_seen_help', '1');
-    }
-  }, []);
 
   // Reload when the IST day rolls over (handles long-open tabs)
   useEffect(() => {
@@ -139,10 +136,17 @@ export default function App() {
     setShowArchive(false);
   }
 
-  function handleReset() {
+  async function handleReset() {
     Object.keys(localStorage)
-      .filter(k => k.startsWith('chainword'))
+      .filter(k => k.startsWith('chainword') || k.startsWith('braingym'))
       .forEach(k => localStorage.removeItem(k));
+    sessionStorage.removeItem('braingym_synced');
+    if (user) {
+      await Promise.all([
+        clearAllCloudStats(user.uid),
+        clearAllCloudProgress(user.uid),
+      ]).catch(console.error);
+    }
     window.location.reload();
   }
 
@@ -163,6 +167,12 @@ export default function App() {
           user={user}
           onSignIn={signInWithGoogle}
           onSignOut={signOut}
+        />
+        <StatsConflictModal
+          open={!!pendingSync}
+          conflictsByGame={pendingSync?.conflictsByGame || {}}
+          onAccept={acceptSync}
+          onDecline={declineSync}
         />
         <Analytics />
       </div>
@@ -250,6 +260,13 @@ export default function App() {
         user={user}
         onSignIn={signInWithGoogle}
         onSignOut={signOut}
+      />
+
+      <StatsConflictModal
+        open={!!pendingSync}
+        conflictsByGame={pendingSync?.conflictsByGame || {}}
+        onAccept={acceptSync}
+        onDecline={declineSync}
       />
 
       <FriendsModal

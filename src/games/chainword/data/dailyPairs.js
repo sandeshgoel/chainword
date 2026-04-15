@@ -22,3 +22,8 @@ export function getDailyInfo(hardMode = false, overrideDateStr = null) {
   const pair = { start: chain[0], end: chain[chain.length - 1] };
   return { pair, pairpath: chain, dateStr, gameNumber };
 }
+
+export function getParStepsForDate(dateStr, hardMode = false) {
+  const { pairpath } = getDailyInfo(hardMode, dateStr);
+  return pairpath.length - 1;
+}

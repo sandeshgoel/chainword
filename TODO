@@ -1,0 +1,40 @@
+- Have a common result banner for all games
+- Remove stars from the result
+- Introduce a three tier award system
+- If the game has best possible outcome, show a golden badge
+- If medium outcome, show silver badge
+- If poor outcome, show bronze badge
+- if unsolved, show sad face
+
+for chainword
+- compute score as #guesses + 2 * #hints
+- score <= par, means gold
+- score = par+1, means silver
+- otherwise bronze
+
+for 4word
+- guesses <=4, means gold
+- guesses = 5, means silver
+- otherwise bronze
+
+for Tiles
+- list all possible words and their scores
+- compute percentile for each score
+- convert user score to percentile
+- if percentile = 100, means gold
+- if percentile between 50 and 90, means silver
+- otherwise bronze
+
+for Squares
+- if no hint taken, means gold
+- if 1 hint taken, means silver
+- otherwise bronze
+
+
+
+
+
+instead of gaveUp, store won
+4word, tiles stat cloud write failed
+stat table needed in every game
+remove par from hard mode also

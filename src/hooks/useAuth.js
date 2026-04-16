@@ -11,7 +11,6 @@ import { doc, setDoc, getDoc, serverTimestamp } from 'firebase/firestore';
 import { auth, db, googleProvider, firebaseConfigured } from '../firebase.js';
 import { computeMerge, applyMerge } from '../utils/cloudStats.js';
 
-const isMobile = () => /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
 
 export function useAuth(onSyncComplete) {
   const [user, setUser] = useState(null);
@@ -103,16 +102,18 @@ export function useAuth(onSyncComplete) {
       toast.error('Firebase not configured');
       return;
     }
-    const mobile = isMobile();
-    toast(`Starting sign-in (${mobile ? 'redirect' : 'popup'})…`, { duration: 4000 });
     try {
-      if (mobile) {
-        await signInWithRedirect(auth, googleProvider);
-      } else {
-        await signInWithPopup(auth, googleProvider);
-      }
+      await signInWithPopup(auth, googleProvider);
     } catch (err) {
-      if (err.code !== 'auth/popup-closed-by-user') {
+      if (err.code === 'auth/popup-blocked') {
+        // Popup was blocked by the browser — fall back to redirect flow
+        try {
+          await signInWithRedirect(auth, googleProvider);
+        } catch (redirectErr) {
+          console.error('Redirect sign-in error:', redirectErr);
+          toast.error(`Sign-in failed: ${redirectErr.code || redirectErr.message}`);
+        }
+      } else if (err.code !== 'auth/popup-closed-by-user') {
         console.error('Sign-in error:', err);
         toast.error(`Sign-in failed: ${err.code || err.message}`);
       }

@@ -53,8 +53,8 @@ const GAMES = [
   {
     id: 'shabdal',
     route: '/shabdal',
-    emoji: 'अ',
-    name: 'Shabdal',
+    emoji: '/shabdal-icon.png',
+    name: 'शब्दल',
     desc: 'Guess the Hindi word in 6 tries',
     from: '#f97316',
     to: '#ea580c',
@@ -111,6 +111,12 @@ function getGameStatus(gameId, dateStr) {
       if (entry) return squaresTier(entry.hintsUsed ?? 0);
       const saved = JSON.parse(localStorage.getItem('chainword_squares_' + dateStr) || 'null');
       if (saved?.attempts > 0) return 'started';
+    } else if (gameId === 'shabdal') {
+      const stats = JSON.parse(localStorage.getItem('braingym_shabdal_stats') || 'null');
+      const entry = stats?.history?.find(h => h.dateStr === dateStr);
+      if (entry) return fourWordTier(entry.won, entry.guesses);
+      const saved = JSON.parse(localStorage.getItem('chainword_shabdal_' + dateStr) || 'null');
+      if (saved?.guesses?.length > 0) return 'started';
     }
   } catch {}
   return 'new';
@@ -233,7 +239,11 @@ function GameTile({ game, status, onClick, isLocked, displayTitle, displayDesc }
 
         {/* Emoji + Name */}
         <div className="flex items-center gap-2 mb-2 pr-8">
-          <span className="text-3xl">{game.emoji}</span>
+          {game.emoji.startsWith('/') ? (
+            <img src={game.emoji} alt={game.name} className="w-9 h-9 object-contain rounded" />
+          ) : (
+            <span className="text-3xl">{game.emoji}</span>
+          )}
           <span className="text-xl font-black text-white tracking-tight">{displayTitle}</span>
         </div>
 

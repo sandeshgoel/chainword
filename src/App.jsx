@@ -8,6 +8,7 @@ import FourWordGame from './games/4word/components/FourWordGame.jsx';
 import TilesGame from './games/tiles/components/TilesGame.jsx';
 import SquaresGame from './games/squares/components/SquaresGame.jsx';
 import ShabdalGame from './games/shabdal/components/ShabdalGame.jsx';
+import { useShabdal } from './games/shabdal/hooks/useShabdal.js';
 import CrypticGame from './games/cryptic/components/CrypticGame.jsx';
 import HowToPlay from './games/chainword/components/HowToPlay.jsx';
 import StatsModal from './components/StatsModal.jsx';
@@ -64,7 +65,7 @@ export default function App() {
 
   // Per-game archive date overrides (null = today)
   const [archiveDates, setArchiveDates] = useState({
-    chainword: null, '4word': null, tiles: null, squares: null,
+    chainword: null, '4word': null, tiles: null, squares: null, shabdal: null,
   });
 
   // Modals
@@ -81,6 +82,7 @@ export default function App() {
   const fourWord = use4Word(wordListReady, archiveDates['4word'], user, statsVersion);
   const tiles = useTiles(archiveDates.tiles, user, statsVersion);
   const squares = useSquares(archiveDates.squares, user, statsVersion);
+  const shabdal = useShabdal(archiveDates.shabdal, user, statsVersion);
 
   // Apply dark mode to document
   useEffect(() => {
@@ -141,7 +143,7 @@ export default function App() {
           .sort()
           .join(',');
         if (srcs && srcs !== currentScripts) window.location.reload();
-      } catch {}
+      } catch { }
     }
 
     const interval = setInterval(checkForNewVersion, 30 * 60_000);
@@ -162,21 +164,24 @@ export default function App() {
     // Local storage keys per game
     const localStatKeys = {
       chainword: ['braingym_chainword_stats', 'braingym_chainword_stats_hard', 'chainword_progress'],
-      '4word':   ['braingym_4word_stats'],
-      tiles:     ['braingym_tiles_stats'],
-      squares:   ['braingym_squares_stats'],
+      '4word': ['braingym_4word_stats'],
+      tiles: ['braingym_tiles_stats'],
+      squares: ['braingym_squares_stats'],
+      shabdal: ['braingym_shabdal_stats'],
     };
     const localPrefixes = {
       chainword: null, // progress stored in single key above
-      '4word':   'chainword_wordle_',
-      tiles:     'chainword_tiles_',
-      squares:   'chainword_squares_',
+      '4word': 'chainword_wordle_',
+      tiles: 'chainword_tiles_',
+      squares: 'chainword_squares_',
+      shabdal: 'chainword_shabdal_',
     };
     const cloudKeys = {
       chainword: ['chainword', 'chainword_hard'],
-      '4word':   ['4word'],
-      tiles:     ['tiles'],
-      squares:   ['squares'],
+      '4word': ['4word'],
+      tiles: ['tiles'],
+      squares: ['squares'],
+      shabdal: ['shabdal'],
     };
 
     // Remove stat keys
@@ -246,8 +251,8 @@ export default function App() {
         activeGame={activeGame}
         onSelectGame={g => navigate('/' + g)}
         onHome={() => navigate('/')}
-        gameNumber={activeGame === '4word' ? fourWord.gameNumber : activeGame === 'tiles' ? tiles.gameNumber : activeGame === 'squares' ? squares.gameNumber : game.gameNumber}
-        dateStr={activeGame === '4word' ? fourWord.dateStr : activeGame === 'tiles' ? tiles.dateStr : activeGame === 'squares' ? squares.dateStr : game.dateStr}
+        gameNumber={activeGame === '4word' ? fourWord.gameNumber : activeGame === 'tiles' ? tiles.gameNumber : activeGame === 'squares' ? squares.gameNumber : activeGame === 'shabdal' ? shabdal.gameNumber : game.gameNumber}
+        dateStr={activeGame === '4word' ? fourWord.dateStr : activeGame === 'tiles' ? tiles.dateStr : activeGame === 'squares' ? squares.dateStr : activeGame === 'shabdal' ? shabdal.dateStr : game.dateStr}
         darkMode={darkMode}
         onToggleDark={() => setDarkMode(d => !d)}
         onHowToPlay={() => setShowHelp(true)}
@@ -264,50 +269,54 @@ export default function App() {
             gamesConfig.chainword?.paid && !userProfile?.paid
               ? <Navigate to="/" replace />
               : <Game
-                  game={game}
-                  wordListReady={wordListReady}
-                  hardMode={hardMode}
-                  onToggleHardMode={() => {
-                    const next = !hardMode;
-                    setHardMode(next);
-                    localStorage.setItem('chainword_hard_mode', next ? 'true' : 'false');
-                  }}
-                  onArchive={() => setShowArchive(true)}
-                  archiveDate={archiveDates.chainword}
-                />
+                game={game}
+                wordListReady={wordListReady}
+                hardMode={hardMode}
+                onToggleHardMode={() => {
+                  const next = !hardMode;
+                  setHardMode(next);
+                  localStorage.setItem('chainword_hard_mode', next ? 'true' : 'false');
+                }}
+                onArchive={() => setShowArchive(true)}
+                archiveDate={archiveDates.chainword}
+              />
           } />
           <Route path="/4word" element={
             gamesConfig['4word']?.paid && !userProfile?.paid
               ? <Navigate to="/" replace />
               : <FourWordGame
-                  game={fourWord}
-                  wordListReady={wordListReady}
-                  onArchive={() => setShowArchive(true)}
-                  archiveDate={archiveDates['4word']}
-                />
+                game={fourWord}
+                wordListReady={wordListReady}
+                onArchive={() => setShowArchive(true)}
+                archiveDate={archiveDates['4word']}
+              />
           } />
           <Route path="/tiles" element={
             gamesConfig.tiles?.paid && !userProfile?.paid
               ? <Navigate to="/" replace />
               : <TilesGame
-                  game={tiles}
-                  onArchive={() => setShowArchive(true)}
-                  archiveDate={archiveDates.tiles}
-                />
+                game={tiles}
+                onArchive={() => setShowArchive(true)}
+                archiveDate={archiveDates.tiles}
+              />
           } />
           <Route path="/squares" element={
             gamesConfig.squares?.paid && !userProfile?.paid
               ? <Navigate to="/" replace />
               : <SquaresGame
-                  game={squares}
-                  onArchive={() => setShowArchive(true)}
-                  archiveDate={archiveDates.squares}
-                />
+                game={squares}
+                onArchive={() => setShowArchive(true)}
+                archiveDate={archiveDates.squares}
+              />
           } />
           <Route path="/shabdal" element={
             gamesConfig.shabdal?.paid && !userProfile?.paid
               ? <Navigate to="/" replace />
-              : <ShabdalGame />
+              : <ShabdalGame
+                game={shabdal}
+                onArchive={() => setShowArchive(true)}
+                archiveDate={archiveDates.shabdal}
+              />
           } />
           <Route path="/cryptic" element={
             gamesConfig.cryptic?.paid && !userProfile?.paid
@@ -323,11 +332,12 @@ export default function App() {
       <StatsModal
         open={showStats}
         onClose={() => setShowStats(false)}
-        stats={activeGame === '4word' ? fourWord.stats : activeGame === 'tiles' ? tiles.stats : activeGame === 'squares' ? squares.stats : game.stats}
+        stats={activeGame === '4word' ? fourWord.stats : activeGame === 'tiles' ? tiles.stats : activeGame === 'squares' ? squares.stats : activeGame === 'shabdal' ? shabdal.stats : game.stats}
         onReset={handleReset}
         is4Word={activeGame === '4word'}
         isTiles={activeGame === 'tiles'}
         isSquares={activeGame === 'squares'}
+        isShabdal={activeGame === 'shabdal'}
         hardMode={activeGame === 'chainword' ? hardMode : undefined}
       />
 

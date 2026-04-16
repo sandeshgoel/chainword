@@ -40,7 +40,12 @@ export default function Header({
       {/* Center: title (tapping goes home) */}
       <button onClick={onHome} className="absolute left-1/2 -translate-x-1/2 flex flex-col items-center leading-none hover:opacity-70 transition-opacity">
         <span className="text-xl font-extrabold tracking-tight text-gray-900 dark:text-white">
-          {activeGame === '4word' ? '🔤 4word' : activeGame === 'tiles' ? '🎯 Tiles' : activeGame === 'squares' ? '🔲 Squares' : '🔗 Chainword'}
+          {activeGame === '4word' ? '🔤 4word' : 
+           activeGame === 'tiles' ? '🎯 Tiles' : 
+           activeGame === 'squares' ? '🔲 Squares' : 
+           activeGame === 'shabdal' ? <><img src="/shabdal-icon.png" alt="अ" className="inline-block w-7 h-7 -mt-0.5 mr-1 rounded" />शब्दल</> :
+           activeGame === 'cryptic' ? '🧩 Cryptic' :
+           '🔗 Chainword'}
         </span>
         {(gameNumber || dateStr) && (
           <span className="text-[10px] font-semibold text-gray-400 dark:text-gray-500">

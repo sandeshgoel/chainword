@@ -6,6 +6,7 @@ const CHAINWORD_STATS_HARD_KEY = 'braingym_chainword_stats_hard';
 const FOUR_WORD_STATS_KEY      = 'braingym_4word_stats';
 const TILES_STATS_KEY          = 'braingym_tiles_stats';
 const SQUARES_STATS_KEY        = 'braingym_squares_stats';
+const SHABDAL_STATS_KEY        = 'braingym_shabdal_stats';
 
 const HISTORY_LIMIT = 100;
 
@@ -157,6 +158,19 @@ export function updateSquaresStats(dateStr, hintsUsed) {
   const { history } = loadSquaresStats();
   upsertHistory(history, { dateStr, hintsUsed, won: true, playedDate: getTodayIST() });
   saveHistory(SQUARES_STATS_KEY, history);
+  return { history };
+}
+
+// --- Shabdal ---
+
+export function loadShabdalStats() {
+  return { history: loadHistory(SHABDAL_STATS_KEY) };
+}
+
+export function updateShabdalStats(guessesCount, dateStr) {
+  const { history } = loadShabdalStats();
+  upsertHistory(history, { dateStr, guesses: guessesCount, won: guessesCount > 0, playedDate: getTodayIST() });
+  saveHistory(SHABDAL_STATS_KEY, history);
   return { history };
 }
 

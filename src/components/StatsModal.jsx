@@ -13,7 +13,7 @@ function formatDate(dateStr) {
   return new Date(Date.UTC(y, m - 1, d)).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', timeZone: 'UTC' });
 }
 
-function HistoryTable({ history, isChainword, isWordle, isTiles, isSquares, hardMode }) {
+function HistoryTable({ history, isChainword, isWordle, isTiles, isSquares, isShabdal, hardMode }) {
   if (!history || history.length === 0) {
     return (
       <p className="text-center text-gray-500 dark:text-gray-400 text-sm py-6">
@@ -272,10 +272,10 @@ function SquaresStats({ stats, hintsDistribution }) {
   );
 }
 
-export default function StatsModal({ open, onClose, stats, onReset, isWordle, isTiles, isSquares, hardMode }) {
+export default function StatsModal({ open, onClose, stats, onReset, isWordle, isTiles, isSquares, isShabdal, hardMode }) {
   const [view, setView] = useState('stats');
-  const isChainword = !isWordle && !isTiles && !isSquares;
-  const gameName = isWordle ? '4word' : isTiles ? 'Tiles' : isSquares ? 'Squares' : 'Chainword';
+  const isChainword = !isWordle && !isTiles && !isSquares && !isShabdal;
+  const gameName = isWordle ? '4word' : isTiles ? 'Tiles' : isSquares ? 'Squares' : isShabdal ? 'शब्दल' : 'Chainword';
   const history = stats.history || [];
   const played = (isTiles || isSquares) ? 0 : history.length;
   const won = history.filter(h => h.won).length;
@@ -306,6 +306,16 @@ export default function StatsModal({ open, onClose, stats, onReset, isWordle, is
     return dist;
   })();
 
+  // Shabdal: compute distribution (same as 4word)
+  const shabdalDistribution = (() => {
+    if (!isShabdal) return null;
+    const dist = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0 };
+    for (const h of (stats.history || [])) {
+      if (h.won && h.guesses >= 1 && h.guesses <= 6) dist[String(h.guesses)] = (dist[String(h.guesses)] || 0) + 1;
+    }
+    return dist;
+  })();
+
   // Squares: compute hintsDistribution from history in real time (rendered inside SquaresStats)
   const squaresDistribution = (() => {
     if (!isSquares) return null;
@@ -318,13 +328,13 @@ export default function StatsModal({ open, onClose, stats, onReset, isWordle, is
   })();
 
   const TIER_KEYS = ['gold', 'silver', 'bronze', 'unsolved'];
-  const distKeys = isWordle ? [1, 2, 3, 4, 5, 6] : TIER_KEYS;
-  const distData = isWordle ? wordleDistribution : distribution;
-  const maxCount = (isChainword || isWordle) ? Math.max(1, ...distKeys.map(k => distData[k] || 0)) : 1;
-  const distBarColor = isWordle
+  const distKeys = isWordle ? [1, 2, 3, 4, 5, 6] : isShabdal ? [1, 2, 3, 4, 5, 6] : TIER_KEYS;
+  const distData = isWordle ? wordleDistribution : isShabdal ? shabdalDistribution : distribution;
+  const maxCount = (isChainword || isWordle || isShabdal) ? Math.max(1, ...distKeys.map(k => distData[k] || 0)) : 1;
+  const distBarColor = isWordle || isShabdal
     ? k => k <= 4 ? 'bg-yellow-400' : k === 5 ? 'bg-slate-400' : 'bg-orange-400'
     : k => ({ gold: 'bg-yellow-400', silver: 'bg-slate-400', bronze: 'bg-orange-400', unsolved: 'bg-red-400' }[k]);
-  const labels = isWordle ? {
+  const labels = isWordle || isShabdal ? {
     1: '1 Guess', 2: '2 Guesses', 3: '3 Guesses',
     4: '4 Guesses', 5: '5 Guesses', 6: '6 Guesses',
   } : {
@@ -362,11 +372,12 @@ export default function StatsModal({ open, onClose, stats, onReset, isWordle, is
             isWordle={isWordle}
             isTiles={isTiles}
             isSquares={isSquares}
+            isShabdal={isShabdal}
             hardMode={hardMode}
           />
         ) : (
           <>
-            {!isWordle && !isTiles && !isSquares && (
+            {!isWordle && !isTiles && !isSquares && !isShabdal && (
               <div className="flex justify-center">
                 <span className={`text-xs font-bold px-3 py-1 rounded-full ${
                   hardMode
@@ -395,7 +406,7 @@ export default function StatsModal({ open, onClose, stats, onReset, isWordle, is
                 </div>
 
                 <div>
-                  <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">Score Distribution</h3>
+                  <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">Guess Distribution</h3>
                   <div className="space-y-2">
                     {distKeys.map((k) => {
                       const count = distData[k] || 0;

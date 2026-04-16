@@ -100,11 +100,13 @@ export function useAuth(onSyncComplete) {
 
   async function signInWithGoogle() {
     if (!firebaseConfigured) {
-      alert('Firebase is not configured. See src/firebase.js for setup instructions.');
+      toast.error('Firebase not configured');
       return;
     }
+    const mobile = isMobile();
+    toast(`Starting sign-in (${mobile ? 'redirect' : 'popup'})…`, { duration: 4000 });
     try {
-      if (isMobile()) {
+      if (mobile) {
         await signInWithRedirect(auth, googleProvider);
       } else {
         await signInWithPopup(auth, googleProvider);

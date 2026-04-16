@@ -1,8 +1,8 @@
-import { useMemo, useState, useRef, useEffect } from 'react';
+import { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { chainwordHistTier, wordleTier, tilesTier, squaresTier, TIER_CONFIG } from '../utils/awards.js';
 import { getParStepsForDate } from '../games/chainword/data/dailyPairs.js';
-import Modal from '../components/Modal.jsx';
+import HamburgerMenu from '../components/HamburgerMenu.jsx';
 
 const GAMES = [
   {
@@ -206,81 +206,18 @@ export default function LandingPage({ darkMode, onToggleDark, onAuth, user }) {
     () => Object.fromEntries(GAMES.map(g => [g.id, getGameStatus(g.id, todayIST)])),
     [todayIST]
   );
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [showAbout, setShowAbout] = useState(false);
-  const menuRef = useRef(null);
-
-  useEffect(() => {
-    function handleClickOutside(event) {
-      if (menuRef.current && !menuRef.current.contains(event.target)) {
-        setIsMenuOpen(false);
-      }
-    }
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
 
   return (
     <div className="min-h-dvh bg-gradient-to-b from-indigo-50 to-white dark:from-gray-900 dark:to-gray-800 flex flex-col">
 
       {/* Top bar */}
       <div className="flex items-center justify-between px-4 py-3">
-        {/* Left: hamburger menu */}
-        <div className="relative" ref={menuRef}>
-          <button
-            onClick={() => setIsMenuOpen(!isMenuOpen)}
-            className="p-2 rounded-full hover:bg-white/60 dark:hover:bg-gray-700 text-gray-500 dark:text-gray-400 transition-colors"
-            aria-label="Menu"
-          >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16M4 18h16" />
-            </svg>
-          </button>
-
-          {isMenuOpen && (
-            <div className="absolute top-full left-0 mt-2 w-56 bg-white dark:bg-gray-800 rounded-xl shadow-xl border border-gray-100 dark:border-gray-700 overflow-hidden z-20">
-              <div className="py-2">
-                <div className="px-4 py-2 text-xs font-semibold text-gray-400 uppercase tracking-wider">Games</div>
-                {GAMES.map(g => (
-                  <button
-                    key={g.id}
-                    onClick={() => { navigate(g.route); setIsMenuOpen(false); }}
-                    className="w-full flex items-center gap-3 px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors text-left"
-                  >
-                    <span className="text-xl flex-shrink-0">{g.emoji}</span>
-                    <span className="text-sm font-medium text-gray-900 dark:text-white">{g.name}</span>
-                  </button>
-                ))}
-                <div className="border-t border-gray-100 dark:border-gray-700 my-1" />
-                <button
-                  onClick={() => { setShowAbout(true); setIsMenuOpen(false); }}
-                  className="w-full flex items-center gap-3 px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors text-left"
-                >
-                  <span className="text-xl flex-shrink-0">ℹ️</span>
-                  <span className="text-sm font-medium text-gray-900 dark:text-white">About</span>
-                </button>
-                <div className="border-t border-gray-100 dark:border-gray-700 my-1" />
-                <button
-                  onClick={() => { onToggleDark(); setIsMenuOpen(false); }}
-                  className="w-full flex items-center gap-3 px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors text-left"
-                >
-                  {darkMode ? (
-                    <svg className="w-5 h-5 text-gray-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707M17.657 17.657l-.707-.707M6.343 6.343l-.707-.707M12 5a7 7 0 000 14A7 7 0 0012 5z" />
-                    </svg>
-                  ) : (
-                    <svg className="w-5 h-5 text-gray-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
-                    </svg>
-                  )}
-                  <span className="text-sm font-medium text-gray-900 dark:text-white">
-                    {darkMode ? 'Light mode' : 'Dark mode'}
-                  </span>
-                </button>
-              </div>
-            </div>
-          )}
-        </div>
+        <HamburgerMenu
+          darkMode={darkMode}
+          onToggleDark={onToggleDark}
+          onSelectGame={id => navigate('/' + id)}
+          buttonClassName="p-2 rounded-full hover:bg-white/60 dark:hover:bg-gray-700 text-gray-500 dark:text-gray-400 transition-colors"
+        />
 
         {/* Right: auth */}
         <button
@@ -297,43 +234,6 @@ export default function LandingPage({ darkMode, onToggleDark, onAuth, user }) {
           )}
         </button>
       </div>
-
-      {/* About modal */}
-      <Modal open={showAbout} onClose={() => setShowAbout(false)} title="About">
-        <div className="space-y-5 text-sm text-gray-700 dark:text-gray-300">
-          <p className="text-gray-600 dark:text-gray-400 leading-relaxed">
-            Brain Gym is a growing suite of daily word puzzles. Chainword was our first.
-          </p>
-          <div className="border-t border-gray-100 dark:border-gray-700" />
-          <div className="flex items-center justify-between">
-            <span className="font-medium text-gray-500 dark:text-gray-400">Version</span>
-            <span className="font-bold text-gray-900 dark:text-white">v1.0.0</span>
-          </div>
-          <div className="border-t border-gray-100 dark:border-gray-700" />
-          <a
-            href="https://sites.google.com/view/chainword/home"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex items-center justify-between py-1 text-indigo-600 dark:text-indigo-400 hover:underline font-medium"
-          >
-            <span>Blog</span>
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-            </svg>
-          </a>
-          <a
-            href="https://sites.google.com/view/chainword/privacy"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex items-center justify-between py-1 text-indigo-600 dark:text-indigo-400 hover:underline font-medium"
-          >
-            <span>View License</span>
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-            </svg>
-          </a>
-        </div>
-      </Modal>
 
       {/* Hero */}
       <div className="flex flex-col items-center pt-4 pb-8 px-4">

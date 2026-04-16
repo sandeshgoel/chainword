@@ -26,7 +26,7 @@ import { loadTheme, saveTheme } from './utils/storage.js';
 import { pushCloudStats } from './utils/cloudStats.js';
 import { loadWordList } from './words.js';
 import { db, firebaseConfigured } from './firebase.js';
-import { doc, getDoc } from 'firebase/firestore';
+import { doc, onSnapshot } from 'firebase/firestore';
 import { DEFAULT_GAMES_CONFIG, DEFAULT_GLOBAL_CONFIG } from './hooks/useAdmin.js';
 
 function getTodayIST() {
@@ -93,16 +93,16 @@ export default function App() {
     loadWordList().then(() => setWordListReady(true));
   }, []);
 
-  // Load admin config (games + global) on mount for paid gating
+  // Listen to admin config in real time for paid gating
   useEffect(() => {
     if (!firebaseConfigured) return;
-    Promise.all([
-      getDoc(doc(db, 'admin', 'games')),
-      getDoc(doc(db, 'admin', 'config')),
-    ]).then(([gamesSnap, configSnap]) => {
-      if (gamesSnap.exists()) setGamesConfig(gamesSnap.data());
-      if (configSnap.exists()) setGlobalConfig(configSnap.data());
-    }).catch(() => {/* use defaults on error */});
+    const unsubGames = onSnapshot(doc(db, 'admin', 'games'), snap => {
+      if (snap.exists()) setGamesConfig({ ...DEFAULT_GAMES_CONFIG, ...snap.data() });
+    }, () => {/* use defaults on error */});
+    const unsubConfig = onSnapshot(doc(db, 'admin', 'config'), snap => {
+      if (snap.exists()) setGlobalConfig(snap.data());
+    }, () => {});
+    return () => { unsubGames(); unsubConfig(); };
   }, []);
 
 

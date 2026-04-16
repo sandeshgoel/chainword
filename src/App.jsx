@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Routes, Route, useLocation, useNavigate } from 'react-router-dom';
+import { Routes, Route, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import { Analytics } from '@vercel/analytics/react';
 import Header from './components/Header.jsx';
@@ -14,6 +14,7 @@ import StatsConflictModal from './components/StatsConflictModal.jsx';
 import FriendsModal from './components/FriendsModal.jsx';
 import ArchiveModal from './components/ArchiveModal.jsx';
 import LandingPage from './pages/LandingPage.jsx';
+import AdminDashboard from './pages/AdminDashboard.jsx';
 import { useAuth } from './hooks/useAuth.js';
 import { useGame } from './games/chainword/hooks/useGame.js';
 import { useWordle } from './games/wordle/hooks/useWordle.js';
@@ -22,6 +23,9 @@ import { useSquares } from './games/squares/hooks/useSquares.js';
 import { loadTheme, saveTheme } from './utils/storage.js';
 import { pushCloudStats } from './utils/cloudStats.js';
 import { loadWordList } from './words.js';
+import { db, firebaseConfigured } from './firebase.js';
+import { doc, getDoc } from 'firebase/firestore';
+import { DEFAULT_GAMES_CONFIG, DEFAULT_GLOBAL_CONFIG } from './hooks/useAdmin.js';
 
 function getTodayIST() {
   return new Date(Date.now() + 5.5 * 60 * 60 * 1000).toISOString().split('T')[0];
@@ -51,6 +55,8 @@ export default function App() {
   const [hardMode, setHardMode] = useState(() => localStorage.getItem('chainword_hard_mode') === 'true');
   const [wordListReady, setWordListReady] = useState(false);
   const [statsVersion, setStatsVersion] = useState(0);
+  const [gamesConfig, setGamesConfig] = useState(DEFAULT_GAMES_CONFIG);
+  const [globalConfig, setGlobalConfig] = useState(DEFAULT_GLOBAL_CONFIG); // eslint-disable-line no-unused-vars
 
   // Per-game archive date overrides (null = today)
   const [archiveDates, setArchiveDates] = useState({
@@ -64,7 +70,7 @@ export default function App() {
   const [showFriends, setShowFriends] = useState(false);
   const [showArchive, setShowArchive] = useState(false);
 
-  const { user, signInWithGoogle, signOut, pendingSync, acceptSync, declineSync } = useAuth(
+  const { user, userProfile, signInWithGoogle, signOut, pendingSync, acceptSync, declineSync } = useAuth(
     () => setStatsVersion(v => v + 1)
   );
   const game = useGame(user, wordListReady, hardMode, archiveDates.chainword, statsVersion);
@@ -81,6 +87,18 @@ export default function App() {
   // Load word list on mount
   useEffect(() => {
     loadWordList().then(() => setWordListReady(true));
+  }, []);
+
+  // Load admin config (games + global) on mount for paid gating
+  useEffect(() => {
+    if (!firebaseConfigured) return;
+    Promise.all([
+      getDoc(doc(db, 'admin', 'games')),
+      getDoc(doc(db, 'admin', 'config')),
+    ]).then(([gamesSnap, configSnap]) => {
+      if (gamesSnap.exists()) setGamesConfig(gamesSnap.data());
+      if (configSnap.exists()) setGlobalConfig(configSnap.data());
+    }).catch(() => {/* use defaults on error */});
   }, []);
 
 
@@ -174,6 +192,16 @@ export default function App() {
     window.location.reload();
   }
 
+  // Admin page
+  if (location.pathname === '/admin') {
+    return (
+      <div className={darkMode ? 'dark' : ''}>
+        <Toaster position="top-center" />
+        <AdminDashboard user={user} userProfile={userProfile} darkMode={darkMode} />
+      </div>
+    );
+  }
+
   // Landing page — no header/modals chrome
   if (activeGame === null) {
     return (
@@ -184,6 +212,8 @@ export default function App() {
           onToggleDark={() => setDarkMode(d => !d)}
           onAuth={() => setShowAuth(true)}
           user={user}
+          userProfile={userProfile}
+          gamesConfig={gamesConfig}
         />
         <AuthModal
           open={showAuth}
@@ -221,45 +251,54 @@ export default function App() {
         onAuth={() => setShowAuth(true)}
         onFriends={() => setShowFriends(true)}
         user={user}
+        isAdmin={userProfile?.admin ?? false}
       />
 
       <main className="flex-1 overflow-hidden">
         <Routes>
           <Route path="/chainword" element={
-            <Game
-              game={game}
-              wordListReady={wordListReady}
-              hardMode={hardMode}
-              onToggleHardMode={() => {
-                const next = !hardMode;
-                setHardMode(next);
-                localStorage.setItem('chainword_hard_mode', next ? 'true' : 'false');
-              }}
-              onArchive={() => setShowArchive(true)}
-              archiveDate={archiveDates.chainword}
-            />
+            gamesConfig.chainword?.paid && !userProfile?.paid
+              ? <Navigate to="/" replace />
+              : <Game
+                  game={game}
+                  wordListReady={wordListReady}
+                  hardMode={hardMode}
+                  onToggleHardMode={() => {
+                    const next = !hardMode;
+                    setHardMode(next);
+                    localStorage.setItem('chainword_hard_mode', next ? 'true' : 'false');
+                  }}
+                  onArchive={() => setShowArchive(true)}
+                  archiveDate={archiveDates.chainword}
+                />
           } />
           <Route path="/4word" element={
-            <WordleGame
-              game={wordle}
-              wordListReady={wordListReady}
-              onArchive={() => setShowArchive(true)}
-              archiveDate={archiveDates['4word']}
-            />
+            gamesConfig['4word']?.paid && !userProfile?.paid
+              ? <Navigate to="/" replace />
+              : <WordleGame
+                  game={wordle}
+                  wordListReady={wordListReady}
+                  onArchive={() => setShowArchive(true)}
+                  archiveDate={archiveDates['4word']}
+                />
           } />
           <Route path="/tiles" element={
-            <TilesGame
-              game={tiles}
-              onArchive={() => setShowArchive(true)}
-              archiveDate={archiveDates.tiles}
-            />
+            gamesConfig.tiles?.paid && !userProfile?.paid
+              ? <Navigate to="/" replace />
+              : <TilesGame
+                  game={tiles}
+                  onArchive={() => setShowArchive(true)}
+                  archiveDate={archiveDates.tiles}
+                />
           } />
           <Route path="/squares" element={
-            <SquaresGame
-              game={squares}
-              onArchive={() => setShowArchive(true)}
-              archiveDate={archiveDates.squares}
-            />
+            gamesConfig.squares?.paid && !userProfile?.paid
+              ? <Navigate to="/" replace />
+              : <SquaresGame
+                  game={squares}
+                  onArchive={() => setShowArchive(true)}
+                  archiveDate={archiveDates.squares}
+                />
           } />
         </Routes>
       </main>

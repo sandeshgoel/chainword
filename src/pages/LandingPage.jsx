@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
+import toast from 'react-hot-toast';
 import { chainwordHistTier, wordleTier, tilesTier, squaresTier, TIER_CONFIG } from '../utils/awards.js';
 import { getParStepsForDate } from '../games/chainword/data/dailyPairs.js';
 import HamburgerMenu from '../components/HamburgerMenu.jsx';
@@ -133,10 +134,18 @@ function BrainGraphic() {
   );
 }
 
-function GameTile({ game, status, onClick }) {
+function GameTile({ game, status, onClick, isLocked, displayTitle, displayDesc }) {
+  function handleClick() {
+    if (isLocked) {
+      toast('This game requires a premium account', { icon: '🔒' });
+    } else {
+      onClick();
+    }
+  }
+
   return (
     <button
-      onClick={onClick}
+      onClick={handleClick}
       className="group w-full text-left focus:outline-none"
       style={{ perspective: '800px' }}
     >
@@ -165,13 +174,21 @@ function GameTile({ game, status, onClick }) {
           e.currentTarget.style.boxShadow = `0 12px 0 ${game.shadow}, 0 18px 32px rgba(0,0,0,0.3)`;
         }}
       >
+        {/* Lock overlay for premium games */}
+        {isLocked && (
+          <div className="absolute inset-0 bg-black/50 rounded-2xl flex flex-col items-center justify-center z-10">
+            <span className="text-3xl">🔒</span>
+            <span className="text-white text-xs font-bold mt-1 tracking-wide">Premium</span>
+          </div>
+        )}
+
         {/* Status indicator */}
-        {TIER_KEYS.has(status) && (
+        {!isLocked && TIER_KEYS.has(status) && (
           <div className="absolute top-3 right-5 text-xl leading-none">
             {TIER_CONFIG[status].emoji}
           </div>
         )}
-        {status === 'started' && (
+        {!isLocked && status === 'started' && (
           <div className="absolute top-3 right-3 w-6 h-6 flex items-center justify-center">
             <span className="w-2.5 h-2.5 rounded-full bg-white/70 animate-pulse" />
           </div>
@@ -186,12 +203,12 @@ function GameTile({ game, status, onClick }) {
         {/* Emoji + Name */}
         <div className="flex items-center gap-2 mb-2 pr-8">
           <span className="text-3xl">{game.emoji}</span>
-          <span className="text-xl font-black text-white tracking-tight">{game.name}</span>
+          <span className="text-xl font-black text-white tracking-tight">{displayTitle}</span>
         </div>
 
         {/* Description */}
         <p className="text-sm leading-snug" style={{ color: 'rgba(255,255,255,0.8)', fontFamily: 'Times New Roman, Times, serif' }}>
-          {game.desc}
+          {displayDesc}
         </p>
 
       </div>
@@ -199,7 +216,7 @@ function GameTile({ game, status, onClick }) {
   );
 }
 
-export default function LandingPage({ darkMode, onToggleDark, onAuth, user }) {
+export default function LandingPage({ darkMode, onToggleDark, onAuth, user, userProfile, gamesConfig = {} }) {
   const navigate = useNavigate();
   const todayIST = useMemo(() => getTodayIST(), []);
   const statuses = useMemo(
@@ -216,6 +233,7 @@ export default function LandingPage({ darkMode, onToggleDark, onAuth, user }) {
           darkMode={darkMode}
           onToggleDark={onToggleDark}
           onSelectGame={id => navigate('/' + id)}
+          isAdmin={userProfile?.admin ?? false}
           buttonClassName="p-2 rounded-full hover:bg-white/60 dark:hover:bg-gray-700 text-gray-500 dark:text-gray-400 transition-colors"
         />
 
@@ -247,9 +265,21 @@ export default function LandingPage({ darkMode, onToggleDark, onAuth, user }) {
       {/* Game tiles */}
       <div className="flex-1 px-4 pb-6 max-w-sm mx-auto w-full">
         <div className="grid grid-cols-2 gap-4">
-          {GAMES.map(game => (
-            <GameTile key={game.id} game={game} status={statuses[game.id]} onClick={() => navigate(game.route)} />
-          ))}
+          {GAMES.map(game => {
+            const cfg = gamesConfig[game.id] || {};
+            const isLocked = !!cfg.paid && !userProfile?.paid;
+            return (
+              <GameTile
+                key={game.id}
+                game={game}
+                status={statuses[game.id]}
+                onClick={() => navigate(game.route)}
+                isLocked={isLocked}
+                displayTitle={cfg.title ?? game.name}
+                displayDesc={cfg.desc ?? game.desc}
+              />
+            );
+          })}
         </div>
         <p className="text-center text-xs text-gray-400 dark:text-gray-500 mt-6 pb-2">
           Brain Gym · Free daily word puzzles

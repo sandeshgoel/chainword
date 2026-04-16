@@ -11,6 +11,7 @@ import { computeMerge, applyMerge } from '../utils/cloudStats.js';
 
 export function useAuth(onSyncComplete) {
   const [user, setUser] = useState(null);
+  const [userProfile, setUserProfile] = useState(null); // { admin, paid, beta }
   const [authLoading, setAuthLoading] = useState(firebaseConfigured);
   // pendingSync: null | { conflictsByGame, mergeResult, uid }
   const [pendingSync, setPendingSync] = useState(null);
@@ -35,6 +36,17 @@ export function useAuth(onSyncComplete) {
             email: u.email,
             photoURL: u.photoURL,
             createdAt: serverTimestamp(),
+            admin: false,
+            paid: false,
+            beta: false,
+          });
+          setUserProfile({ admin: false, paid: false, beta: false });
+        } else {
+          const data = snap.data();
+          setUserProfile({
+            admin: data.admin ?? false,
+            paid: data.paid ?? false,
+            beta: data.beta ?? false,
           });
         }
 
@@ -68,6 +80,7 @@ export function useAuth(onSyncComplete) {
           }
         }
       } else {
+        setUserProfile(null);
         setPendingSync(null);
       }
     });
@@ -120,5 +133,5 @@ export function useAuth(onSyncComplete) {
     await signOut();
   }
 
-  return { user, authLoading, signInWithGoogle, signOut, pendingSync, acceptSync, declineSync };
+  return { user, userProfile, authLoading, signInWithGoogle, signOut, pendingSync, acceptSync, declineSync };
 }

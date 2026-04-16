@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { version } from '../../package.json';
 import Modal from './Modal.jsx';
 
@@ -9,10 +10,24 @@ const GAMES = [
   { id: 'squares', emoji: '🔲', name: 'Squares' },
 ];
 
-export default function HamburgerMenu({ darkMode, onToggleDark, onSelectGame, activeGame, onHome, buttonClassName }) {
+function getLocalDataKeys() {
+  return Object.keys(localStorage)
+    .filter(k => k.startsWith('chainword_') || k.startsWith('braingym_'))
+    .sort();
+}
+
+function clearLocalDataKeys(keys) {
+  keys.forEach(k => localStorage.removeItem(k));
+  sessionStorage.clear();
+  window.location.reload();
+}
+
+export default function HamburgerMenu({ darkMode, onToggleDark, onSelectGame, activeGame, onHome, isAdmin, buttonClassName }) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [showAbout, setShowAbout] = useState(false);
+  const [localKeys, setLocalKeys] = useState([]);
   const menuRef = useRef(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
     function handleClickOutside(event) {
@@ -70,6 +85,28 @@ export default function HamburgerMenu({ darkMode, onToggleDark, onSelectGame, ac
               <span className="text-xl flex-shrink-0">ℹ️</span>
               <span className="text-sm font-medium text-gray-900 dark:text-white">About</span>
             </button>
+            {isAdmin && (
+              <>
+                <div className="border-t border-gray-100 dark:border-gray-700 my-1"></div>
+                <button
+                  onClick={() => { navigate('/admin'); setIsMenuOpen(false); }}
+                  className="w-full flex items-center gap-3 px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors text-left"
+                >
+                  <span className="text-xl flex-shrink-0">🛠️</span>
+                  <span className="text-sm font-medium text-gray-900 dark:text-white">Admin Dashboard</span>
+                </button>
+              </>
+            )}
+            <div className="border-t border-gray-100 dark:border-gray-700 my-1"></div>
+            <button
+              onClick={() => { setLocalKeys(getLocalDataKeys()); setIsMenuOpen(false); }}
+              className="w-full flex items-center gap-3 px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors text-left"
+            >
+              <svg className="w-5 h-5 text-red-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6M1 7h22M8 7V5a2 2 0 012-2h4a2 2 0 012 2v2" />
+              </svg>
+              <span className="text-sm font-medium text-red-500">Clear Local Data</span>
+            </button>
             <div className="border-t border-gray-100 dark:border-gray-700 my-1"></div>
             <button
               onClick={() => { onToggleDark(); setIsMenuOpen(false); }}
@@ -95,6 +132,31 @@ export default function HamburgerMenu({ darkMode, onToggleDark, onSelectGame, ac
           </div>
         </div>
       )}
+
+      <Modal open={localKeys.length > 0} onClose={() => setLocalKeys([])} title="Clear Local Data">
+        <div className="space-y-4 text-sm text-gray-700 dark:text-gray-300">
+          <p>The following keys will be permanently deleted. Cloud data (if signed in) will not be affected.</p>
+          <ul className="max-h-48 overflow-y-auto rounded-lg bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 divide-y divide-gray-100 dark:divide-gray-800 text-xs font-mono">
+            {localKeys.map(k => (
+              <li key={k} className="px-3 py-1.5 text-gray-600 dark:text-gray-400">{k}</li>
+            ))}
+          </ul>
+          <div className="flex gap-3 pt-1">
+            <button
+              onClick={() => clearLocalDataKeys(localKeys)}
+              className="flex-1 px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg font-medium transition-colors"
+            >
+              Clear All ({localKeys.length})
+            </button>
+            <button
+              onClick={() => setLocalKeys([])}
+              className="flex-1 px-4 py-2 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-900 dark:text-white rounded-lg font-medium transition-colors"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      </Modal>
 
       <Modal open={showAbout} onClose={() => setShowAbout(false)} title="About">
         <div className="space-y-5 text-sm text-gray-700 dark:text-gray-300">

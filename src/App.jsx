@@ -7,6 +7,8 @@ import Game from './games/chainword/components/Game.jsx';
 import WordleGame from './games/wordle/components/WordleGame.jsx';
 import TilesGame from './games/tiles/components/TilesGame.jsx';
 import SquaresGame from './games/squares/components/SquaresGame.jsx';
+import ShabdalGame from './games/shabdal/components/ShabdalGame.jsx';
+import CrypticGame from './games/cryptic/components/CrypticGame.jsx';
 import HowToPlay from './games/chainword/components/HowToPlay.jsx';
 import StatsModal from './components/StatsModal.jsx';
 import AuthModal from './components/AuthModal.jsx';
@@ -43,6 +45,8 @@ function pathToGame(pathname) {
   if (pathname.startsWith('/4word')) return '4word';
   if (pathname.startsWith('/tiles')) return 'tiles';
   if (pathname.startsWith('/squares')) return 'squares';
+  if (pathname.startsWith('/shabdal')) return 'shabdal';
+  if (pathname.startsWith('/cryptic')) return 'cryptic';
   return null;
 }
 
@@ -299,6 +303,16 @@ export default function App() {
                   onArchive={() => setShowArchive(true)}
                   archiveDate={archiveDates.squares}
                 />
+          } />
+          <Route path="/shabdal" element={
+            gamesConfig.shabdal?.paid && !userProfile?.paid
+              ? <Navigate to="/" replace />
+              : <ShabdalGame />
+          } />
+          <Route path="/cryptic" element={
+            gamesConfig.cryptic?.paid && !userProfile?.paid
+              ? <Navigate to="/" replace />
+              : <CrypticGame />
           } />
         </Routes>
       </main>

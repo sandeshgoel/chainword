@@ -88,6 +88,35 @@ function getTodayIST() {
   return new Date(Date.now() + 5.5 * 60 * 60 * 1000).toISOString().split('T')[0];
 }
 
+function computeValidWords(tiles) {
+  const ws = getWordSet();
+  if (!ws) return [];
+  const wordScores = new Map();
+  const n = tiles.length;
+  for (let a = 0; a < n; a++) {
+    for (let b = 0; b < n; b++) {
+      if (b === a) continue;
+      for (let c = 0; c < n; c++) {
+        if (c === a || c === b) continue;
+        for (let d = 0; d < n; d++) {
+          if (d === a || d === b || d === c) continue;
+            const word = (tiles[a].letter + tiles[b].letter + tiles[c].letter + tiles[d].letter).toLowerCase();
+            if (ws.has(word)) {
+              const score =
+                tiles[a].points * SLOT_MULTIPLIERS[0] +
+                tiles[b].points * SLOT_MULTIPLIERS[1] +
+                tiles[c].points * SLOT_MULTIPLIERS[2] +
+                tiles[d].points * SLOT_MULTIPLIERS[3];
+              const current = wordScores.get(word) || 0;
+              if (score > current) wordScores.set(word, score);
+            }
+        }
+      }
+    }
+  }
+  return Array.from(wordScores.entries()).map(([word, score]) => ({ word: word.toUpperCase(), score }));
+}
+
 export default function TilesGame({ game, onArchive, archiveDate }) {
   const {
     tiles, slots, dateStr, gameNumber,
@@ -100,7 +129,14 @@ export default function TilesGame({ game, onArchive, archiveDate }) {
   const [copied, setCopied] = useState(false);
   const [toast, setToast] = useState(null); // { word, score }
   const [exitingSet, setExitingSet] = useState(new Set());
+  const [showWordsModal, setShowWordsModal] = useState(false);
+  const [wordsData, setWordsData] = useState(null);
   const isSubmittingRef = useRef(false);
+
+  function handleShowWords() {
+    setWordsData(computeValidWords(tiles));
+    setShowWordsModal(true);
+  }
 
   const filledCount = slots.filter(Boolean).length;
   const currentWord = slots.filter(Boolean).map(t => t.letter).join('');
@@ -250,12 +286,20 @@ export default function TilesGame({ game, onArchive, archiveDate }) {
           </div>
           <div className="flex items-center justify-between w-full">
             <p className="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">Tap tile to place</p>
-            <button
-              onClick={shuffleTiles}
-              className="text-xs text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 transition-colors px-2 py-1 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800"
-            >
-              🔀 Shuffle
-            </button>
+            <div className="flex items-center gap-1">
+              <button
+                onClick={handleShowWords}
+                className="text-xs text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 transition-colors px-2 py-1 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800"
+              >
+                ? Words
+              </button>
+              <button
+                onClick={shuffleTiles}
+                className="text-xs text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 transition-colors px-2 py-1 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800"
+              >
+                🔀 Shuffle
+              </button>
+            </div>
           </div>
         </div>
 
@@ -357,6 +401,45 @@ export default function TilesGame({ game, onArchive, archiveDate }) {
             </div>
           </>);
         })()}
+
+        {/* Valid words modal */}
+        <Modal open={showWordsModal} onClose={() => setShowWordsModal(false)} title="Valid Words">
+          {wordsData && (() => {
+            const histogram = {};
+            wordsData.forEach(({ score }) => {
+              histogram[score] = (histogram[score] || 0) + 1;
+            });
+            const scores = Object.keys(histogram).map(Number).sort((a, b) => a - b);
+            const maxCount = Math.max(...Object.values(histogram), 1);
+            return (
+              <div className="space-y-4">
+                <p className="text-center text-sm text-gray-500 dark:text-gray-400">
+                  <span className="text-3xl font-bold text-gray-900 dark:text-white">{wordsData.length}</span>
+                  <span className="ml-1">valid {wordsData.length === 1 ? 'word' : 'words'} possible with your rack</span>
+                </p>
+                {wordsData.length > 0 && (
+                  <div className="space-y-1.5">
+                    <p className="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">Score distribution (best placement)</p>
+                    {scores.map(score => (
+                      <div key={score} className="flex items-center gap-2">
+                        <span className="text-xs tabular-nums text-gray-500 dark:text-gray-400 w-12 text-right shrink-0">{score} pts</span>
+                        <div className="flex-1 relative h-6 bg-gray-100 dark:bg-gray-700 rounded-full overflow-hidden">
+                          <div
+                            className="absolute inset-y-0 left-0 bg-indigo-500 dark:bg-indigo-600 rounded-full transition-all"
+                            style={{ width: `${(histogram[score] / maxCount) * 100}%` }}
+                          />
+                          <span className="absolute inset-y-0 right-2 flex items-center text-xs font-semibold text-gray-600 dark:text-gray-300">
+                            {histogram[score]}
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            );
+          })()}
+        </Modal>
 
         {/* Archive button */}
         <button

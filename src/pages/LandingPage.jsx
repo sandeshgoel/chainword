@@ -50,6 +50,28 @@ const GAMES = [
     shadow: '#9d174d',
     badge: 'Logic',
   },
+  {
+    id: 'shabdal',
+    route: '/shabdal',
+    emoji: 'अ',
+    name: 'Shabdal',
+    desc: 'Guess the Hindi word in 6 tries',
+    from: '#f97316',
+    to: '#ea580c',
+    shadow: '#9a3412',
+    badge: 'Hindi Wordle',
+  },
+  {
+    id: 'cryptic',
+    route: '/cryptic',
+    emoji: '🧩',
+    name: 'Cryptic',
+    desc: 'Solve a daily cryptic crossword clue',
+    from: '#7c3aed',
+    to: '#6d28d9',
+    shadow: '#4c1d95',
+    badge: 'Cryptic Clues',
+  },
 ];
 
 function getTodayIST() {
@@ -174,11 +196,20 @@ function GameTile({ game, status, onClick, isLocked, displayTitle, displayDesc }
           e.currentTarget.style.boxShadow = `0 12px 0 ${game.shadow}, 0 18px 32px rgba(0,0,0,0.3)`;
         }}
       >
-        {/* Lock overlay for premium games */}
+        {/* Vertical ribbon + lock for premium games */}
         {isLocked && (
-          <div className="absolute inset-0 bg-black/50 rounded-2xl flex flex-col items-center justify-center z-10">
-            <span className="text-3xl">🔒</span>
-            <span className="text-white text-xs font-bold mt-1 tracking-wide">Premium</span>
+          <div className="absolute top-0 right-4 z-10">
+            <div
+              className="w-7 bg-amber-400 flex flex-col items-center pt-2.5 shadow-lg"
+              style={{ height: '52px', clipPath: 'polygon(0 0, 100% 0, 100% 78%, 50% 100%, 0 78%)' }}
+            >
+              <svg width="15" height="18" viewBox="0 0 15 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M3.5 7.5V5.5a4 4 0 018 0v2" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+                <rect x="1.5" y="7.5" width="12" height="9" rx="2.5" fill="white" fillOpacity="0.95"/>
+                <circle cx="7.5" cy="12" r="1.6" fill="#d97706"/>
+                <rect x="6.8" y="12" width="1.4" height="2.2" rx="0.7" fill="#d97706"/>
+              </svg>
+            </div>
           </div>
         )}
 

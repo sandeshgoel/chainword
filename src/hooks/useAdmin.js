@@ -7,10 +7,12 @@ import { db, firebaseConfigured } from '../firebase.js';
 const DEFAULT_GLOBAL_CONFIG = { ads_enabled: false };
 
 const DEFAULT_GAMES_CONFIG = {
-  chainword: { title: 'Chainword', desc: 'Link 4-letter words one step at a time', paid: false },
-  '4word':   { title: '4Word',    desc: 'Guess the 4-letter word in 6 tries',      paid: false },
-  tiles:     { title: 'Tiles',    desc: 'Build the top scoring word from your rack', paid: false },
-  squares:   { title: 'Squares',  desc: 'Fill the corners to form valid words',    paid: false },
+  chainword: { title: 'Chainword', desc: 'Link 4-letter words one step at a time',          paid: false },
+  '4word':   { title: '4Word',    desc: 'Guess the 4-letter word in 6 tries',               paid: false },
+  tiles:     { title: 'Tiles',    desc: 'Build the top scoring word from your rack',         paid: false },
+  squares:   { title: 'Squares',  desc: 'Fill the corners to form valid words',              paid: false },
+  shabdal:   { title: 'Shabdal',  desc: 'Guess the Hindi word in 6 tries',                  paid: false },
+  cryptic:   { title: 'Cryptic',  desc: 'Solve a daily cryptic crossword clue',             paid: false },
 };
 
 export { DEFAULT_GAMES_CONFIG, DEFAULT_GLOBAL_CONFIG };

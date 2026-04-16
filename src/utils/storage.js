@@ -3,7 +3,7 @@ const THEME_KEY    = 'chainword_theme';
 
 const CHAINWORD_STATS_KEY      = 'braingym_chainword_stats';
 const CHAINWORD_STATS_HARD_KEY = 'braingym_chainword_stats_hard';
-const WORDLE_STATS_KEY         = 'braingym_4word_stats';
+const FOUR_WORD_STATS_KEY      = 'braingym_4word_stats';
 const TILES_STATS_KEY          = 'braingym_tiles_stats';
 const SQUARES_STATS_KEY        = 'braingym_squares_stats';
 
@@ -12,23 +12,6 @@ const HISTORY_LIMIT = 100;
 function getTodayIST() {
   return new Date(Date.now() + 5.5 * 60 * 60 * 1000).toISOString().split('T')[0];
 }
-
-// --- Migration ---
-
-function migrate(oldKey, newKey) {
-  if (localStorage.getItem(newKey)) return;
-  const old = localStorage.getItem(oldKey);
-  if (old) {
-    localStorage.setItem(newKey, old);
-    localStorage.removeItem(oldKey);
-  }
-}
-
-migrate('chainword_stats',         CHAINWORD_STATS_KEY);
-migrate('chainword_stats_hard',    CHAINWORD_STATS_HARD_KEY);
-migrate('chainword_wordle_stats',  WORDLE_STATS_KEY);
-migrate('chainword_tiles_stats',   TILES_STATS_KEY);
-migrate('chainword_squares_stats', SQUARES_STATS_KEY);
 
 // --- Progress (per-day game state) ---
 
@@ -140,14 +123,14 @@ export { CHAINWORD_STATS_KEY, CHAINWORD_STATS_HARD_KEY };
 
 // --- 4word ---
 
-export function loadWordleStats() {
-  return { history: loadHistory(WORDLE_STATS_KEY) };
+export function load4WordStats() {
+  return { history: loadHistory(FOUR_WORD_STATS_KEY) };
 }
 
-export function updateWordleStats(guessesCount, dateStr) {
-  const { history } = loadWordleStats();
+export function update4WordStats(guessesCount, dateStr) {
+  const { history } = load4WordStats();
   upsertHistory(history, { dateStr, guesses: guessesCount, won: guessesCount > 0, playedDate: getTodayIST() });
-  saveHistory(WORDLE_STATS_KEY, history);
+  saveHistory(FOUR_WORD_STATS_KEY, history);
   return { history };
 }
 

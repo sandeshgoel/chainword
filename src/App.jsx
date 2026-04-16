@@ -4,7 +4,7 @@ import { Toaster } from 'react-hot-toast';
 import { Analytics } from '@vercel/analytics/react';
 import Header from './components/Header.jsx';
 import Game from './games/chainword/components/Game.jsx';
-import WordleGame from './games/wordle/components/WordleGame.jsx';
+import FourWordGame from './games/4word/components/FourWordGame.jsx';
 import TilesGame from './games/tiles/components/TilesGame.jsx';
 import SquaresGame from './games/squares/components/SquaresGame.jsx';
 import ShabdalGame from './games/shabdal/components/ShabdalGame.jsx';
@@ -19,7 +19,7 @@ import LandingPage from './pages/LandingPage.jsx';
 import AdminDashboard from './pages/AdminDashboard.jsx';
 import { useAuth } from './hooks/useAuth.js';
 import { useGame } from './games/chainword/hooks/useGame.js';
-import { useWordle } from './games/wordle/hooks/useWordle.js';
+import { use4Word } from './games/4word/hooks/use4Word.js';
 import { useTiles } from './games/tiles/hooks/useTiles.js';
 import { useSquares } from './games/squares/hooks/useSquares.js';
 import { loadTheme, saveTheme } from './utils/storage.js';
@@ -78,7 +78,7 @@ export default function App() {
     () => setStatsVersion(v => v + 1)
   );
   const game = useGame(user, wordListReady, hardMode, archiveDates.chainword, statsVersion);
-  const wordle = useWordle(wordListReady, archiveDates['4word'], user, statsVersion);
+  const fourWord = use4Word(wordListReady, archiveDates['4word'], user, statsVersion);
   const tiles = useTiles(archiveDates.tiles, user, statsVersion);
   const squares = useSquares(archiveDates.squares, user, statsVersion);
 
@@ -98,10 +98,10 @@ export default function App() {
     if (!firebaseConfigured) return;
     const unsubGames = onSnapshot(doc(db, 'admin', 'games'), snap => {
       if (snap.exists()) setGamesConfig({ ...DEFAULT_GAMES_CONFIG, ...snap.data() });
-    }, () => {/* use defaults on error */});
+    }, (err) => { console.error('Failed to fetch games config:', err); });
     const unsubConfig = onSnapshot(doc(db, 'admin', 'config'), snap => {
       if (snap.exists()) setGlobalConfig(snap.data());
-    }, () => {});
+    }, (err) => { console.error('Failed to fetch global config:', err); });
     return () => { unsubGames(); unsubConfig(); };
   }, []);
 
@@ -246,8 +246,8 @@ export default function App() {
         activeGame={activeGame}
         onSelectGame={g => navigate('/' + g)}
         onHome={() => navigate('/')}
-        gameNumber={activeGame === '4word' ? wordle.gameNumber : activeGame === 'tiles' ? tiles.gameNumber : activeGame === 'squares' ? squares.gameNumber : game.gameNumber}
-        dateStr={activeGame === '4word' ? wordle.dateStr : activeGame === 'tiles' ? tiles.dateStr : activeGame === 'squares' ? squares.dateStr : game.dateStr}
+        gameNumber={activeGame === '4word' ? fourWord.gameNumber : activeGame === 'tiles' ? tiles.gameNumber : activeGame === 'squares' ? squares.gameNumber : game.gameNumber}
+        dateStr={activeGame === '4word' ? fourWord.dateStr : activeGame === 'tiles' ? tiles.dateStr : activeGame === 'squares' ? squares.dateStr : game.dateStr}
         darkMode={darkMode}
         onToggleDark={() => setDarkMode(d => !d)}
         onHowToPlay={() => setShowHelp(true)}
@@ -279,8 +279,8 @@ export default function App() {
           <Route path="/4word" element={
             gamesConfig['4word']?.paid && !userProfile?.paid
               ? <Navigate to="/" replace />
-              : <WordleGame
-                  game={wordle}
+              : <FourWordGame
+                  game={fourWord}
                   wordListReady={wordListReady}
                   onArchive={() => setShowArchive(true)}
                   archiveDate={archiveDates['4word']}
@@ -323,9 +323,9 @@ export default function App() {
       <StatsModal
         open={showStats}
         onClose={() => setShowStats(false)}
-        stats={activeGame === '4word' ? wordle.stats : activeGame === 'tiles' ? tiles.stats : activeGame === 'squares' ? squares.stats : game.stats}
+        stats={activeGame === '4word' ? fourWord.stats : activeGame === 'tiles' ? tiles.stats : activeGame === 'squares' ? squares.stats : game.stats}
         onReset={handleReset}
-        isWordle={activeGame === '4word'}
+        is4Word={activeGame === '4word'}
         isTiles={activeGame === 'tiles'}
         isSquares={activeGame === 'squares'}
         hardMode={activeGame === 'chainword' ? hardMode : undefined}

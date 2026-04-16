@@ -64,7 +64,7 @@ export function chainwordHistTier(won, guesses, hintsUsed, parSteps) {
   return 'bronze';
 }
 
-export function wordleTier(won, guessCount) {
+export function fourWordTier(won, guessCount) {
   if (!won) return 'unsolved';
   if (guessCount <= 4) return 'gold';
   if (guessCount === 5) return 'silver';

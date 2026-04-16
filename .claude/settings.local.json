@@ -3,7 +3,8 @@
     "allow": [
       "Bash(npm run:*)",
       "Bash(grep -E \"\\\\.\\(jsx|js|tsx|ts\\)$\")",
-      "Bash(ls -lh /Users/sandeshgoel/SOFTWARE-loca/chainword/src/words.*)"
+      "Bash(ls -lh /Users/sandeshgoel/SOFTWARE-loca/chainword/src/words.*)",
+      "Bash(grep -E \"\\\\.\\(env|json\\)$\")"
     ]
   }
 }

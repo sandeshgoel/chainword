@@ -20,8 +20,8 @@ export async function loadWordList() {
 
 const BASE_EPOCH_DAY = 20555; // 2026-04-12
 
-// Returns daily Wordle target for today (IST) or a specific override date.
-export function getDailyWordleTarget(overrideDateStr = null) {
+// Returns daily 4Word target for today (IST) or a specific override date.
+export function getDaily4WordTarget(overrideDateStr = null) {
   let dateStr, epochDay;
   if (overrideDateStr) {
     dateStr = overrideDateStr;

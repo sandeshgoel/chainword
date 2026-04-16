@@ -112,7 +112,7 @@ export function buildTilesShareText({ gameNumber, dateStr, bestScore, optimalSco
   );
 }
 
-export function buildWordleShareText({ gameNumber, dateStr, guesses, status }) {
+export function build4WordShareText({ gameNumber, dateStr, guesses, status }) {
   const result = status === 'won' ? guesses.length : 'X';
   let text = `4word #${gameNumber} 🔤\n${formatDate(dateStr)}  •  ${result}/6\n\n`;
 

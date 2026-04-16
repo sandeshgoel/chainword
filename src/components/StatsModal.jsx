@@ -3,7 +3,7 @@ import Modal from './Modal.jsx';
 import { getParStepsForDate } from '../games/chainword/data/dailyPairs.js';
 import { computeStreaks } from '../utils/storage.js';
 import {
-  chainwordHistTier, wordleTier, tilesTier, squaresTier,
+  chainwordHistTier, fourWordTier, tilesTier, squaresTier,
   TIER_CONFIG,
 } from '../utils/awards.js';
 
@@ -81,7 +81,7 @@ function HistoryTable({ history, isChainword, isWordle, isTiles, isSquares, hard
                 })()}
 
                 {isWordle && (() => {
-                  const tier = wordleTier(h.won, h.guesses);
+                  const tier = fourWordTier(h.won, h.guesses);
                   return (<>
                     <td className="text-center px-2 py-2 text-base">{TIER_CONFIG[tier].emoji}</td>
                     <td className="text-center px-2 py-2 text-gray-700 dark:text-gray-300">

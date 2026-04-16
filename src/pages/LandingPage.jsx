@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
-import { chainwordHistTier, wordleTier, tilesTier, squaresTier, TIER_CONFIG } from '../utils/awards.js';
+import { chainwordHistTier, fourWordTier, tilesTier, squaresTier, TIER_CONFIG } from '../utils/awards.js';
 import { getParStepsForDate } from '../games/chainword/data/dailyPairs.js';
 import HamburgerMenu from '../components/HamburgerMenu.jsx';
 
@@ -94,9 +94,9 @@ function getGameStatus(gameId, dateStr) {
       const all = JSON.parse(localStorage.getItem('chainword_progress') || '{}');
       if (all[dateStr]?.chain?.length > 1 || all[dateStr + '_hard']?.chain?.length > 1) return 'started';
     } else if (gameId === '4word') {
-      const stats = JSON.parse(localStorage.getItem('braingym_wordle_stats') || 'null');
+      const stats = JSON.parse(localStorage.getItem('braingym_4word_stats') || 'null');
       const entry = stats?.history?.find(h => h.dateStr === dateStr);
-      if (entry) return wordleTier(entry.won, entry.guesses);
+      if (entry) return fourWordTier(entry.won, entry.guesses);
       const saved = JSON.parse(localStorage.getItem('chainword_wordle_' + dateStr) || 'null');
       if (saved?.guesses?.length > 0) return 'started';
     } else if (gameId === 'tiles') {

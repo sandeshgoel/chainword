@@ -7,11 +7,11 @@ import {
   getRedirectResult,
   signOut as firebaseSignOut,
 } from 'firebase/auth';
-
-const isMobile = () => /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
 import { doc, setDoc, getDoc, serverTimestamp } from 'firebase/firestore';
 import { auth, db, googleProvider, firebaseConfigured } from '../firebase.js';
 import { computeMerge, applyMerge } from '../utils/cloudStats.js';
+
+const isMobile = () => /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
 
 export function useAuth(onSyncComplete) {
   const [user, setUser] = useState(null);
@@ -27,8 +27,11 @@ export function useAuth(onSyncComplete) {
   useEffect(() => {
     if (!firebaseConfigured) return;
     // Handle result from signInWithRedirect (mobile flow)
-    getRedirectResult(auth).catch(err => {
+    getRedirectResult(auth).then(result => {
+      if (result) console.log('Redirect sign-in succeeded:', result.user?.email);
+    }).catch(err => {
       console.error('Redirect sign-in error:', err);
+      toast.error(`Sign-in failed: ${err.code || err.message}`);
     });
     const unsub = onAuthStateChanged(auth, async (u) => {
       setUser(u);
@@ -109,6 +112,7 @@ export function useAuth(onSyncComplete) {
     } catch (err) {
       if (err.code !== 'auth/popup-closed-by-user') {
         console.error('Sign-in error:', err);
+        toast.error(`Sign-in failed: ${err.code || err.message}`);
       }
     }
   }

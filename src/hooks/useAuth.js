@@ -3,8 +3,12 @@ import toast from 'react-hot-toast';
 import {
   onAuthStateChanged,
   signInWithPopup,
+  signInWithRedirect,
+  getRedirectResult,
   signOut as firebaseSignOut,
 } from 'firebase/auth';
+
+const isMobile = () => /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
 import { doc, setDoc, getDoc, serverTimestamp } from 'firebase/firestore';
 import { auth, db, googleProvider, firebaseConfigured } from '../firebase.js';
 import { computeMerge, applyMerge } from '../utils/cloudStats.js';
@@ -22,6 +26,10 @@ export function useAuth(onSyncComplete) {
 
   useEffect(() => {
     if (!firebaseConfigured) return;
+    // Handle result from signInWithRedirect (mobile flow)
+    getRedirectResult(auth).catch(err => {
+      console.error('Redirect sign-in error:', err);
+    });
     const unsub = onAuthStateChanged(auth, async (u) => {
       setUser(u);
       setAuthLoading(false);
@@ -93,7 +101,11 @@ export function useAuth(onSyncComplete) {
       return;
     }
     try {
-      await signInWithPopup(auth, googleProvider);
+      if (isMobile()) {
+        await signInWithRedirect(auth, googleProvider);
+      } else {
+        await signInWithPopup(auth, googleProvider);
+      }
     } catch (err) {
       if (err.code !== 'auth/popup-closed-by-user') {
         console.error('Sign-in error:', err);

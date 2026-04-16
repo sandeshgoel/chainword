@@ -27,7 +27,6 @@ export default function ShabdalKeyboard({ letterStates = {}, onKey }) {
               <button
                 key={key}
                 onMouseDown={(e) => { e.preventDefault(); onKey(key); }}
-                onTouchStart={(e) => { e.preventDefault(); onKey(key); }}
                 className={`
                   ${isWide ? 'px-1 min-w-[38px] sm:min-w-[46px] text-[10px]' : 'flex-1 max-w-[32px] text-sm sm:text-base'}
                   h-11 rounded font-bold flex items-center justify-center

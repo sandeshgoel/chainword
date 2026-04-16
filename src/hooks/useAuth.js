@@ -103,17 +103,14 @@ export function useAuth(onSyncComplete) {
       return;
     }
     try {
-      await signInWithPopup(auth, googleProvider);
+      if (/Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) {
+        // Mobile: use redirect — same-origin (chainword.in) so getRedirectResult works correctly
+        await signInWithRedirect(auth, googleProvider);
+      } else {
+        await signInWithPopup(auth, googleProvider);
+      }
     } catch (err) {
-      if (err.code === 'auth/popup-blocked') {
-        // Popup was blocked by the browser — fall back to redirect flow
-        try {
-          await signInWithRedirect(auth, googleProvider);
-        } catch (redirectErr) {
-          console.error('Redirect sign-in error:', redirectErr);
-          toast.error(`Sign-in failed: ${redirectErr.code || redirectErr.message}`);
-        }
-      } else if (err.code !== 'auth/popup-closed-by-user') {
+      if (err.code !== 'auth/popup-closed-by-user') {
         console.error('Sign-in error:', err);
         toast.error(`Sign-in failed: ${err.code || err.message}`);
       }

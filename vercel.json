@@ -1,1 +1,12 @@
-{ "rewrites": [{ "source": "/(.*)", "destination": "/" }] }
+{
+  "rewrites": [
+    {
+      "source": "/__/auth/:path*",
+      "destination": "https://chainword-cc17f.firebaseapp.com/__/auth/:path*"
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/"
+    }
+  ]
+}

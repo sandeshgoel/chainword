@@ -3,7 +3,7 @@ import { bfs, diffsByOneLetter } from '../../../utils/wordUtils.js';
 import {
   getDateProgress, saveDateProgress,
   updateStatsOnWin, updateStatsOnGiveUp, loadStats,
-  CHAINWORD_STATS_KEY, CHAINWORD_STATS_HARD_KEY,
+  CHAINWORD_STATS_KEY, CHAINWORD_HARD_STATS_KEY,
 } from '../../../utils/storage.js';
 import { pushCloudStats } from '../../../utils/cloudStats.js';
 import { GAME_ID_CHAINWORD, GAME_ID_CHAINWORD_HARD } from '../../../gamesMeta.js';
@@ -14,7 +14,7 @@ export function useGame(user, wordListReady, hardMode = false, overrideDateStr =
   const { pair, pairpath, dateStr, gameNumber } = getDailyInfo(hardMode, overrideDateStr);
   // Mode-specific keys so easy and hard progress/stats are stored separately
   const progressKey = hardMode ? `${dateStr}_hard` : dateStr;
-  const statsKey = hardMode ? CHAINWORD_STATS_HARD_KEY : CHAINWORD_STATS_KEY;
+  const statsKey = hardMode ? CHAINWORD_HARD_STATS_KEY : CHAINWORD_STATS_KEY;
 
   const [chain, setChain] = useState([pair.start]);
   const [optimalPath, setOptimalPath] = useState(null);

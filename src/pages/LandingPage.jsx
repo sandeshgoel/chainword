@@ -6,9 +6,9 @@ import { getParStepsForDate } from '../games/chainword/data/dailyPairs.js';
 import HamburgerMenu from '../components/HamburgerMenu.jsx';
 import { GAMES_META, GAME_ID_CHAINWORD, GAME_ID_WORD4, GAME_ID_TILES, GAME_ID_SQUARES, GAME_ID_SHABDAL } from '../gamesMeta.js';
 import {
-  CHAINWORD_STATS_KEY, CHAINWORD_STATS_HARD_KEY,
+  CHAINWORD_STATS_KEY, CHAINWORD_HARD_STATS_KEY,
   WORD4_STATS_KEY, TILES_STATS_KEY, SQUARES_STATS_KEY, SHABDAL_STATS_KEY,
-  CHAINWORD_PROGRESS_PREFIX, WORD4_PROGRESS_PREFIX, TILES_PROGRESS_PREFIX, SQUARES_PROGRESS_PREFIX, SHABDAL_PROGRESS_PREFIX,
+  CHAINWORD_PROGRESS_PREFIX, CHAINWORD_HARD_PROGRESS_PREFIX, WORD4_PROGRESS_PREFIX, TILES_PROGRESS_PREFIX, SQUARES_PROGRESS_PREFIX, SHABDAL_PROGRESS_PREFIX,
 } from '../utils/storage.js';
 
 function getTodayIST() {
@@ -24,12 +24,12 @@ function getGameStatus(gameId, dateStr) {
       const stats = JSON.parse(localStorage.getItem(CHAINWORD_STATS_KEY) || 'null');
       const entry = stats?.history?.find(h => h.dateStr === dateStr);
       if (entry) return chainwordHistTier(entry.won, entry.guesses, entry.hintsUsed, getParStepsForDate(dateStr, false));
-      const hardStats = JSON.parse(localStorage.getItem(CHAINWORD_STATS_HARD_KEY) || 'null');
+      const hardStats = JSON.parse(localStorage.getItem(CHAINWORD_HARD_STATS_KEY) || 'null');
       const hardEntry = hardStats?.history?.find(h => h.dateStr === dateStr);
       if (hardEntry) return chainwordHistTier(hardEntry.won, hardEntry.guesses, hardEntry.hintsUsed, getParStepsForDate(dateStr, true));
       // Not finished — check if in progress
       const data = JSON.parse(localStorage.getItem(CHAINWORD_PROGRESS_PREFIX + dateStr) || 'null');
-      const hardData = JSON.parse(localStorage.getItem(CHAINWORD_PROGRESS_PREFIX + dateStr + '_hard') || 'null');
+      const hardData = JSON.parse(localStorage.getItem(CHAINWORD_HARD_PROGRESS_PREFIX + dateStr) || 'null');
       if (data?.chain?.length > 1 || hardData?.chain?.length > 1) return 'started';
     } else if (gameId === GAME_ID_WORD4) {
       const stats = JSON.parse(localStorage.getItem(WORD4_STATS_KEY) || 'null');

@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import Modal from './Modal.jsx';
 import {
-  CHAINWORD_STATS_KEY, CHAINWORD_STATS_HARD_KEY,
+  CHAINWORD_STATS_KEY, CHAINWORD_HARD_STATS_KEY,
   WORD4_STATS_KEY, TILES_STATS_KEY, SQUARES_STATS_KEY,
   CHAINWORD_PROGRESS_PREFIX, WORD4_PROGRESS_PREFIX, TILES_PROGRESS_PREFIX, SQUARES_PROGRESS_PREFIX,
 } from '../utils/storage.js';
@@ -30,7 +30,7 @@ function hasStatsEntry(statsKey, dateStr) {
 function getPlayStatus(dateStr, activeGame, hardMode) {
   try {
     if (activeGame === GAME_ID_CHAINWORD) {
-      const statsKey = hardMode ? CHAINWORD_STATS_HARD_KEY : CHAINWORD_STATS_KEY;
+      const statsKey = hardMode ? CHAINWORD_HARD_STATS_KEY : CHAINWORD_STATS_KEY;
       if (hasStatsEntry(statsKey, dateStr)) return 'finished';
       const key = hardMode ? dateStr + '_hard' : dateStr;
       const entry = JSON.parse(localStorage.getItem(CHAINWORD_PROGRESS_PREFIX + key) || 'null');

@@ -11,15 +11,16 @@ export const LAST_USER_KEY  = 'braingym_last_user';
 
 // Per-game stats history
 export const CHAINWORD_STATS_KEY      = 'braingym_stats_chainword';
-export const CHAINWORD_STATS_HARD_KEY = 'braingym_stats_chainword_hard';
+export const CHAINWORD_HARD_STATS_KEY = 'braingym_stats_chainword_hard';
 export const WORD4_STATS_KEY          = 'braingym_stats_word4';
 export const TILES_STATS_KEY          = 'braingym_stats_tiles';
 export const SQUARES_STATS_KEY        = 'braingym_stats_squares';
 export const SHABDAL_STATS_KEY        = 'braingym_stats_shabdal';
 export const CRYPTIC_STATS_KEY        = 'braingym_stats_cryptic';
 
-// Per-date game progress prefixes  (append YYYY-MM-DD, or YYYY-MM-DD_hard for chainword hard mode)
+// Per-date game progress prefixes  (append YYYY-MM-DD)
 export const CHAINWORD_PROGRESS_PREFIX = 'braingym_pg_chainword_';
+export const CHAINWORD_HARD_PROGRESS_PREFIX = 'braingym_pg_chainword_hard_';
 export const WORD4_PROGRESS_PREFIX     = 'braingym_pg_word4_';
 export const TILES_PROGRESS_PREFIX     = 'braingym_pg_tiles_';
 export const SQUARES_PROGRESS_PREFIX   = 'braingym_pg_squares_';
@@ -29,15 +30,17 @@ export const CRYPTIC_PROGRESS_PREFIX   = 'braingym_pg_cryptic_';
 // Convenience arrays for auth / reset flows
 export const ALL_STAT_KEYS = [
   CHAINWORD_STATS_KEY,
-  CHAINWORD_STATS_HARD_KEY,
+  CHAINWORD_HARD_STATS_KEY,
   WORD4_STATS_KEY,
   TILES_STATS_KEY,
   SQUARES_STATS_KEY,
   SHABDAL_STATS_KEY,
+  CRYPTIC_STATS_KEY,
 ];
 
 export const ALL_PROGRESS_PREFIXES = [
   CHAINWORD_PROGRESS_PREFIX,
+  CHAINWORD_HARD_PROGRESS_PREFIX,
   WORD4_PROGRESS_PREFIX,
   TILES_PROGRESS_PREFIX,
   SQUARES_PROGRESS_PREFIX,

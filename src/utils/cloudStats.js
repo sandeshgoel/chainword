@@ -2,30 +2,24 @@ import { doc, getDoc, setDoc, deleteDoc, collection, getDocs, serverTimestamp } 
 import { db, firebaseConfigured } from '../firebase.js';
 import {
   getGameHistory, setGameHistory,
-  CHAINWORD_STATS_KEY, CHAINWORD_STATS_HARD_KEY, WORD4_STATS_KEY, TILES_STATS_KEY, SQUARES_STATS_KEY,
+  CHAINWORD_STATS_KEY, CHAINWORD_HARD_STATS_KEY, WORD4_STATS_KEY, TILES_STATS_KEY, SQUARES_STATS_KEY, SHABDAL_STATS_KEY, CRYPTIC_STATS_KEY,
 } from './storage.js';
 import {
-  GAME_ID_CHAINWORD, GAME_ID_CHAINWORD_HARD, GAME_ID_WORD4, GAME_ID_TILES, GAME_ID_SQUARES,
+  GAME_ID_CHAINWORD, GAME_ID_CHAINWORD_HARD, GAME_ID_WORD4, GAME_ID_TILES, GAME_ID_SQUARES, GAME_ID_SHABDAL, GAME_ID_CRYPTIC,
 } from '../gamesMeta.js';
 
 // Maps Firestore game key → localStorage key
 export const CLOUD_TO_LOCAL = {
   [GAME_ID_CHAINWORD]:      CHAINWORD_STATS_KEY,
-  [GAME_ID_CHAINWORD_HARD]: CHAINWORD_STATS_HARD_KEY,
+  [GAME_ID_CHAINWORD_HARD]: CHAINWORD_HARD_STATS_KEY,
   [GAME_ID_WORD4]:          WORD4_STATS_KEY,
   [GAME_ID_TILES]:          TILES_STATS_KEY,
   [GAME_ID_SQUARES]:        SQUARES_STATS_KEY,
+  [GAME_ID_SHABDAL]:        SHABDAL_STATS_KEY,
+  [GAME_ID_CRYPTIC]:        CRYPTIC_STATS_KEY,
 };
 
 export const CLOUD_GAME_KEYS = Object.keys(CLOUD_TO_LOCAL);
-
-export const GAME_DISPLAY_NAMES = {
-  [GAME_ID_CHAINWORD]:      'Chainword (Easy)',
-  [GAME_ID_CHAINWORD_HARD]: 'Chainword (Hard)',
-  [GAME_ID_WORD4]:          'word4',
-  [GAME_ID_TILES]:          'Tiles',
-  [GAME_ID_SQUARES]:        'Squares',
-};
 
 function cloudRef(uid, gameKey) {
   return doc(db, 'users', uid, 'stats', gameKey);

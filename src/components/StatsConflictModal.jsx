@@ -1,5 +1,4 @@
 import Modal from './Modal.jsx';
-import { GAME_DISPLAY_NAMES } from '../utils/cloudStats.js';
 
 function formatDate(dateStr) {
   const d = new Date(dateStr + 'T00:00:00Z');
@@ -56,7 +55,7 @@ export default function StatsConflictModal({ open, mergeResult, onAccept, onDecl
           {gamesWithConflicts.map(({ gameKey, conflicts }) => (
             <div key={gameKey}>
               <p className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400 mb-1">
-                {GAME_DISPLAY_NAMES[gameKey] || gameKey}
+                {gameKey}
               </p>
               <div className="space-y-1">
                 {conflicts.filter(({ local, cloud }) => hasVisibleDiff(local, cloud)).map(({ dateStr, local, cloud }) => {

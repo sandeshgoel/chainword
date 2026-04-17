@@ -30,22 +30,33 @@ async function fetchCloudHistory(uid, gameKey) {
   return snap.exists() ? (snap.data().history || []) : [];
 }
 
-// Merge local + cloud histories. Local wins on conflicting dateStr.
+// Stable JSON comparison: sorts keys so insertion-order differences don't cause false conflicts.
+function stableJson(obj) {
+  if (obj === null || typeof obj !== 'object' || Array.isArray(obj)) return JSON.stringify(obj);
+  const sorted = {};
+  Object.keys(obj).sort().forEach(k => { sorted[k] = obj[k]; });
+  return JSON.stringify(sorted);
+}
+
+// Merge local + cloud histories. Cloud wins on conflicting dateStr;
+// entries that only exist on one side are kept (no data is discarded).
 // Returns { merged, conflicts: [{dateStr, local, cloud}] }
 export function mergeHistories(localHistory, cloudHistory) {
   const localMap = new Map((localHistory || []).map(e => [e.dateStr, e]));
   const cloudMap = new Map((cloudHistory || []).map(e => [e.dateStr, e]));
 
+  // Detect days where both sides have a result but they differ (value comparison, order-insensitive)
   const conflicts = [];
-  for (const [dateStr, localEntry] of localMap) {
-    const cloudEntry = cloudMap.get(dateStr);
-    if (cloudEntry && JSON.stringify(localEntry) !== JSON.stringify(cloudEntry)) {
+  for (const [dateStr, cloudEntry] of cloudMap) {
+    const localEntry = localMap.get(dateStr);
+    if (localEntry && stableJson(localEntry) !== stableJson(cloudEntry)) {
       conflicts.push({ dateStr, local: localEntry, cloud: cloudEntry });
     }
   }
 
+  // Cloud wins on conflicts; unique local-only entries are preserved
   const allDates = new Set([...localMap.keys(), ...cloudMap.keys()]);
-  const merged = Array.from(allDates).map(d => localMap.get(d) || cloudMap.get(d));
+  const merged = Array.from(allDates).map(d => cloudMap.get(d) || localMap.get(d));
   merged.sort((a, b) => b.dateStr.localeCompare(a.dateStr));
   if (merged.length > 100) merged.length = 100;
 

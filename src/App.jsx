@@ -77,7 +77,7 @@ export default function App() {
   const [showArchive, setShowArchive] = useState(false);
 
   const {
-    user, userProfile, signingIn,
+    user, userProfile, lastUser, signingIn,
     signInWithGoogle, signOut,
     pendingSync, acceptSync, declineSync,
     sessionConflict, resolveSession,
@@ -227,6 +227,7 @@ export default function App() {
           onAuth={() => setShowAuth(true)}
           user={user}
           userProfile={userProfile}
+          lastUser={lastUser}
           signingIn={signingIn}
           gamesConfig={gamesConfig}
         />
@@ -235,6 +236,7 @@ export default function App() {
           onClose={() => setShowAuth(false)}
           user={user}
           userProfile={userProfile}
+          lastUser={lastUser}
           onSignIn={signInWithGoogle}
           onSignOut={signOut}
         />
@@ -246,7 +248,7 @@ export default function App() {
         />
         <StatsConflictModal
           open={!!pendingSync}
-          conflictsByGame={pendingSync?.conflictsByGame || {}}
+          mergeResult={pendingSync?.mergeResult}
           onAccept={acceptSync}
           onDecline={declineSync}
         />
@@ -284,6 +286,7 @@ export default function App() {
         onFriends={() => setShowFriends(true)}
         user={user}
         userProfile={userProfile}
+        lastUser={lastUser}
         signingIn={signingIn}
         isAdmin={userProfile?.admin ?? false}
       />
@@ -371,6 +374,7 @@ export default function App() {
         onClose={() => setShowAuth(false)}
         user={user}
         userProfile={userProfile}
+        lastUser={lastUser}
         onSignIn={signInWithGoogle}
         onSignOut={signOut}
       />
@@ -384,7 +388,7 @@ export default function App() {
 
       <StatsConflictModal
         open={!!pendingSync}
-        conflictsByGame={pendingSync?.conflictsByGame || {}}
+        mergeResult={pendingSync?.mergeResult}
         onAccept={acceptSync}
         onDecline={declineSync}
       />

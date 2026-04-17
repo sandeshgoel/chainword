@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import toast from 'react-hot-toast';
 import {
+  GoogleAuthProvider,
   onAuthStateChanged,
   signInWithPopup,
   signInWithRedirect,
@@ -8,7 +9,7 @@ import {
   signOut as firebaseSignOut,
 } from 'firebase/auth';
 import { doc, setDoc, getDoc, serverTimestamp, onSnapshot } from 'firebase/firestore';
-import { auth, db, googleProvider, firebaseConfigured } from '../firebase.js';
+import { auth, db, firebaseConfigured } from '../firebase.js';
 import { computeMerge, applyMerge } from '../utils/cloudStats.js';
 
 // localStorage-based session ID — stable per browser, shared across all tabs.
@@ -31,9 +32,43 @@ function resetSessionId() {
 }
 
 
+const LAST_USER_KEY = 'braingym_last_user';
+
+function readLastUser() {
+  try { return JSON.parse(localStorage.getItem(LAST_USER_KEY) || 'null'); } catch { return null; }
+}
+
+// All localStorage keys that hold per-user game stats / progress.
+const STAT_KEYS = [
+  'braingym_chainword_stats',
+  'braingym_chainword_stats_hard',
+  'chainword_progress',
+  'braingym_4word_stats',
+  'braingym_tiles_stats',
+  'braingym_squares_stats',
+  'braingym_shabdal_stats',
+];
+const STAT_PREFIXES = [
+  'chainword_wordle_',
+  'chainword_tiles_',
+  'chainword_squares_',
+  'chainword_shabdal_',
+  'chainword_cryptic_',
+];
+
+function clearAllLocalStats() {
+  STAT_KEYS.forEach(k => localStorage.removeItem(k));
+  Object.keys(localStorage)
+    .filter(k => STAT_PREFIXES.some(p => k.startsWith(p)))
+    .forEach(k => localStorage.removeItem(k));
+}
+
 export function useAuth(onSyncComplete) {
   const [user, setUser] = useState(null);
   const [userProfile, setUserProfile] = useState(null); // { admin, paid, beta }
+  // lastUser: cached { displayName, email, photoURL } from the last successful sign-in,
+  // shown in the UI when the user is currently signed out.
+  const [lastUser, setLastUser] = useState(readLastUser);
   const [authLoading, setAuthLoading] = useState(firebaseConfigured);
   // signingIn: true while Google auth flow is in progress
   const [signingIn, setSigningIn] = useState(
@@ -126,6 +161,20 @@ export function useAuth(onSyncComplete) {
       setAuthLoading(false);
 
       if (u) {
+        // If a different user is signing in, their local stats belong to someone else — clear them
+        // so the subsequent cloud sync fills in this user's data with a clean slate.
+        const previousCached = readLastUser();
+        if (previousCached?.email && previousCached.email !== u.email) {
+          clearAllLocalStats();
+          sessionStorage.removeItem('braingym_synced');
+          toast.success('Switched account — loading your stats from cloud');
+        }
+
+        // Cache identity locally so we can show the avatar when signed out
+        const cached = { displayName: u.displayName, email: u.email, photoURL: u.photoURL };
+        localStorage.setItem(LAST_USER_KEY, JSON.stringify(cached));
+        setLastUser(cached);
+
         const ref = doc(db, 'users', u.uid);
         const snap = await getDoc(ref);
 
@@ -195,20 +244,30 @@ export function useAuth(onSyncComplete) {
     };
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  async function signInWithGoogle() {
+  // loginHint: email of the account to pre-select (skips picker when already signed in to Google).
+  // Pass null / omit to force the full account-picker (sign in as someone else).
+  async function signInWithGoogle(loginHint = null) {
     if (!firebaseConfigured) {
       toast.error('Firebase not configured');
       return;
     }
+    // Create a fresh provider instance per call so custom params don't bleed across calls.
+    const provider = new GoogleAuthProvider();
+    if (loginHint) {
+      provider.setCustomParameters({ login_hint: loginHint });
+    } else {
+      provider.setCustomParameters({ prompt: 'select_account' });
+    }
+
     isNewSignIn.current = true;
     setSigningIn(true);
     try {
       if (/Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) {
         // Mobile: redirect flow — set flag so spinner shows on return
         sessionStorage.setItem('braingym_signing_in', 'true');
-        await signInWithRedirect(auth, googleProvider);
+        await signInWithRedirect(auth, provider);
       } else {
-        await signInWithPopup(auth, googleProvider);
+        await signInWithPopup(auth, provider);
       }
     } catch (err) {
       isNewSignIn.current = false;
@@ -264,8 +323,8 @@ export function useAuth(onSyncComplete) {
       onSyncCompleteRef.current?.();
       const totalConflicts = Object.values(pendingSync.conflictsByGame).reduce((a, b) => a + b, 0);
       const msg = cloudAddedCount > 0
-        ? `Stats merged — ${cloudAddedCount} result${cloudAddedCount !== 1 ? 's' : ''} from cloud, ${totalConflicts} conflict${totalConflicts !== 1 ? 's' : ''} resolved`
-        : `Stats merged — ${totalConflicts} conflict${totalConflicts !== 1 ? 's' : ''} resolved (local wins)`;
+        ? `Stats synced — ${cloudAddedCount} result${cloudAddedCount !== 1 ? 's' : ''} added, ${totalConflicts} conflict${totalConflicts !== 1 ? 's' : ''} resolved (cloud wins)`
+        : `Stats synced — ${totalConflicts} conflict${totalConflicts !== 1 ? 's' : ''} resolved (cloud wins)`;
       toast.success(msg);
     } catch (err) {
       console.error('Apply merge error:', err);
@@ -280,7 +339,7 @@ export function useAuth(onSyncComplete) {
   }
 
   return {
-    user, userProfile, authLoading, signingIn,
+    user, userProfile, lastUser, authLoading, signingIn,
     signInWithGoogle, signOut,
     pendingSync, acceptSync, declineSync,
     sessionConflict, resolveSession,

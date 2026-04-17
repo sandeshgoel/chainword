@@ -104,7 +104,7 @@ function BrainGraphic() {
 function GameTile({ game, status, onClick, isLocked, displayTitle, displayDesc }) {
   function handleClick() {
     if (isLocked) {
-      toast('This game requires a premium account', { icon: '🔒' });
+      toast('This game requires a premium account', { icon: '🔒', id: 'premium-locked' });
     } else {
       onClick();
     }
@@ -141,26 +141,20 @@ function GameTile({ game, status, onClick, isLocked, displayTitle, displayDesc }
           e.currentTarget.style.boxShadow = `0 12px 0 ${game.shadow}, 0 18px 32px rgba(0,0,0,0.3)`;
         }}
       >
-        {/* Vertical ribbon + lock for premium games */}
+        {/* Lock badge for premium games */}
         {isLocked && (
-          <div className="absolute top-0 right-4 z-10">
-            <div
-              className="w-7 bg-amber-400 flex flex-col items-center pt-2.5 shadow-lg"
-              style={{ height: '52px', clipPath: 'polygon(0 0, 100% 0, 100% 78%, 50% 100%, 0 78%)' }}
-            >
-              <svg width="15" height="18" viewBox="0 0 15 18" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M3.5 7.5V5.5a4 4 0 018 0v2" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
-                <rect x="1.5" y="7.5" width="12" height="9" rx="2.5" fill="white" fillOpacity="0.95"/>
-                <circle cx="7.5" cy="12" r="1.6" fill="#d97706"/>
-                <rect x="6.8" y="12" width="1.4" height="2.2" rx="0.7" fill="#d97706"/>
-              </svg>
-            </div>
+          <div className="absolute -top-3 -right-3 z-10 w-8 h-8 rounded-full bg-black/80 shadow-lg flex items-center justify-center">
+            <svg width="14" height="16" viewBox="0 0 14 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M3 7V5a4 4 0 018 0v2" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+              <rect x="1" y="7" width="12" height="8" rx="2" fill="white" fillOpacity="0.9"/>
+              <circle cx="7" cy="11" r="1.4" fill="black" fillOpacity="0.6"/>
+            </svg>
           </div>
         )}
 
         {/* Status indicator */}
         {!isLocked && TIER_KEYS.has(status) && (
-          <div className="absolute top-3 right-5 text-xl leading-none">
+          <div className="absolute top-3 right-3 w-8 h-8 rounded-full bg-white/90 shadow flex items-center justify-center text-lg leading-none">
             {TIER_CONFIG[status].emoji}
           </div>
         )}
@@ -279,7 +273,7 @@ export default function LandingPage({ darkMode, onToggleDark, onAuth, user, user
 
       {/* Game tiles */}
       <div className="flex-1 px-4 pb-6 max-w-sm mx-auto w-full">
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-2 gap-x-4 gap-y-7">
           {GAMES_META.map(game => {
             const cfg = gamesConfig[game.id] || {};
             const isLocked = !!cfg.paid && !userProfile?.paid;

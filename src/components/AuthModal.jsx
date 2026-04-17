@@ -18,12 +18,21 @@ export default function AuthModal({ open, onClose, user, userProfile, onSignIn, 
         <div className="space-y-4">
           <div className="flex items-center gap-3">
             {user.photoURL && (
-              <img
-                src={user.photoURL}
-                alt={user.displayName}
-                className={`w-12 h-12 rounded-full ${userProfile?.paid ? 'ring-4 ring-yellow-400 ring-offset-2 ring-offset-white dark:ring-offset-gray-800' : ''}`}
-                referrerPolicy="no-referrer"
-              />
+              <div className="relative inline-block">
+                <img
+                  src={user.photoURL}
+                  alt={user.displayName}
+                  className={`w-12 h-12 rounded-full ${userProfile?.paid ? 'ring-4 ring-yellow-400 ring-offset-2 ring-offset-white dark:ring-offset-gray-800' : ''}`}
+                  referrerPolicy="no-referrer"
+                />
+                {userProfile?.admin && (
+                  <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-blue-600 rounded-full flex items-center justify-center border-2 border-white dark:border-gray-800">
+                    <svg className="w-2.5 h-2.5 text-white" viewBox="0 0 20 20" fill="currentColor">
+                      <path fillRule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" clipRule="evenodd" />
+                    </svg>
+                  </div>
+                )}
+              </div>
             )}
             <div>
               <p className="font-semibold text-gray-900 dark:text-white">{user.displayName}</p>

@@ -218,7 +218,8 @@ export default function App() {
   // Landing page — no header/modals chrome
   if (activeGame === null) {
     return (
-      <div className="bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 transition-colors">
+      <div className="min-h-dvh bg-gray-200 dark:bg-gray-950 flex justify-center transition-colors">
+      <div className="w-full max-w-[430px] bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 transition-colors relative overflow-x-hidden">
         <Toaster position="top-center" />
         <LandingPage
           darkMode={darkMode}
@@ -250,13 +251,23 @@ export default function App() {
           onDecline={declineSync}
         />
         <Analytics />
+        {/* Landscape-rotation overlay */}
+        <div className="rotate-overlay fixed inset-0 z-[200] bg-gray-900 text-white flex-col items-center justify-center gap-4 text-center p-8">
+          <svg className="w-16 h-16 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 18H12.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" />
+          </svg>
+          <p className="text-lg font-semibold">Please rotate your device</p>
+          <p className="text-sm text-gray-400">This app is designed for portrait mode</p>
+        </div>
+      </div>
       </div>
     );
   }
 
   // Game pages
   return (
-    <div className="h-dvh flex flex-col bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 transition-colors">
+    <div className="min-h-dvh bg-gray-200 dark:bg-gray-950 flex justify-center transition-colors">
+    <div className="w-full max-w-[430px] h-dvh flex flex-col bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 transition-colors overflow-hidden relative">
       <Toaster position="top-center" />
 
       <Header
@@ -394,6 +405,16 @@ export default function App() {
         selectedDate={archiveDates[activeGame]}
         onSelectDate={handleArchiveSelect}
       />
+
+      {/* Landscape-rotation overlay */}
+      <div className="rotate-overlay fixed inset-0 z-[200] bg-gray-900 text-white flex-col items-center justify-center gap-4 text-center p-8">
+        <svg className="w-16 h-16 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 18H12.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" />
+        </svg>
+        <p className="text-lg font-semibold">Please rotate your device</p>
+        <p className="text-sm text-gray-400">This app is designed for portrait mode</p>
+      </div>
+    </div>
     </div>
   );
 }

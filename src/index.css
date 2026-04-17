@@ -40,3 +40,14 @@ body {
 .animate-pop {
   animation: pop 0.2s ease-in-out;
 }
+
+/* Landscape-rotation overlay — shown on phones rotated sideways (short viewport) */
+.rotate-overlay {
+  display: none;
+}
+
+@media screen and (orientation: landscape) and (max-height: 500px) {
+  .rotate-overlay {
+    display: flex;
+  }
+}

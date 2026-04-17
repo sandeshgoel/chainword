@@ -3,16 +3,20 @@ import {
   collection, doc, onSnapshot, updateDoc, setDoc, deleteField,
 } from 'firebase/firestore';
 import { db, firebaseConfigured } from '../firebase.js';
+import {
+  GAME_ID_CHAINWORD, GAME_ID_WORD4, GAME_ID_TILES,
+  GAME_ID_SQUARES, GAME_ID_SHABDAL, GAME_ID_CRYPTIC,
+} from '../gamesMeta.js';
 
 const DEFAULT_GLOBAL_CONFIG = { ads_enabled: false };
 
 const DEFAULT_GAMES_CONFIG = {
-  chainword: { title: 'Chainword', desc: 'Link 4-letter words one step at a time',          paid: false },
-  word4:     { title: 'word4',    desc: 'Guess the 4-letter word in 6 tries',               paid: false },
-  tiles:     { title: 'Tiles',    desc: 'Build the top scoring word from your rack',         paid: false },
-  squares:   { title: 'Squares',  desc: 'Fill the corners to form valid words',              paid: false },
-  shabdal:   { title: 'Shabdal',  desc: 'Guess the Hindi word in 6 tries',                  paid: false },
-  cryptic:   { title: 'Cryptic',  desc: 'Solve a daily cryptic crossword clue',             paid: false },
+  [GAME_ID_CHAINWORD]: { paid: false },
+  [GAME_ID_WORD4]:     { paid: false },
+  [GAME_ID_TILES]:     { paid: false },
+  [GAME_ID_SQUARES]:   { paid: false },
+  [GAME_ID_SHABDAL]:   { paid: false },
+  [GAME_ID_CRYPTIC]:   { paid: false },
 };
 
 export { DEFAULT_GAMES_CONFIG, DEFAULT_GLOBAL_CONFIG };
@@ -49,11 +53,11 @@ export function useAdmin() {
       } else {
         const data = snap.data();
         // One-time migration: rename '4word' key → 'word4'
-        if (data['4word'] && !data['word4']) {
-          await updateDoc(gamesRef, { word4: data['4word'], '4word': deleteField() });
-        } else if (!data['word4']) {
+        if (data['4word'] && !data[GAME_ID_WORD4]) {
+          await updateDoc(gamesRef, { [GAME_ID_WORD4]: data['4word'], '4word': deleteField() });
+        } else if (!data[GAME_ID_WORD4]) {
           // 'word4' entry missing (e.g. was deleted) — seed it with the default
-          await updateDoc(gamesRef, { word4: DEFAULT_GAMES_CONFIG.word4 });
+          await updateDoc(gamesRef, { [GAME_ID_WORD4]: DEFAULT_GAMES_CONFIG[GAME_ID_WORD4] });
         }
         setGamesConfig({ ...DEFAULT_GAMES_CONFIG, ...snap.data() });
       }

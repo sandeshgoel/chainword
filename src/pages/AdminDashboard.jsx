@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAdmin } from '../hooks/useAdmin.js';
+import { GAMES_META } from '../gamesMeta.js';
 
-const GAME_IDS = ['chainword', 'word4', 'tiles', 'squares', 'shabdal', 'cryptic'];
+const GAME_IDS = GAMES_META.map(g => g.id);
 
 function Toggle({ checked, onChange, disabled }) {
   return (

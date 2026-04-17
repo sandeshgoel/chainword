@@ -4,7 +4,7 @@ import toast from 'react-hot-toast';
 import { chainwordHistTier, word4Tier as fourWordTier, tilesTier, squaresTier, TIER_CONFIG } from '../utils/awards.js';
 import { getParStepsForDate } from '../games/chainword/data/dailyPairs.js';
 import HamburgerMenu from '../components/HamburgerMenu.jsx';
-import { GAMES_META } from '../gamesMeta.js';
+import { GAMES_META, GAME_ID_CHAINWORD, GAME_ID_WORD4, GAME_ID_TILES, GAME_ID_SQUARES, GAME_ID_SHABDAL } from '../gamesMeta.js';
 import {
   CHAINWORD_STATS_KEY, CHAINWORD_STATS_HARD_KEY,
   WORD4_STATS_KEY, TILES_STATS_KEY, SQUARES_STATS_KEY, SHABDAL_STATS_KEY,
@@ -19,7 +19,7 @@ function getTodayIST() {
 // or 'started' | 'new'
 function getGameStatus(gameId, dateStr) {
   try {
-    if (gameId === 'chainword') {
+    if (gameId === GAME_ID_CHAINWORD) {
       // Check easy stats first, then hard
       const stats = JSON.parse(localStorage.getItem(CHAINWORD_STATS_KEY) || 'null');
       const entry = stats?.history?.find(h => h.dateStr === dateStr);
@@ -31,25 +31,25 @@ function getGameStatus(gameId, dateStr) {
       const data = JSON.parse(localStorage.getItem(CHAINWORD_PROGRESS_PREFIX + dateStr) || 'null');
       const hardData = JSON.parse(localStorage.getItem(CHAINWORD_PROGRESS_PREFIX + dateStr + '_hard') || 'null');
       if (data?.chain?.length > 1 || hardData?.chain?.length > 1) return 'started';
-    } else if (gameId === 'word4') {
+    } else if (gameId === GAME_ID_WORD4) {
       const stats = JSON.parse(localStorage.getItem(WORD4_STATS_KEY) || 'null');
       const entry = stats?.history?.find(h => h.dateStr === dateStr);
       if (entry) return fourWordTier(entry.won, entry.guesses);
       const saved = JSON.parse(localStorage.getItem(WORD4_PROGRESS_PREFIX + dateStr) || 'null');
       if (saved?.guesses?.length > 0) return 'started';
-    } else if (gameId === 'tiles') {
+    } else if (gameId === GAME_ID_TILES) {
       const stats = JSON.parse(localStorage.getItem(TILES_STATS_KEY) || 'null');
       const entry = stats?.history?.find(h => h.dateStr === dateStr);
       if (entry) return tilesTier(entry.score, entry.optimalScore);
       const saved = JSON.parse(localStorage.getItem(TILES_PROGRESS_PREFIX + dateStr) || 'null');
       if (saved?.submissions?.length > 0) return 'started';
-    } else if (gameId === 'squares') {
+    } else if (gameId === GAME_ID_SQUARES) {
       const stats = JSON.parse(localStorage.getItem(SQUARES_STATS_KEY) || 'null');
       const entry = stats?.history?.find(h => h.dateStr === dateStr);
       if (entry) return squaresTier(entry.hintsUsed ?? 0);
       const saved = JSON.parse(localStorage.getItem(SQUARES_PROGRESS_PREFIX + dateStr) || 'null');
       if (saved?.attempts > 0) return 'started';
-    } else if (gameId === 'shabdal') {
+    } else if (gameId === GAME_ID_SHABDAL) {
       const stats = JSON.parse(localStorage.getItem(SHABDAL_STATS_KEY) || 'null');
       const entry = stats?.history?.find(h => h.dateStr === dateStr);
       if (entry) return fourWordTier(entry.won, entry.guesses);

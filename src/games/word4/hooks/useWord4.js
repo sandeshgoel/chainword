@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { getDailyWord4Target, getWordSet } from '../../../words.js';
 import { loadWord4Stats, updateWord4Stats, WORD4_PROGRESS_PREFIX } from '../../../utils/storage.js';
 import { pushCloudStats } from '../../../utils/cloudStats.js';
+import { GAME_ID_WORD4 } from '../../../gamesMeta.js';
 import { evaluateGuess } from '../../../utils/wordUtils.js';
 
 export function useWord4(wordListReady, overrideDateStr = null, user = null, statsVersion = 0) {
@@ -72,7 +73,7 @@ export function useWord4(wordListReady, overrideDateStr = null, user = null, sta
     if (newStatus === 'won' || newStatus === 'lost') {
       const newStats = updateWord4Stats(newStatus === 'won' ? newGuesses.length : 0, dateStr);
       setStats(newStats);
-      if (user) pushCloudStats(user.uid, 'word4', newStats.history).catch(console.error);
+      if (user) pushCloudStats(user.uid, GAME_ID_WORD4, newStats.history).catch(console.error);
     }
 
     return true;

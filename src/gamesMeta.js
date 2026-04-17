@@ -1,11 +1,21 @@
+// Game ID constants — single source of truth for all game identifier strings.
+// Import these everywhere instead of using raw string literals.
+export const GAME_ID_CHAINWORD      = 'chainword';
+export const GAME_ID_WORD4          = 'word4';
+export const GAME_ID_TILES          = 'tiles';
+export const GAME_ID_SQUARES        = 'squares';
+export const GAME_ID_SHABDAL        = 'shabdal';
+export const GAME_ID_CRYPTIC        = 'cryptic';
+// Firestore key for chainword hard mode (not a standalone game, but referenced alongside game IDs)
+export const GAME_ID_CHAINWORD_HARD = 'chainword_hard';
+
 // Single source of truth for game identity: id, route, icon, default name,
 // and landing-page tile appearance.  Components that need only a subset
 // (e.g. the hamburger menu) can still import this and pick what they need.
-
 export const GAMES_META = [
   {
-    id: 'chainword',
-    route: '/chainword',
+    id: GAME_ID_CHAINWORD,
+    route: '/' + GAME_ID_CHAINWORD,
     emoji: '🔗',
     name: 'Chainword',
     desc: 'Link 4-letter words one step at a time',
@@ -15,8 +25,8 @@ export const GAMES_META = [
     badge: 'Word Chain',
   },
   {
-    id: 'word4',
-    route: '/word4',
+    id: GAME_ID_WORD4,
+    route: '/' + GAME_ID_WORD4,
     emoji: '🔤',
     name: 'Word4',
     desc: 'Guess the 4-letter word in 6 tries',
@@ -26,8 +36,8 @@ export const GAMES_META = [
     badge: 'Wordle',
   },
   {
-    id: 'tiles',
-    route: '/tiles',
+    id: GAME_ID_TILES,
+    route: '/' + GAME_ID_TILES,
     emoji: '🎯',
     name: 'Tiles',
     desc: 'Build the top scoring word from your rack',
@@ -37,8 +47,8 @@ export const GAMES_META = [
     badge: 'Scrabble',
   },
   {
-    id: 'squares',
-    route: '/squares',
+    id: GAME_ID_SQUARES,
+    route: '/' + GAME_ID_SQUARES,
     emoji: '🔲',
     name: 'Squares',
     desc: 'Fill the corners to form valid words',
@@ -48,8 +58,8 @@ export const GAMES_META = [
     badge: 'Logic',
   },
   {
-    id: 'shabdal',
-    route: '/shabdal',
+    id: GAME_ID_SHABDAL,
+    route: '/' + GAME_ID_SHABDAL,
     // emoji is an image path — components should render <img> instead of a text emoji
     emoji: '/shabdal-icon.png',
     name: 'शब्दल',
@@ -60,8 +70,8 @@ export const GAMES_META = [
     badge: 'Hindi Wordle',
   },
   {
-    id: 'cryptic',
-    route: '/cryptic',
+    id: GAME_ID_CRYPTIC,
+    route: '/' + GAME_ID_CRYPTIC,
     emoji: '🧩',
     name: 'Cryptic',
     desc: 'Solve a daily cryptic crossword clue',

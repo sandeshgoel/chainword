@@ -3,6 +3,7 @@ import { getDailySquare } from '../data/dailySquares.js';
 import { getWordSet } from '../../../words.js';
 import { loadSquaresStats, updateSquaresStats, SQUARES_PROGRESS_PREFIX } from '../../../utils/storage.js';
 import { pushCloudStats } from '../../../utils/cloudStats.js';
+import { GAME_ID_SQUARES } from '../../../gamesMeta.js';
 
 function loadState(dateStr) {
   try {
@@ -182,7 +183,7 @@ export function useSquares(overrideDateStr = null, user = null, statsVersion = 0
       persist('won', [tl, tr, bl, br], newAttempts, [...EMPTY_SLOTS], hintedCorners, hintsUsed);
       const newStats = updateSquaresStats(dateStr, hintsUsed);
       setStats(newStats);
-      if (user) pushCloudStats(user.uid, 'squares', newStats.history).catch(console.error);
+      if (user) pushCloudStats(user.uid, GAME_ID_SQUARES, newStats.history).catch(console.error);
     } else {
       setFeedback({
         letters: [tl, tr, bl, br],

@@ -3,6 +3,7 @@ import { getDailyTiles } from '../data/dailyTiles.js';
 import { getWordSet } from '../../../words.js';
 import { loadTilesStats, updateTilesStats, TILES_PROGRESS_PREFIX } from '../../../utils/storage.js';
 import { pushCloudStats } from '../../../utils/cloudStats.js';
+import { GAME_ID_TILES } from '../../../gamesMeta.js';
 
 // Slot multipliers: positions 0-3 → ×1, ×2 (DL), ×1, ×3 (TL)
 export const SLOT_MULTIPLIERS = [1, 2, 1, 3];
@@ -179,7 +180,7 @@ export function useTiles(overrideDateStr = null, user = null, statsVersion = 0) 
     if (score >= newBest) {
       const newStats = updateTilesStats(dateStr, newBest, optimalScore);
       setStats(newStats);
-      if (user) pushCloudStats(user.uid, 'tiles', newStats.history).catch(console.error);
+      if (user) pushCloudStats(user.uid, GAME_ID_TILES, newStats.history).catch(console.error);
     }
 
     return true;

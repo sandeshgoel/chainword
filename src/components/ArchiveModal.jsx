@@ -5,6 +5,7 @@ import {
   WORD4_STATS_KEY, TILES_STATS_KEY, SQUARES_STATS_KEY,
   CHAINWORD_PROGRESS_PREFIX, WORD4_PROGRESS_PREFIX, TILES_PROGRESS_PREFIX, SQUARES_PROGRESS_PREFIX,
 } from '../utils/storage.js';
+import { GAME_ID_CHAINWORD, GAME_ID_WORD4, GAME_ID_TILES, GAME_ID_SQUARES } from '../gamesMeta.js';
 
 const BASE_DATE_STR = '2026-04-12'; // game #1
 const MONTH_NAMES = ['January','February','March','April','May','June','July','August','September','October','November','December'];
@@ -28,21 +29,21 @@ function hasStatsEntry(statsKey, dateStr) {
 
 function getPlayStatus(dateStr, activeGame, hardMode) {
   try {
-    if (activeGame === 'chainword') {
+    if (activeGame === GAME_ID_CHAINWORD) {
       const statsKey = hardMode ? CHAINWORD_STATS_HARD_KEY : CHAINWORD_STATS_KEY;
       if (hasStatsEntry(statsKey, dateStr)) return 'finished';
       const key = hardMode ? dateStr + '_hard' : dateStr;
       const entry = JSON.parse(localStorage.getItem(CHAINWORD_PROGRESS_PREFIX + key) || 'null');
       if (entry?.chain?.length > 1) return 'started';
-    } else if (activeGame === 'word4') {
+    } else if (activeGame === GAME_ID_WORD4) {
       if (hasStatsEntry(WORD4_STATS_KEY, dateStr)) return 'finished';
       const data = JSON.parse(localStorage.getItem(WORD4_PROGRESS_PREFIX + dateStr) || 'null');
       if (data?.guesses?.length > 0) return 'started';
-    } else if (activeGame === 'tiles') {
+    } else if (activeGame === GAME_ID_TILES) {
       if (hasStatsEntry(TILES_STATS_KEY, dateStr)) return 'finished';
       const data = JSON.parse(localStorage.getItem(TILES_PROGRESS_PREFIX + dateStr) || 'null');
       if (data?.submissions?.length > 0) return 'finished';
-    } else if (activeGame === 'squares') {
+    } else if (activeGame === GAME_ID_SQUARES) {
       if (hasStatsEntry(SQUARES_STATS_KEY, dateStr)) return 'finished';
       const data = JSON.parse(localStorage.getItem(SQUARES_PROGRESS_PREFIX + dateStr) || 'null');
       if (data?.attempts > 0) return 'started';

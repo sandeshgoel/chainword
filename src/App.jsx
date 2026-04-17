@@ -35,7 +35,13 @@ import { pushCloudStats } from './utils/cloudStats.js';
 import { loadWordList } from './words.js';
 import { db, firebaseConfigured } from './firebase.js';
 import { doc, onSnapshot } from 'firebase/firestore';
-import { DEFAULT_GAMES_CONFIG, DEFAULT_GLOBAL_CONFIG } from './hooks/useAdmin.js';
+import { DEFAULT_GLOBAL_CONFIG } from './hooks/useAdmin.js';
+import {
+  GAME_ID_CHAINWORD, GAME_ID_WORD4, GAME_ID_TILES,
+  GAME_ID_SQUARES, GAME_ID_SHABDAL, GAME_ID_CRYPTIC,
+  GAME_ID_CHAINWORD_HARD,
+  GAMES_META,
+} from './gamesMeta.js';
 
 function getTodayIST() {
   return new Date(Date.now() + 5.5 * 60 * 60 * 1000).toISOString().split('T')[0];
@@ -49,12 +55,12 @@ function msUntilMidnightIST() {
 }
 
 function pathToGame(pathname) {
-  if (pathname.startsWith('/chainword')) return 'chainword';
-  if (pathname.startsWith('/word4')) return 'word4';
-  if (pathname.startsWith('/tiles')) return 'tiles';
-  if (pathname.startsWith('/squares')) return 'squares';
-  if (pathname.startsWith('/shabdal')) return 'shabdal';
-  if (pathname.startsWith('/cryptic')) return 'cryptic';
+  if (pathname.startsWith('/' + GAME_ID_CHAINWORD)) return GAME_ID_CHAINWORD;
+  if (pathname.startsWith('/' + GAME_ID_WORD4))     return GAME_ID_WORD4;
+  if (pathname.startsWith('/' + GAME_ID_TILES))     return GAME_ID_TILES;
+  if (pathname.startsWith('/' + GAME_ID_SQUARES))   return GAME_ID_SQUARES;
+  if (pathname.startsWith('/' + GAME_ID_SHABDAL))   return GAME_ID_SHABDAL;
+  if (pathname.startsWith('/' + GAME_ID_CRYPTIC))   return GAME_ID_CRYPTIC;
   return null;
 }
 
@@ -67,12 +73,14 @@ export default function App() {
   const [hardMode, setHardMode] = useState(() => localStorage.getItem(HARD_MODE_KEY) === 'true');
   const [wordListReady, setWordListReady] = useState(false);
   const [statsVersion, setStatsVersion] = useState(0);
-  const [gamesConfig, setGamesConfig] = useState(DEFAULT_GAMES_CONFIG);
+  const [gamesConfig, setGamesConfig] = useState({});
+  const [gamesConfigError, setGamesConfigError] = useState(null);
   const [globalConfig, setGlobalConfig] = useState(DEFAULT_GLOBAL_CONFIG); // eslint-disable-line no-unused-vars
 
   // Per-game archive date overrides (null = today)
   const [archiveDates, setArchiveDates] = useState({
-    chainword: null, word4: null, tiles: null, squares: null, shabdal: null,
+    [GAME_ID_CHAINWORD]: null, [GAME_ID_WORD4]: null, [GAME_ID_TILES]: null,
+    [GAME_ID_SQUARES]: null, [GAME_ID_SHABDAL]: null,
   });
 
   // Modals
@@ -109,8 +117,22 @@ export default function App() {
   useEffect(() => {
     if (!firebaseConfigured) return;
     const unsubGames = onSnapshot(doc(db, 'admin', 'games'), snap => {
-      if (snap.exists()) setGamesConfig({ ...DEFAULT_GAMES_CONFIG, ...snap.data() });
-    }, (err) => { console.error('Failed to fetch games config:', err); });
+      if (!snap.exists()) {
+        setGamesConfigError('Games configuration not found in database.');
+        return;
+      }
+      const data = snap.data();
+      const missing = GAMES_META.filter(g => !data[g.id]?.title || !data[g.id]?.desc).map(g => g.id);
+      if (missing.length > 0) {
+        setGamesConfigError(`Missing title/desc in DB for: ${missing.join(', ')}`);
+      } else {
+        setGamesConfigError(null);
+        setGamesConfig(data);
+      }
+    }, (err) => {
+      console.error('Failed to fetch games config:', err);
+      setGamesConfigError('Failed to load games configuration from database.');
+    });
     const unsubConfig = onSnapshot(doc(db, 'admin', 'config'), snap => {
       if (snap.exists()) setGlobalConfig(snap.data());
     }, (err) => { console.error('Failed to fetch global config:', err); });
@@ -173,25 +195,25 @@ export default function App() {
   async function handleReset() {
     // Local storage keys per game
     const localStatKeys = {
-      chainword: [CHAINWORD_STATS_KEY, CHAINWORD_STATS_HARD_KEY],
-      word4: [WORD4_STATS_KEY],
-      tiles: [TILES_STATS_KEY],
-      squares: [SQUARES_STATS_KEY],
-      shabdal: [SHABDAL_STATS_KEY],
+      [GAME_ID_CHAINWORD]: [CHAINWORD_STATS_KEY, CHAINWORD_STATS_HARD_KEY],
+      [GAME_ID_WORD4]:     [WORD4_STATS_KEY],
+      [GAME_ID_TILES]:     [TILES_STATS_KEY],
+      [GAME_ID_SQUARES]:   [SQUARES_STATS_KEY],
+      [GAME_ID_SHABDAL]:   [SHABDAL_STATS_KEY],
     };
     const localPrefixes = {
-      chainword: CHAINWORD_PROGRESS_PREFIX,
-      word4: WORD4_PROGRESS_PREFIX,
-      tiles: TILES_PROGRESS_PREFIX,
-      squares: SQUARES_PROGRESS_PREFIX,
-      shabdal: SHABDAL_PROGRESS_PREFIX,
+      [GAME_ID_CHAINWORD]: CHAINWORD_PROGRESS_PREFIX,
+      [GAME_ID_WORD4]:     WORD4_PROGRESS_PREFIX,
+      [GAME_ID_TILES]:     TILES_PROGRESS_PREFIX,
+      [GAME_ID_SQUARES]:   SQUARES_PROGRESS_PREFIX,
+      [GAME_ID_SHABDAL]:   SHABDAL_PROGRESS_PREFIX,
     };
     const cloudKeys = {
-      chainword: ['chainword', 'chainword_hard'],
-      word4: ['word4'],
-      tiles: ['tiles'],
-      squares: ['squares'],
-      shabdal: ['shabdal'],
+      [GAME_ID_CHAINWORD]: [GAME_ID_CHAINWORD, GAME_ID_CHAINWORD_HARD],
+      [GAME_ID_WORD4]:     [GAME_ID_WORD4],
+      [GAME_ID_TILES]:     [GAME_ID_TILES],
+      [GAME_ID_SQUARES]:   [GAME_ID_SQUARES],
+      [GAME_ID_SHABDAL]:   [GAME_ID_SHABDAL],
     };
 
     // Remove stat keys
@@ -278,12 +300,18 @@ export default function App() {
     <div className="w-full max-w-[430px] h-dvh flex flex-col bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 transition-colors overflow-hidden relative">
       <Toaster position="top-center" />
 
+      {gamesConfigError && (
+        <div className="bg-red-600 text-white text-xs font-semibold px-4 py-2 text-center shrink-0">
+          Config error: {gamesConfigError}
+        </div>
+      )}
+
       <Header
         activeGame={activeGame}
         onSelectGame={g => navigate('/' + g)}
         onHome={() => navigate('/')}
-        gameNumber={activeGame === 'word4' ? fourWord.gameNumber : activeGame === 'tiles' ? tiles.gameNumber : activeGame === 'squares' ? squares.gameNumber : activeGame === 'shabdal' ? shabdal.gameNumber : game.gameNumber}
-        dateStr={activeGame === 'word4' ? fourWord.dateStr : activeGame === 'tiles' ? tiles.dateStr : activeGame === 'squares' ? squares.dateStr : activeGame === 'shabdal' ? shabdal.dateStr : game.dateStr}
+        gameNumber={activeGame === GAME_ID_WORD4 ? fourWord.gameNumber : activeGame === GAME_ID_TILES ? tiles.gameNumber : activeGame === GAME_ID_SQUARES ? squares.gameNumber : activeGame === GAME_ID_SHABDAL ? shabdal.gameNumber : game.gameNumber}
+        dateStr={activeGame === GAME_ID_WORD4 ? fourWord.dateStr : activeGame === GAME_ID_TILES ? tiles.dateStr : activeGame === GAME_ID_SQUARES ? squares.dateStr : activeGame === GAME_ID_SHABDAL ? shabdal.dateStr : game.dateStr}
         darkMode={darkMode}
         onToggleDark={() => setDarkMode(d => !d)}
         onHowToPlay={() => setShowHelp(true)}
@@ -367,13 +395,13 @@ export default function App() {
       <StatsModal
         open={showStats}
         onClose={() => setShowStats(false)}
-        stats={activeGame === 'word4' ? fourWord.stats : activeGame === 'tiles' ? tiles.stats : activeGame === 'squares' ? squares.stats : activeGame === 'shabdal' ? shabdal.stats : game.stats}
+        stats={activeGame === GAME_ID_WORD4 ? fourWord.stats : activeGame === GAME_ID_TILES ? tiles.stats : activeGame === GAME_ID_SQUARES ? squares.stats : activeGame === GAME_ID_SHABDAL ? shabdal.stats : game.stats}
         onReset={handleReset}
-        isWord4={activeGame === 'word4'}
-        isTiles={activeGame === 'tiles'}
-        isSquares={activeGame === 'squares'}
-        isShabdal={activeGame === 'shabdal'}
-        hardMode={activeGame === 'chainword' ? hardMode : undefined}
+        isWord4={activeGame === GAME_ID_WORD4}
+        isTiles={activeGame === GAME_ID_TILES}
+        isSquares={activeGame === GAME_ID_SQUARES}
+        isShabdal={activeGame === GAME_ID_SHABDAL}
+        hardMode={activeGame === GAME_ID_CHAINWORD ? hardMode : undefined}
       />
 
       <AuthModal

@@ -1,11 +1,12 @@
 import { useState, useEffect, useCallback } from 'react';
-import { bfs, diffsByOneLetter, getStars } from '../../../utils/wordUtils.js';
+import { bfs, diffsByOneLetter } from '../../../utils/wordUtils.js';
 import {
   getDateProgress, saveDateProgress,
   updateStatsOnWin, updateStatsOnGiveUp, loadStats,
   CHAINWORD_STATS_KEY, CHAINWORD_STATS_HARD_KEY,
 } from '../../../utils/storage.js';
 import { pushCloudStats } from '../../../utils/cloudStats.js';
+import { GAME_ID_CHAINWORD, GAME_ID_CHAINWORD_HARD } from '../../../gamesMeta.js';
 import { getDailyInfo } from '../data/dailyPairs.js';
 import { getWordSet } from '../../../words.js';
 
@@ -22,7 +23,7 @@ export function useGame(user, wordListReady, hardMode = false, overrideDateStr =
   const [hintsUsed, setHintsUsed] = useState(0);
   const [stats, setStats] = useState(() => loadStats(statsKey));
 
-  const cloudKey = hardMode ? 'chainword_hard' : 'chainword';
+  const cloudKey = hardMode ? GAME_ID_CHAINWORD_HARD : GAME_ID_CHAINWORD;
   const parSteps = optimalPath ? optimalPath.length - 1 : null;
   const userSteps = chain.length - 1;
   const currentWord = chain[chain.length - 1];

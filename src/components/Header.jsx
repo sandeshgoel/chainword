@@ -22,7 +22,7 @@ export default function Header({
   gamesConfig,
 }) {
   const meta = GAMES_META_BY_ID[activeGame] ?? {};
-  const gameTitle = gamesConfig?.[activeGame]?.title ?? meta.name ?? activeGame;
+  const gameTitle = gamesConfig?.[activeGame]?.title || activeGame;
 
   return (
     <header className="flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 sticky top-0 z-10">

@@ -1,4 +1,5 @@
 import Modal from '../../../components/Modal.jsx';
+import { GAME_ID_CHAINWORD, GAME_ID_WORD4, GAME_ID_TILES, GAME_ID_SQUARES } from '../../../gamesMeta.js';
 
 function ChainwordHelp() {
   return (
@@ -198,19 +199,19 @@ function SquaresHelp() {
 }
 
 const TITLES = {
-  chainword: '🔗 How to Play Chainword',
-  word4:     '🔤 How to Play word4',
-  tiles:     '🎯 How to Play Tiles',
-  squares:   '🔲 How to Play Squares',
+  [GAME_ID_CHAINWORD]: '🔗 How to Play Chainword',
+  [GAME_ID_WORD4]:     '🔤 How to Play word4',
+  [GAME_ID_TILES]:     '🎯 How to Play Tiles',
+  [GAME_ID_SQUARES]:   '🔲 How to Play Squares',
 };
 
-export default function HowToPlay({ open, onClose, activeGame = 'chainword' }) {
+export default function HowToPlay({ open, onClose, activeGame = GAME_ID_CHAINWORD }) {
   return (
     <Modal open={open} onClose={onClose} title={TITLES[activeGame] ?? 'How to Play'}>
-      {activeGame === 'chainword' && <ChainwordHelp />}
-      {activeGame === 'word4'    && <FourWordHelp />}
-      {activeGame === 'tiles'    && <TilesHelp />}
-      {activeGame === 'squares'  && <SquaresHelp />}
+      {activeGame === GAME_ID_CHAINWORD && <ChainwordHelp />}
+      {activeGame === GAME_ID_WORD4     && <FourWordHelp />}
+      {activeGame === GAME_ID_TILES     && <TilesHelp />}
+      {activeGame === GAME_ID_SQUARES   && <SquaresHelp />}
     </Modal>
   );
 }

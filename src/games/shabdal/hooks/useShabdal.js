@@ -3,6 +3,7 @@ import { getDailyWord } from '../data/shabdalWords.js';
 import { formHindiWord } from '../../../utils/hindiUtils.js';
 import { loadShabdalStats, updateShabdalStats, SHABDAL_PROGRESS_PREFIX } from '../../../utils/storage.js';
 import { pushCloudStats } from '../../../utils/cloudStats.js';
+import { GAME_ID_SHABDAL } from '../../../gamesMeta.js';
 import { evaluateGuess } from '../../../utils/wordUtils.js';
 
 export function useShabdal(overrideDateStr = null, user = null, statsVersion = 0) {
@@ -66,7 +67,7 @@ export function useShabdal(overrideDateStr = null, user = null, statsVersion = 0
     if (newStatus === 'won' || newStatus === 'lost') {
       const newStats = updateShabdalStats(newStatus === 'won' ? newGuesses.length : 0, dateStr);
       setStats(newStats);
-      if (user) pushCloudStats(user.uid, 'shabdal', newStats.history).catch(console.error);
+      if (user) pushCloudStats(user.uid, GAME_ID_SHABDAL, newStats.history).catch(console.error);
     }
 
     setError('');

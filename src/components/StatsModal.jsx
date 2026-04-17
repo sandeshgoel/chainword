@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import Modal from './Modal.jsx';
+import { GAME_ID_WORD4 } from '../gamesMeta.js';
 import { getParStepsForDate } from '../games/chainword/data/dailyPairs.js';
 import { computeStreaks } from '../utils/storage.js';
 import {
@@ -275,7 +276,7 @@ function SquaresStats({ stats, hintsDistribution }) {
 export default function StatsModal({ open, onClose, stats, onReset, isWord4, isTiles, isSquares, isShabdal, hardMode }) {
   const [view, setView] = useState('stats');
   const isChainword = !isWord4 && !isTiles && !isSquares && !isShabdal;
-  const gameName = isWord4 ? 'word4' : isTiles ? 'Tiles' : isSquares ? 'Squares' : isShabdal ? 'शब्दल' : 'Chainword';
+  const gameName = isWord4 ? GAME_ID_WORD4 : isTiles ? 'Tiles' : isSquares ? 'Squares' : isShabdal ? 'शब्दल' : 'Chainword';
   const history = stats.history || [];
   const played = (isTiles || isSquares) ? 0 : history.length;
   const won = history.filter(h => h.won).length;

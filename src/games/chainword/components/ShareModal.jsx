@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import Modal from '../../../components/Modal.jsx';
-import { buildShareText, shareOrCopy } from '../../../utils/sharing.js';
+import { buildChainwordShareText, shareOrCopy } from '../../../utils/sharing.js';
 import { chainwordTier, TIER_CONFIG } from '../../../utils/awards.js';
 
 export default function ShareModal({ open, onClose, gameData }) {
@@ -8,7 +8,7 @@ export default function ShareModal({ open, onClose, gameData }) {
 
   if (!gameData) return null;
   const { gameNumber, dateStr, start, end, userSteps, parSteps, chain, hintsUsed, gaveUp } = gameData;
-  const text = buildShareText({ gameNumber, dateStr, start, end, userSteps, parSteps, chain, hintsUsed, gaveUp });
+  const text = buildChainwordShareText({ gameNumber, dateStr, start, end, userSteps, parSteps, chain, hintsUsed, gaveUp });
 
   async function handleShare() {
     await shareOrCopy(text, () => {

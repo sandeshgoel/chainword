@@ -85,6 +85,11 @@ export function squaresTier(hintsUsed) {
 
 // --- Display config ---
 
+export const TIER_GOLD = 'gold';
+export const TIER_SILVER = 'silver';
+export const TIER_BRONZE = 'bronze';
+export const TIER_UNSOLVED = 'unsolved';
+
 export const TIER_CONFIG = {
   gold:     { emoji: '🥇', label: 'Gold',     bg: 'bg-yellow-50 dark:bg-yellow-900/20', border: 'border-yellow-200 dark:border-yellow-800', text: 'text-yellow-700 dark:text-yellow-300' },
   silver:   { emoji: '🥈', label: 'Silver',   bg: 'bg-slate-100 dark:bg-slate-700/50',  border: 'border-slate-300 dark:border-slate-600',   text: 'text-slate-600 dark:text-slate-300'   },

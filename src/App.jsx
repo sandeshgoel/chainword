@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Routes, Route, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
-import { Analytics } from '@vercel/analytics/react';
 import Header from './components/Header.jsx';
 import Game from './games/chainword/components/Game.jsx';
 import Word4Game from './games/word4/components/Word4Game.jsx';
@@ -284,7 +283,6 @@ export default function App() {
           onAccept={acceptSync}
           onDecline={declineSync}
         />
-        <Analytics />
         {/* Landscape-rotation overlay */}
         <div className="rotate-overlay fixed inset-0 z-[200] bg-gray-900 text-white flex-col items-center justify-center gap-4 text-center p-8">
           <svg className="w-16 h-16 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -439,7 +437,6 @@ export default function App() {
         dateStr={game.dateStr}
       />
 
-      <Analytics />
       <ArchiveModal
         open={showArchive}
         onClose={() => setShowArchive(false)}

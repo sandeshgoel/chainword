@@ -5,6 +5,11 @@ import { chainwordHistTier, word4Tier as fourWordTier, tilesTier, squaresTier, T
 import { getParStepsForDate } from '../games/chainword/data/dailyPairs.js';
 import HamburgerMenu from '../components/HamburgerMenu.jsx';
 import { GAMES_META } from '../gamesMeta.js';
+import {
+  CHAINWORD_STATS_KEY, CHAINWORD_STATS_HARD_KEY,
+  WORD4_STATS_KEY, TILES_STATS_KEY, SQUARES_STATS_KEY, SHABDAL_STATS_KEY,
+  CHAINWORD_PROGRESS_PREFIX, WORD4_PROGRESS_PREFIX, TILES_PROGRESS_PREFIX, SQUARES_PROGRESS_PREFIX, SHABDAL_PROGRESS_PREFIX,
+} from '../utils/storage.js';
 
 function getTodayIST() {
   return new Date(Date.now() + 5.5 * 60 * 60 * 1000).toISOString().split('T')[0];
@@ -16,38 +21,39 @@ function getGameStatus(gameId, dateStr) {
   try {
     if (gameId === 'chainword') {
       // Check easy stats first, then hard
-      const stats = JSON.parse(localStorage.getItem('braingym_chainword_stats') || 'null');
+      const stats = JSON.parse(localStorage.getItem(CHAINWORD_STATS_KEY) || 'null');
       const entry = stats?.history?.find(h => h.dateStr === dateStr);
       if (entry) return chainwordHistTier(entry.won, entry.guesses, entry.hintsUsed, getParStepsForDate(dateStr, false));
-      const hardStats = JSON.parse(localStorage.getItem('braingym_chainword_hard_stats') || 'null');
+      const hardStats = JSON.parse(localStorage.getItem(CHAINWORD_STATS_HARD_KEY) || 'null');
       const hardEntry = hardStats?.history?.find(h => h.dateStr === dateStr);
       if (hardEntry) return chainwordHistTier(hardEntry.won, hardEntry.guesses, hardEntry.hintsUsed, getParStepsForDate(dateStr, true));
       // Not finished — check if in progress
-      const all = JSON.parse(localStorage.getItem('chainword_progress') || '{}');
-      if (all[dateStr]?.chain?.length > 1 || all[dateStr + '_hard']?.chain?.length > 1) return 'started';
+      const data = JSON.parse(localStorage.getItem(CHAINWORD_PROGRESS_PREFIX + dateStr) || 'null');
+      const hardData = JSON.parse(localStorage.getItem(CHAINWORD_PROGRESS_PREFIX + dateStr + '_hard') || 'null');
+      if (data?.chain?.length > 1 || hardData?.chain?.length > 1) return 'started';
     } else if (gameId === 'word4') {
-      const stats = JSON.parse(localStorage.getItem('braingym_word4_stats') || 'null');
+      const stats = JSON.parse(localStorage.getItem(WORD4_STATS_KEY) || 'null');
       const entry = stats?.history?.find(h => h.dateStr === dateStr);
       if (entry) return fourWordTier(entry.won, entry.guesses);
-      const saved = JSON.parse(localStorage.getItem('chainword_wordle_' + dateStr) || 'null');
+      const saved = JSON.parse(localStorage.getItem(WORD4_PROGRESS_PREFIX + dateStr) || 'null');
       if (saved?.guesses?.length > 0) return 'started';
     } else if (gameId === 'tiles') {
-      const stats = JSON.parse(localStorage.getItem('braingym_tiles_stats') || 'null');
+      const stats = JSON.parse(localStorage.getItem(TILES_STATS_KEY) || 'null');
       const entry = stats?.history?.find(h => h.dateStr === dateStr);
       if (entry) return tilesTier(entry.score, entry.optimalScore);
-      const saved = JSON.parse(localStorage.getItem('chainword_tiles_' + dateStr) || 'null');
+      const saved = JSON.parse(localStorage.getItem(TILES_PROGRESS_PREFIX + dateStr) || 'null');
       if (saved?.submissions?.length > 0) return 'started';
     } else if (gameId === 'squares') {
-      const stats = JSON.parse(localStorage.getItem('braingym_squares_stats') || 'null');
+      const stats = JSON.parse(localStorage.getItem(SQUARES_STATS_KEY) || 'null');
       const entry = stats?.history?.find(h => h.dateStr === dateStr);
       if (entry) return squaresTier(entry.hintsUsed ?? 0);
-      const saved = JSON.parse(localStorage.getItem('chainword_squares_' + dateStr) || 'null');
+      const saved = JSON.parse(localStorage.getItem(SQUARES_PROGRESS_PREFIX + dateStr) || 'null');
       if (saved?.attempts > 0) return 'started';
     } else if (gameId === 'shabdal') {
-      const stats = JSON.parse(localStorage.getItem('braingym_shabdal_stats') || 'null');
+      const stats = JSON.parse(localStorage.getItem(SHABDAL_STATS_KEY) || 'null');
       const entry = stats?.history?.find(h => h.dateStr === dateStr);
       if (entry) return fourWordTier(entry.won, entry.guesses);
-      const saved = JSON.parse(localStorage.getItem('chainword_shabdal_' + dateStr) || 'null');
+      const saved = JSON.parse(localStorage.getItem(SHABDAL_PROGRESS_PREFIX + dateStr) || 'null');
       if (saved?.guesses?.length > 0) return 'started';
     }
   } catch {}

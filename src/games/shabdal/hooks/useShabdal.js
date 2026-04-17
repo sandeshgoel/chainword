@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { getDailyWord } from '../data/shabdalWords.js';
 import { formHindiWord } from '../../../utils/hindiUtils.js';
-import { loadShabdalStats, updateShabdalStats } from '../../../utils/storage.js';
+import { loadShabdalStats, updateShabdalStats, SHABDAL_PROGRESS_PREFIX } from '../../../utils/storage.js';
 import { pushCloudStats } from '../../../utils/cloudStats.js';
 import { evaluateGuess } from '../../../utils/wordUtils.js';
 
@@ -16,7 +16,7 @@ export function useShabdal(overrideDateStr = null, user = null, statsVersion = 0
 
   // Load from local storage
   useEffect(() => {
-    const key = `chainword_shabdal_${dateStr}`;
+    const key = SHABDAL_PROGRESS_PREFIX + dateStr;
     const saved = localStorage.getItem(key);
     if (saved) {
       try {
@@ -33,7 +33,7 @@ export function useShabdal(overrideDateStr = null, user = null, statsVersion = 0
   }, [dateStr, target]);
 
   const persist = useCallback((newGuesses, newStatus) => {
-    const key = `chainword_shabdal_${dateStr}`;
+    const key = SHABDAL_PROGRESS_PREFIX + dateStr;
     localStorage.setItem(key, JSON.stringify({
       guesses: newGuesses,
       status: newStatus,

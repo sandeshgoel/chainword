@@ -1,5 +1,10 @@
 import { useState } from 'react';
 import Modal from './Modal.jsx';
+import {
+  CHAINWORD_STATS_KEY, CHAINWORD_STATS_HARD_KEY,
+  WORD4_STATS_KEY, TILES_STATS_KEY, SQUARES_STATS_KEY,
+  CHAINWORD_PROGRESS_PREFIX, WORD4_PROGRESS_PREFIX, TILES_PROGRESS_PREFIX, SQUARES_PROGRESS_PREFIX,
+} from '../utils/storage.js';
 
 const BASE_DATE_STR = '2026-04-12'; // game #1
 const MONTH_NAMES = ['January','February','March','April','May','June','July','August','September','October','November','December'];
@@ -14,24 +19,32 @@ function toEpochDay(dateStr) {
   return Math.floor(new Date(dateStr + 'T00:00:00Z').getTime() / (24 * 60 * 60 * 1000));
 }
 
+function hasStatsEntry(statsKey, dateStr) {
+  try {
+    const stats = JSON.parse(localStorage.getItem(statsKey) || 'null');
+    return stats?.history?.some(h => h.dateStr === dateStr) ?? false;
+  } catch { return false; }
+}
+
 function getPlayStatus(dateStr, activeGame, hardMode) {
   try {
     if (activeGame === 'chainword') {
-      const key = hardMode ? `${dateStr}_hard` : dateStr;
-      const all = JSON.parse(localStorage.getItem('chainword_progress') || '{}');
-      const entry = all[key];
-      if (entry?.status === 'won' || entry?.status === 'gaveUp') return 'finished';
+      const statsKey = hardMode ? CHAINWORD_STATS_HARD_KEY : CHAINWORD_STATS_KEY;
+      if (hasStatsEntry(statsKey, dateStr)) return 'finished';
+      const key = hardMode ? dateStr + '_hard' : dateStr;
+      const entry = JSON.parse(localStorage.getItem(CHAINWORD_PROGRESS_PREFIX + key) || 'null');
       if (entry?.chain?.length > 1) return 'started';
     } else if (activeGame === 'word4') {
-      const data = JSON.parse(localStorage.getItem(`chainword_wordle_${dateStr}`) || 'null');
-      if (data?.status === 'won' || data?.status === 'lost') return 'finished';
+      if (hasStatsEntry(WORD4_STATS_KEY, dateStr)) return 'finished';
+      const data = JSON.parse(localStorage.getItem(WORD4_PROGRESS_PREFIX + dateStr) || 'null');
       if (data?.guesses?.length > 0) return 'started';
     } else if (activeGame === 'tiles') {
-      const data = JSON.parse(localStorage.getItem(`chainword_tiles_${dateStr}`) || 'null');
+      if (hasStatsEntry(TILES_STATS_KEY, dateStr)) return 'finished';
+      const data = JSON.parse(localStorage.getItem(TILES_PROGRESS_PREFIX + dateStr) || 'null');
       if (data?.submissions?.length > 0) return 'finished';
     } else if (activeGame === 'squares') {
-      const data = JSON.parse(localStorage.getItem(`chainword_squares_${dateStr}`) || 'null');
-      if (data?.status === 'won') return 'finished';
+      if (hasStatsEntry(SQUARES_STATS_KEY, dateStr)) return 'finished';
+      const data = JSON.parse(localStorage.getItem(SQUARES_PROGRESS_PREFIX + dateStr) || 'null');
       if (data?.attempts > 0) return 'started';
     }
   } catch {}

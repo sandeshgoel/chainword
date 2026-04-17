@@ -1,12 +1,49 @@
-const PROGRESS_KEY = 'chainword_progress';
-const THEME_KEY    = 'chainword_theme';
+// ── Single source of truth for all localStorage key names ──
+// Every key starts with 'braingym_'.  Import these constants; never use raw strings.
 
-const CHAINWORD_STATS_KEY      = 'braingym_chainword_stats';
-const CHAINWORD_STATS_HARD_KEY = 'braingym_chainword_stats_hard';
-const FOUR_WORD_STATS_KEY      = 'braingym_word4_stats';
-const TILES_STATS_KEY          = 'braingym_tiles_stats';
-const SQUARES_STATS_KEY        = 'braingym_squares_stats';
-const SHABDAL_STATS_KEY        = 'braingym_shabdal_stats';
+// Global state
+export const THEME_KEY      = 'braingym_theme';
+export const HARD_MODE_KEY  = 'braingym_hard_mode';
+
+// Auth / session (used in useAuth.js)
+export const SESSION_ID_KEY = 'braingym_session_id';
+export const LAST_USER_KEY  = 'braingym_last_user';
+
+// Per-game stats history
+export const CHAINWORD_STATS_KEY      = 'braingym_stats_chainword';
+export const CHAINWORD_STATS_HARD_KEY = 'braingym_stats_chainword_hard';
+export const WORD4_STATS_KEY          = 'braingym_stats_word4';
+export const TILES_STATS_KEY          = 'braingym_stats_tiles';
+export const SQUARES_STATS_KEY        = 'braingym_stats_squares';
+export const SHABDAL_STATS_KEY        = 'braingym_stats_shabdal';
+export const CRYPTIC_STATS_KEY        = 'braingym_stats_cryptic';
+
+// Per-date game progress prefixes  (append YYYY-MM-DD, or YYYY-MM-DD_hard for chainword hard mode)
+export const CHAINWORD_PROGRESS_PREFIX = 'braingym_pg_chainword_';
+export const WORD4_PROGRESS_PREFIX     = 'braingym_pg_word4_';
+export const TILES_PROGRESS_PREFIX     = 'braingym_pg_tiles_';
+export const SQUARES_PROGRESS_PREFIX   = 'braingym_pg_squares_';
+export const SHABDAL_PROGRESS_PREFIX   = 'braingym_pg_shabdal_';
+export const CRYPTIC_PROGRESS_PREFIX   = 'braingym_pg_cryptic_';
+
+// Convenience arrays for auth / reset flows
+export const ALL_STAT_KEYS = [
+  CHAINWORD_STATS_KEY,
+  CHAINWORD_STATS_HARD_KEY,
+  WORD4_STATS_KEY,
+  TILES_STATS_KEY,
+  SQUARES_STATS_KEY,
+  SHABDAL_STATS_KEY,
+];
+
+export const ALL_PROGRESS_PREFIXES = [
+  CHAINWORD_PROGRESS_PREFIX,
+  WORD4_PROGRESS_PREFIX,
+  TILES_PROGRESS_PREFIX,
+  SQUARES_PROGRESS_PREFIX,
+  SHABDAL_PROGRESS_PREFIX,
+  CRYPTIC_PROGRESS_PREFIX,
+];
 
 const HISTORY_LIMIT = 100;
 
@@ -14,23 +51,16 @@ function getTodayIST() {
   return new Date(Date.now() + 5.5 * 60 * 60 * 1000).toISOString().split('T')[0];
 }
 
-// --- Progress (per-day game state) ---
+// --- Chainword per-date progress ---
+// progressKey is dateStr for easy mode, dateStr_hard for hard mode.
 
-export function loadProgress() {
-  try { return JSON.parse(localStorage.getItem(PROGRESS_KEY) || '{}'); }
-  catch { return {}; }
+export function getDateProgress(progressKey) {
+  try { return JSON.parse(localStorage.getItem(CHAINWORD_PROGRESS_PREFIX + progressKey) || 'null'); }
+  catch { return null; }
 }
 
-export function saveProgress(all) {
-  try { localStorage.setItem(PROGRESS_KEY, JSON.stringify(all)); } catch (_) {}
-}
-
-export function getDateProgress(dateStr) { return loadProgress()[dateStr] || null; }
-
-export function saveDateProgress(dateStr, data) {
-  const all = loadProgress();
-  all[dateStr] = data;
-  saveProgress(all);
+export function saveDateProgress(progressKey, data) {
+  try { localStorage.setItem(CHAINWORD_PROGRESS_PREFIX + progressKey, JSON.stringify(data)); } catch (_) {}
 }
 
 // --- Shared helpers ---
@@ -120,28 +150,16 @@ export function updateStatsOnGiveUp(guesses, hintsUsed, dateStr, key = CHAINWORD
   return { history };
 }
 
-export { CHAINWORD_STATS_KEY, CHAINWORD_STATS_HARD_KEY };
-
 // --- word4 ---
 
-// One-time migration: copy legacy 'braingym_4word_stats' key to new name if present.
-(function migrateWord4Stats() {
-  try {
-    const OLD_KEY = 'braingym_4word_stats';
-    if (localStorage.getItem(OLD_KEY) && !localStorage.getItem(FOUR_WORD_STATS_KEY)) {
-      localStorage.setItem(FOUR_WORD_STATS_KEY, localStorage.getItem(OLD_KEY));
-    }
-  } catch (_) {}
-})();
-
 export function loadWord4Stats() {
-  return { history: loadHistory(FOUR_WORD_STATS_KEY) };
+  return { history: loadHistory(WORD4_STATS_KEY) };
 }
 
 export function updateWord4Stats(guessesCount, dateStr) {
   const { history } = loadWord4Stats();
   upsertHistory(history, { dateStr, guesses: guessesCount, won: guessesCount > 0, playedDate: getTodayIST() });
-  saveHistory(FOUR_WORD_STATS_KEY, history);
+  saveHistory(WORD4_STATS_KEY, history);
   return { history };
 }
 

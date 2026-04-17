@@ -1,14 +1,17 @@
 import { doc, getDoc, setDoc, deleteDoc, collection, getDocs, serverTimestamp } from 'firebase/firestore';
 import { db, firebaseConfigured } from '../firebase.js';
-import { getGameHistory, setGameHistory } from './storage.js';
+import {
+  getGameHistory, setGameHistory,
+  CHAINWORD_STATS_KEY, CHAINWORD_STATS_HARD_KEY, WORD4_STATS_KEY, TILES_STATS_KEY, SQUARES_STATS_KEY,
+} from './storage.js';
 
 // Maps Firestore game key → localStorage key
 export const CLOUD_TO_LOCAL = {
-  chainword:      'braingym_chainword_stats',
-  chainword_hard: 'braingym_chainword_stats_hard',
-  word4:          'braingym_word4_stats',
-  tiles:          'braingym_tiles_stats',
-  squares:        'braingym_squares_stats',
+  chainword:      CHAINWORD_STATS_KEY,
+  chainword_hard: CHAINWORD_STATS_HARD_KEY,
+  word4:          WORD4_STATS_KEY,
+  tiles:          TILES_STATS_KEY,
+  squares:        SQUARES_STATS_KEY,
 };
 
 export const CLOUD_GAME_KEYS = Object.keys(CLOUD_TO_LOCAL);

@@ -11,55 +11,34 @@ import {
 import { doc, setDoc, getDoc, serverTimestamp, onSnapshot } from 'firebase/firestore';
 import { auth, db, firebaseConfigured } from '../firebase.js';
 import { computeMerge, applyMerge } from '../utils/cloudStats.js';
+import { SESSION_ID_KEY, LAST_USER_KEY, ALL_STAT_KEYS, ALL_PROGRESS_PREFIXES } from '../utils/storage.js';
 
 // localStorage-based session ID — stable per browser, shared across all tabs.
 // Using localStorage (not sessionStorage) prevents false conflicts between tabs
 // and ensures the same browser always presents the same session identity.
 function getSessionId() {
-  const key = 'braingym_session_id';
-  let id = localStorage.getItem(key);
+  let id = localStorage.getItem(SESSION_ID_KEY);
   if (!id) {
     id = crypto.randomUUID();
-    localStorage.setItem(key, id);
+    localStorage.setItem(SESSION_ID_KEY, id);
   }
   return id;
 }
 
 function resetSessionId() {
   const id = crypto.randomUUID();
-  localStorage.setItem('braingym_session_id', id);
+  localStorage.setItem(SESSION_ID_KEY, id);
   return id;
 }
-
-
-const LAST_USER_KEY = 'braingym_last_user';
 
 function readLastUser() {
   try { return JSON.parse(localStorage.getItem(LAST_USER_KEY) || 'null'); } catch { return null; }
 }
 
-// All localStorage keys that hold per-user game stats / progress.
-const STAT_KEYS = [
-  'braingym_chainword_stats',
-  'braingym_chainword_stats_hard',
-  'chainword_progress',
-  'braingym_word4_stats',
-  'braingym_tiles_stats',
-  'braingym_squares_stats',
-  'braingym_shabdal_stats',
-];
-const STAT_PREFIXES = [
-  'chainword_wordle_',
-  'chainword_tiles_',
-  'chainword_squares_',
-  'chainword_shabdal_',
-  'chainword_cryptic_',
-];
-
 function clearAllLocalStats() {
-  STAT_KEYS.forEach(k => localStorage.removeItem(k));
+  ALL_STAT_KEYS.forEach(k => localStorage.removeItem(k));
   Object.keys(localStorage)
-    .filter(k => STAT_PREFIXES.some(p => k.startsWith(p)))
+    .filter(k => ALL_PROGRESS_PREFIXES.some(p => k.startsWith(p)))
     .forEach(k => localStorage.removeItem(k));
 }
 

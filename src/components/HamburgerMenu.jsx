@@ -6,7 +6,7 @@ import { GAMES_META } from '../gamesMeta.js';
 
 function getLocalDataKeys() {
   return Object.keys(localStorage)
-    .filter(k => k.startsWith('chainword_') || k.startsWith('braingym_'))
+    .filter(k => k.startsWith('braingym_'))
     .sort();
 }
 

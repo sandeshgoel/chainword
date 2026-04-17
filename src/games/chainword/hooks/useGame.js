@@ -1,8 +1,4 @@
 import { useState, useEffect, useCallback } from 'react';
-import {
-  doc, getDoc, setDoc, serverTimestamp,
-} from 'firebase/firestore';
-import { db, firebaseConfigured } from '../../../firebase.js';
 import { bfs, diffsByOneLetter, getStars } from '../../../utils/wordUtils.js';
 import {
   getDateProgress, saveDateProgress,
@@ -59,37 +55,18 @@ export function useGame(user, wordListReady, hardMode = false, overrideDateStr =
     setStats(loadStats(statsKey));
   }, [statsKey, statsVersion]);
 
-  // Sync progress with cloud when user is signed in
-  useEffect(() => {
-    if (!firebaseConfigured || !user) return;
-    const ref = doc(db, 'users', user.uid, 'games', dateStr);
-    getDoc(ref).then((snap) => {
-      if (snap.exists()) {
-        const data = snap.data();
-        setChain(data.chain || [pair.start]);
-        setStatus(data.status || 'playing');
-        setHintsUsed(data.hintsUsed || (data.hintUsed ? 1 : 0));
-      }
-    });
-  }, [user, dateStr, pair.start]);
-
   const persist = useCallback(
-    async (newChain, newStatus, newHintUsed) => {
-      const data = {
+    (newChain, newStatus, newHintUsed) => {
+      saveDateProgress(progressKey, {
         chain: newChain,
         status: newStatus,
         hintsUsed: newHintUsed,
         start: pair.start,
         end: pair.end,
         gameNumber,
-      };
-      saveDateProgress(progressKey, data);
-      if (firebaseConfigured && user) {
-        const ref = doc(db, 'users', user.uid, 'games', progressKey);
-        await setDoc(ref, { ...data, updatedAt: serverTimestamp() }, { merge: true });
-      }
+      });
     },
-    [progressKey, pair, gameNumber, user]
+    [progressKey, pair, gameNumber]
   );
 
   function submitWord(word, hintsOverride) {

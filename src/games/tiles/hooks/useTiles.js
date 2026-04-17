@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { getDailyTiles } from '../data/dailyTiles.js';
 import { getWordSet } from '../../../words.js';
-import { loadTilesStats, updateTilesStats } from '../../../utils/storage.js';
+import { loadTilesStats, updateTilesStats, TILES_PROGRESS_PREFIX } from '../../../utils/storage.js';
 import { pushCloudStats } from '../../../utils/cloudStats.js';
 
 // Slot multipliers: positions 0-3 → ×1, ×2 (DL), ×1, ×3 (TL)
@@ -73,7 +73,7 @@ export function useTiles(overrideDateStr = null, user = null, statsVersion = 0) 
     setSlots([null, null, null, null]);
     setError('');
 
-    const key = `chainword_tiles_${dateStr}`;
+    const key = TILES_PROGRESS_PREFIX + dateStr;
     const saved = localStorage.getItem(key);
     if (saved) {
       try {
@@ -88,7 +88,7 @@ export function useTiles(overrideDateStr = null, user = null, statsVersion = 0) 
   }, [dateStr]);
 
   const persist = useCallback((newSubmissions, newBest) => {
-    const key = `chainword_tiles_${dateStr}`;
+    const key = TILES_PROGRESS_PREFIX + dateStr;
     localStorage.setItem(key, JSON.stringify({ submissions: newSubmissions, bestScore: newBest }));
   }, [dateStr]);
 

@@ -1,19 +1,19 @@
 import { useState, useEffect, useCallback } from 'react';
 import { getDailySquare } from '../data/dailySquares.js';
 import { getWordSet } from '../../../words.js';
-import { loadSquaresStats, updateSquaresStats } from '../../../utils/storage.js';
+import { loadSquaresStats, updateSquaresStats, SQUARES_PROGRESS_PREFIX } from '../../../utils/storage.js';
 import { pushCloudStats } from '../../../utils/cloudStats.js';
 
 function loadState(dateStr) {
   try {
-    const saved = localStorage.getItem(`chainword_squares_${dateStr}`);
+    const saved = localStorage.getItem(SQUARES_PROGRESS_PREFIX + dateStr);
     if (saved) return JSON.parse(saved);
   } catch {}
   return null;
 }
 
 function saveState(dateStr, data) {
-  localStorage.setItem(`chainword_squares_${dateStr}`, JSON.stringify(data));
+  localStorage.setItem(SQUARES_PROGRESS_PREFIX + dateStr, JSON.stringify(data));
 }
 
 const EMPTY_SLOTS = ['', '', '', ''];

@@ -24,7 +24,13 @@ import { useGame } from './games/chainword/hooks/useGame.js';
 import { useWord4 } from './games/word4/hooks/useWord4.js';
 import { useTiles } from './games/tiles/hooks/useTiles.js';
 import { useSquares } from './games/squares/hooks/useSquares.js';
-import { loadTheme, saveTheme } from './utils/storage.js';
+import {
+  loadTheme, saveTheme,
+  HARD_MODE_KEY,
+  CHAINWORD_STATS_KEY, CHAINWORD_STATS_HARD_KEY,
+  WORD4_STATS_KEY, TILES_STATS_KEY, SQUARES_STATS_KEY, SHABDAL_STATS_KEY,
+  CHAINWORD_PROGRESS_PREFIX, WORD4_PROGRESS_PREFIX, TILES_PROGRESS_PREFIX, SQUARES_PROGRESS_PREFIX, SHABDAL_PROGRESS_PREFIX,
+} from './utils/storage.js';
 import { pushCloudStats } from './utils/cloudStats.js';
 import { loadWordList } from './words.js';
 import { db, firebaseConfigured } from './firebase.js';
@@ -58,7 +64,7 @@ export default function App() {
   const activeGame = pathToGame(location.pathname);
 
   const [darkMode, setDarkMode] = useState(() => loadTheme() === 'dark');
-  const [hardMode, setHardMode] = useState(() => localStorage.getItem('chainword_hard_mode') === 'true');
+  const [hardMode, setHardMode] = useState(() => localStorage.getItem(HARD_MODE_KEY) === 'true');
   const [wordListReady, setWordListReady] = useState(false);
   const [statsVersion, setStatsVersion] = useState(0);
   const [gamesConfig, setGamesConfig] = useState(DEFAULT_GAMES_CONFIG);
@@ -167,18 +173,18 @@ export default function App() {
   async function handleReset() {
     // Local storage keys per game
     const localStatKeys = {
-      chainword: ['braingym_chainword_stats', 'braingym_chainword_stats_hard', 'chainword_progress'],
-      word4: ['braingym_word4_stats'],
-      tiles: ['braingym_tiles_stats'],
-      squares: ['braingym_squares_stats'],
-      shabdal: ['braingym_shabdal_stats'],
+      chainword: [CHAINWORD_STATS_KEY, CHAINWORD_STATS_HARD_KEY],
+      word4: [WORD4_STATS_KEY],
+      tiles: [TILES_STATS_KEY],
+      squares: [SQUARES_STATS_KEY],
+      shabdal: [SHABDAL_STATS_KEY],
     };
     const localPrefixes = {
-      chainword: null, // progress stored in single key above
-      word4: 'chainword_wordle_',
-      tiles: 'chainword_tiles_',
-      squares: 'chainword_squares_',
-      shabdal: 'chainword_shabdal_',
+      chainword: CHAINWORD_PROGRESS_PREFIX,
+      word4: WORD4_PROGRESS_PREFIX,
+      tiles: TILES_PROGRESS_PREFIX,
+      squares: SQUARES_PROGRESS_PREFIX,
+      shabdal: SHABDAL_PROGRESS_PREFIX,
     };
     const cloudKeys = {
       chainword: ['chainword', 'chainword_hard'],
@@ -304,7 +310,7 @@ export default function App() {
                 onToggleHardMode={() => {
                   const next = !hardMode;
                   setHardMode(next);
-                  localStorage.setItem('chainword_hard_mode', next ? 'true' : 'false');
+                  localStorage.setItem(HARD_MODE_KEY, next ? 'true' : 'false');
                 }}
                 onArchive={() => setShowArchive(true)}
                 archiveDate={archiveDates.chainword}

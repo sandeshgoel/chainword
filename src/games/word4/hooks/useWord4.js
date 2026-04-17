@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { getDailyWord4Target, getWordSet } from '../../../words.js';
-import { loadWord4Stats, updateWord4Stats } from '../../../utils/storage.js';
+import { loadWord4Stats, updateWord4Stats, WORD4_PROGRESS_PREFIX } from '../../../utils/storage.js';
 import { pushCloudStats } from '../../../utils/cloudStats.js';
 import { evaluateGuess } from '../../../utils/wordUtils.js';
 
@@ -16,7 +16,7 @@ export function useWord4(wordListReady, overrideDateStr = null, user = null, sta
 
   // Load from local storage
   useEffect(() => {
-    const key = `chainword_wordle_${dateStr}`;
+    const key = WORD4_PROGRESS_PREFIX + dateStr;
     const saved = localStorage.getItem(key);
     if (saved) {
       try {
@@ -33,7 +33,7 @@ export function useWord4(wordListReady, overrideDateStr = null, user = null, sta
   }, [dateStr, target]);
 
   const persist = useCallback((newGuesses, newStatus) => {
-    const key = `chainword_wordle_${dateStr}`;
+    const key = WORD4_PROGRESS_PREFIX + dateStr;
     localStorage.setItem(key, JSON.stringify({
       guesses: newGuesses,
       status: newStatus,

@@ -2,34 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { getDailyWordleTarget, getWordSet } from '../../../words.js';
 import { loadWordleStats, updateWordleStats } from '../../../utils/storage.js';
 import { pushCloudStats } from '../../../utils/cloudStats.js';
-
-function evaluateGuess(guess, target) {
-  const result = Array(4).fill('gray');
-  const targetChars = target.split('');
-  const guessChars = guess.split('');
-
-  // Pass 1: exact matches (green)
-  for (let i = 0; i < 4; i++) {
-    if (guessChars[i] === targetChars[i]) {
-      result[i] = 'green';
-      targetChars[i] = null; // mark as used
-      guessChars[i] = null;
-    }
-  }
-
-  // Pass 2: present but wrong place (orange)
-  for (let i = 0; i < 4; i++) {
-    if (guessChars[i] !== null) {
-      const idx = targetChars.indexOf(guessChars[i]);
-      if (idx !== -1) {
-        result[i] = 'orange';
-        targetChars[idx] = null; // mark as used
-      }
-    }
-  }
-
-  return result;
-}
+import { evaluateGuess } from '../../../utils/wordUtils.js';
 
 export function useWordle(wordListReady, overrideDateStr = null, user = null, statsVersion = 0) {
   const { target, dateStr, gameNumber } = getDailyWordleTarget(overrideDateStr);

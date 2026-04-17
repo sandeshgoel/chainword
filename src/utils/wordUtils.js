@@ -1,4 +1,38 @@
 const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+// IST date helpers — single source of truth used across the app
+export function getTodayIST() {
+  return new Date(Date.now() + 5.5 * 60 * 60 * 1000).toISOString().split('T')[0];
+}
+
+// Evaluate a Wordle-style guess against a target.
+// Works with both strings (word4/wordle) and arrays of tokens (shabdal).
+// Returns an array of 'green' | 'orange' | 'gray' the same length as guess.
+export function evaluateGuess(guess, target) {
+  const n = guess.length;
+  const result = Array(n).fill('gray');
+  const targetCopy = [...target];
+  const guessCopy = [...guess];
+
+  for (let i = 0; i < n; i++) {
+    if (guessCopy[i] === targetCopy[i]) {
+      result[i] = 'green';
+      targetCopy[i] = null;
+      guessCopy[i] = null;
+    }
+  }
+  for (let i = 0; i < n; i++) {
+    if (guessCopy[i] !== null) {
+      const idx = targetCopy.indexOf(guessCopy[i]);
+      if (idx !== -1) {
+        result[i] = 'orange';
+        targetCopy[idx] = null;
+      }
+    }
+  }
+  return result;
+}
+
 export function formatDate(dateStr) {
   const [y, m, d] = dateStr.split('-').map(Number);
   return `${MONTHS[m - 1]} ${d}, ${y}`;

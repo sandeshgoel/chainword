@@ -4,7 +4,7 @@ import { Toaster } from 'react-hot-toast';
 import { Analytics } from '@vercel/analytics/react';
 import Header from './components/Header.jsx';
 import Game from './games/chainword/components/Game.jsx';
-import FourWordGame from './games/4word/components/FourWordGame.jsx';
+import Word4Game from './games/word4/components/Word4Game.jsx';
 import TilesGame from './games/tiles/components/TilesGame.jsx';
 import SquaresGame from './games/squares/components/SquaresGame.jsx';
 import ShabdalGame from './games/shabdal/components/ShabdalGame.jsx';
@@ -21,7 +21,7 @@ import LandingPage from './pages/LandingPage.jsx';
 import AdminDashboard from './pages/AdminDashboard.jsx';
 import { useAuth } from './hooks/useAuth.js';
 import { useGame } from './games/chainword/hooks/useGame.js';
-import { use4Word } from './games/4word/hooks/use4Word.js';
+import { useWord4 } from './games/word4/hooks/useWord4.js';
 import { useTiles } from './games/tiles/hooks/useTiles.js';
 import { useSquares } from './games/squares/hooks/useSquares.js';
 import { loadTheme, saveTheme } from './utils/storage.js';
@@ -44,7 +44,7 @@ function msUntilMidnightIST() {
 
 function pathToGame(pathname) {
   if (pathname.startsWith('/chainword')) return 'chainword';
-  if (pathname.startsWith('/4word')) return '4word';
+  if (pathname.startsWith('/word4')) return 'word4';
   if (pathname.startsWith('/tiles')) return 'tiles';
   if (pathname.startsWith('/squares')) return 'squares';
   if (pathname.startsWith('/shabdal')) return 'shabdal';
@@ -66,7 +66,7 @@ export default function App() {
 
   // Per-game archive date overrides (null = today)
   const [archiveDates, setArchiveDates] = useState({
-    chainword: null, '4word': null, tiles: null, squares: null, shabdal: null,
+    chainword: null, word4: null, tiles: null, squares: null, shabdal: null,
   });
 
   // Modals
@@ -83,7 +83,7 @@ export default function App() {
     sessionConflict, resolveSession,
   } = useAuth(() => setStatsVersion(v => v + 1));
   const game = useGame(user, wordListReady, hardMode, archiveDates.chainword, statsVersion);
-  const fourWord = use4Word(wordListReady, archiveDates['4word'], user, statsVersion);
+  const fourWord = useWord4(wordListReady, archiveDates.word4, user, statsVersion);
   const tiles = useTiles(archiveDates.tiles, user, statsVersion);
   const squares = useSquares(archiveDates.squares, user, statsVersion);
   const shabdal = useShabdal(archiveDates.shabdal, user, statsVersion);
@@ -168,21 +168,21 @@ export default function App() {
     // Local storage keys per game
     const localStatKeys = {
       chainword: ['braingym_chainword_stats', 'braingym_chainword_stats_hard', 'chainword_progress'],
-      '4word': ['braingym_4word_stats'],
+      word4: ['braingym_word4_stats'],
       tiles: ['braingym_tiles_stats'],
       squares: ['braingym_squares_stats'],
       shabdal: ['braingym_shabdal_stats'],
     };
     const localPrefixes = {
       chainword: null, // progress stored in single key above
-      '4word': 'chainword_wordle_',
+      word4: 'chainword_wordle_',
       tiles: 'chainword_tiles_',
       squares: 'chainword_squares_',
       shabdal: 'chainword_shabdal_',
     };
     const cloudKeys = {
       chainword: ['chainword', 'chainword_hard'],
-      '4word': ['4word'],
+      word4: ['word4'],
       tiles: ['tiles'],
       squares: ['squares'],
       shabdal: ['shabdal'],
@@ -276,8 +276,8 @@ export default function App() {
         activeGame={activeGame}
         onSelectGame={g => navigate('/' + g)}
         onHome={() => navigate('/')}
-        gameNumber={activeGame === '4word' ? fourWord.gameNumber : activeGame === 'tiles' ? tiles.gameNumber : activeGame === 'squares' ? squares.gameNumber : activeGame === 'shabdal' ? shabdal.gameNumber : game.gameNumber}
-        dateStr={activeGame === '4word' ? fourWord.dateStr : activeGame === 'tiles' ? tiles.dateStr : activeGame === 'squares' ? squares.dateStr : activeGame === 'shabdal' ? shabdal.dateStr : game.dateStr}
+        gameNumber={activeGame === 'word4' ? fourWord.gameNumber : activeGame === 'tiles' ? tiles.gameNumber : activeGame === 'squares' ? squares.gameNumber : activeGame === 'shabdal' ? shabdal.gameNumber : game.gameNumber}
+        dateStr={activeGame === 'word4' ? fourWord.dateStr : activeGame === 'tiles' ? tiles.dateStr : activeGame === 'squares' ? squares.dateStr : activeGame === 'shabdal' ? shabdal.dateStr : game.dateStr}
         darkMode={darkMode}
         onToggleDark={() => setDarkMode(d => !d)}
         onHowToPlay={() => setShowHelp(true)}
@@ -289,6 +289,7 @@ export default function App() {
         lastUser={lastUser}
         signingIn={signingIn}
         isAdmin={userProfile?.admin ?? false}
+        gamesConfig={gamesConfig}
       />
 
       <main className="flex-1 overflow-hidden">
@@ -309,14 +310,14 @@ export default function App() {
                 archiveDate={archiveDates.chainword}
               />
           } />
-          <Route path="/4word" element={
-            gamesConfig['4word']?.paid && !userProfile?.paid
+          <Route path="/word4" element={
+            gamesConfig.word4?.paid && !userProfile?.paid
               ? <Navigate to="/" replace />
-              : <FourWordGame
+              : <Word4Game
                 game={fourWord}
                 wordListReady={wordListReady}
                 onArchive={() => setShowArchive(true)}
-                archiveDate={archiveDates['4word']}
+                archiveDate={archiveDates.word4}
               />
           } />
           <Route path="/tiles" element={
@@ -360,9 +361,9 @@ export default function App() {
       <StatsModal
         open={showStats}
         onClose={() => setShowStats(false)}
-        stats={activeGame === '4word' ? fourWord.stats : activeGame === 'tiles' ? tiles.stats : activeGame === 'squares' ? squares.stats : activeGame === 'shabdal' ? shabdal.stats : game.stats}
+        stats={activeGame === 'word4' ? fourWord.stats : activeGame === 'tiles' ? tiles.stats : activeGame === 'squares' ? squares.stats : activeGame === 'shabdal' ? shabdal.stats : game.stats}
         onReset={handleReset}
-        is4Word={activeGame === '4word'}
+        isWord4={activeGame === 'word4'}
         isTiles={activeGame === 'tiles'}
         isSquares={activeGame === 'squares'}
         isShabdal={activeGame === 'shabdal'}

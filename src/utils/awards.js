@@ -1,7 +1,7 @@
 import { getWordSet } from '../words.js';
 
-// Slot multipliers — must match useTiles.js
-const SLOT_MULTIPLIERS = [1, 2, 1, 3];
+// Slot multipliers — single source of truth (useTiles.js and sharing.js import from here)
+export { SLOT_MULTIPLIERS } from '../games/tiles/hooks/useTiles.js';
 
 // Enumerate all valid 4-permutation scores for a given tile rack.
 function allTilesScores(tiles) {
@@ -64,7 +64,7 @@ export function chainwordHistTier(won, guesses, hintsUsed, parSteps) {
   return 'bronze';
 }
 
-export function fourWordTier(won, guessCount) {
+export function word4Tier(won, guessCount) {
   if (!won) return 'unsolved';
   if (guessCount <= 4) return 'gold';
   if (guessCount === 5) return 'silver';

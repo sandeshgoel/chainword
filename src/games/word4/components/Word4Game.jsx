@@ -1,8 +1,8 @@
 import { useState, useRef, useEffect } from 'react';
-import { build4WordShareText, shareOrCopy } from '../../../utils/sharing.js';
+import { buildWord4ShareText, shareOrCopy } from '../../../utils/sharing.js';
 import ResultBanner from '../../../components/ResultBanner.jsx';
 import Modal from '../../../components/Modal.jsx';
-import { fourWordTier, TIER_CONFIG } from '../../../utils/awards.js';
+import { word4Tier, TIER_CONFIG } from '../../../utils/awards.js';
 
 const KEYBOARD_ROWS = [
   ['Q','W','E','R','T','Y','U','I','O','P'],
@@ -241,7 +241,7 @@ export default function FourWordGame({ game, wordListReady, onArchive, archiveDa
   const letterStates = getLetterStates(guesses);
 
   const shareText = status !== 'playing'
-    ? build4WordShareText({ gameNumber, dateStr, guesses, status })
+    ? buildWord4ShareText({ gameNumber, dateStr, guesses, status })
     : '';
 
   async function handleShare() {
@@ -294,7 +294,7 @@ export default function FourWordGame({ game, wordListReady, onArchive, archiveDa
           {status !== 'playing' && (
             <div className="mt-4 w-full">
               <ResultBanner
-                tier={fourWordTier(status === 'won', guesses.length)}
+                tier={word4Tier(status === 'won', guesses.length)}
                 title={status === 'won' ? 'You got it!' : 'Game Over'}
                 details={status === 'won' ? `In ${guesses.length} / 6` : `The word was ${target.toUpperCase()}`}
               >
@@ -311,14 +311,14 @@ export default function FourWordGame({ game, wordListReady, onArchive, archiveDa
           )}
 
           {status !== 'playing' && (() => {
-            const tier = fourWordTier(status === 'won', guesses.length);
+            const tier = word4Tier(status === 'won', guesses.length);
             const cfg = TIER_CONFIG[tier];
             return (
               <Modal open={showShare} onClose={() => setShowShare(false)} title="Share Your Result">
                 <div className="space-y-4">
                   <div className="text-center space-y-1">
                     <div className="text-3xl">{cfg.emoji}</div>
-                    <p className="text-lg font-bold text-gray-900 dark:text-white">4word #{gameNumber}</p>
+                    <p className="text-lg font-bold text-gray-900 dark:text-white">word4 #{gameNumber}</p>
                     <p className="text-sm text-gray-500 dark:text-gray-400">
                       {status === 'won'
                         ? `Solved in ${guesses.length} / 6`

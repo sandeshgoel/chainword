@@ -1,45 +1,18 @@
 import { useState, useEffect, useCallback } from 'react';
-import { getDaily4WordTarget, getWordSet } from '../../../words.js';
-import { load4WordStats, update4WordStats } from '../../../utils/storage.js';
+import { getDailyWord4Target, getWordSet } from '../../../words.js';
+import { loadWord4Stats, updateWord4Stats } from '../../../utils/storage.js';
 import { pushCloudStats } from '../../../utils/cloudStats.js';
+import { evaluateGuess } from '../../../utils/wordUtils.js';
 
-function evaluateGuess(guess, target) {
-  const result = Array(4).fill('gray');
-  const targetChars = target.split('');
-  const guessChars = guess.split('');
-
-  // Pass 1: exact matches (green)
-  for (let i = 0; i < 4; i++) {
-    if (guessChars[i] === targetChars[i]) {
-      result[i] = 'green';
-      targetChars[i] = null; // mark as used
-      guessChars[i] = null;
-    }
-  }
-
-  // Pass 2: present but wrong place (orange)
-  for (let i = 0; i < 4; i++) {
-    if (guessChars[i] !== null) {
-      const idx = targetChars.indexOf(guessChars[i]);
-      if (idx !== -1) {
-        result[i] = 'orange';
-        targetChars[idx] = null; // mark as used
-      }
-    }
-  }
-
-  return result;
-}
-
-export function use4Word(wordListReady, overrideDateStr = null, user = null, statsVersion = 0) {
-  const { target, dateStr, gameNumber } = getDaily4WordTarget(overrideDateStr);
+export function useWord4(wordListReady, overrideDateStr = null, user = null, statsVersion = 0) {
+  const { target, dateStr, gameNumber } = getDailyWord4Target(overrideDateStr);
 
   const [guesses, setGuesses] = useState([]); // array of { word, colors }
   const [status, setStatus] = useState('playing'); // playing | won | lost
   const [error, setError] = useState('');
-  const [stats, setStats] = useState(load4WordStats());
+  const [stats, setStats] = useState(loadWord4Stats());
 
-  useEffect(() => { setStats(load4WordStats()); }, [statsVersion]);
+  useEffect(() => { setStats(loadWord4Stats()); }, [statsVersion]);
 
   // Load from local storage
   useEffect(() => {
@@ -97,9 +70,9 @@ export function use4Word(wordListReady, overrideDateStr = null, user = null, sta
     persist(newGuesses, newStatus);
 
     if (newStatus === 'won' || newStatus === 'lost') {
-      const newStats = update4WordStats(newStatus === 'won' ? newGuesses.length : 0, dateStr);
+      const newStats = updateWord4Stats(newStatus === 'won' ? newGuesses.length : 0, dateStr);
       setStats(newStats);
-      if (user) pushCloudStats(user.uid, '4word', newStats.history).catch(console.error);
+      if (user) pushCloudStats(user.uid, 'word4', newStats.history).catch(console.error);
     }
 
     return true;

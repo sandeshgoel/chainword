@@ -3,7 +3,7 @@ import Modal from './Modal.jsx';
 import { getParStepsForDate } from '../games/chainword/data/dailyPairs.js';
 import { computeStreaks } from '../utils/storage.js';
 import {
-  chainwordHistTier, fourWordTier, tilesTier, squaresTier,
+  chainwordHistTier, word4Tier, tilesTier, squaresTier,
   TIER_CONFIG,
 } from '../utils/awards.js';
 
@@ -13,7 +13,7 @@ function formatDate(dateStr) {
   return new Date(Date.UTC(y, m - 1, d)).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', timeZone: 'UTC' });
 }
 
-function HistoryTable({ history, isChainword, isWordle, isTiles, isSquares, isShabdal, hardMode }) {
+function HistoryTable({ history, isChainword, isWord4, isTiles, isSquares, isShabdal, hardMode }) {
   if (!history || history.length === 0) {
     return (
       <p className="text-center text-gray-500 dark:text-gray-400 text-sm py-6">
@@ -34,7 +34,7 @@ function HistoryTable({ history, isChainword, isWordle, isTiles, isSquares, isSh
               <th className="text-center px-2 py-2 font-semibold">Hints</th>
               <th className="text-center px-2 py-2 font-semibold">Result</th>
             </>}
-            {isWordle && <>
+            {isWord4 && <>
               <th className="text-center px-2 py-2 font-semibold">Award</th>
               <th className="text-center px-2 py-2 font-semibold">Guesses</th>
             </>}
@@ -80,8 +80,8 @@ function HistoryTable({ history, isChainword, isWordle, isTiles, isSquares, isSh
                   </>);
                 })()}
 
-                {isWordle && (() => {
-                  const tier = fourWordTier(h.won, h.guesses);
+                {isWord4 && (() => {
+                  const tier = word4Tier(h.won, h.guesses);
                   return (<>
                     <td className="text-center px-2 py-2 text-base">{TIER_CONFIG[tier].emoji}</td>
                     <td className="text-center px-2 py-2 text-gray-700 dark:text-gray-300">
@@ -272,17 +272,17 @@ function SquaresStats({ stats, hintsDistribution }) {
   );
 }
 
-export default function StatsModal({ open, onClose, stats, onReset, isWordle, isTiles, isSquares, isShabdal, hardMode }) {
+export default function StatsModal({ open, onClose, stats, onReset, isWord4, isTiles, isSquares, isShabdal, hardMode }) {
   const [view, setView] = useState('stats');
-  const isChainword = !isWordle && !isTiles && !isSquares && !isShabdal;
-  const gameName = isWordle ? '4word' : isTiles ? 'Tiles' : isSquares ? 'Squares' : isShabdal ? 'शब्दल' : 'Chainword';
+  const isChainword = !isWord4 && !isTiles && !isSquares && !isShabdal;
+  const gameName = isWord4 ? 'word4' : isTiles ? 'Tiles' : isSquares ? 'Squares' : isShabdal ? 'शब्दल' : 'Chainword';
   const history = stats.history || [];
   const played = (isTiles || isSquares) ? 0 : history.length;
   const won = history.filter(h => h.won).length;
   const { currentStreak, maxStreak } = (isTiles || isSquares) ? { currentStreak: 0, maxStreak: 0 }
     : computeStreaks(history, h => h.won);
 
-  const winRate = isChainword || isWordle ? (played > 0 ? Math.round((won / played) * 100) : 0) : 0;
+  const winRate = isChainword || isWord4 ? (played > 0 ? Math.round((won / played) * 100) : 0) : 0;
 
   // Chainword: compute tier distribution from history in real time
   const distribution = (() => {
@@ -298,7 +298,7 @@ export default function StatsModal({ open, onClose, stats, onReset, isWordle, is
 
   // 4word: compute distribution from history in real time
   const wordleDistribution = (() => {
-    if (!isWordle) return null;
+    if (!isWord4) return null;
     const dist = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0 };
     for (const h of (stats.history || [])) {
       if (h.won && h.guesses >= 1 && h.guesses <= 6) dist[String(h.guesses)] = (dist[String(h.guesses)] || 0) + 1;
@@ -328,13 +328,13 @@ export default function StatsModal({ open, onClose, stats, onReset, isWordle, is
   })();
 
   const TIER_KEYS = ['gold', 'silver', 'bronze', 'unsolved'];
-  const distKeys = isWordle ? [1, 2, 3, 4, 5, 6] : isShabdal ? [1, 2, 3, 4, 5, 6] : TIER_KEYS;
-  const distData = isWordle ? wordleDistribution : isShabdal ? shabdalDistribution : distribution;
-  const maxCount = (isChainword || isWordle || isShabdal) ? Math.max(1, ...distKeys.map(k => distData[k] || 0)) : 1;
-  const distBarColor = isWordle || isShabdal
+  const distKeys = isWord4 ? [1, 2, 3, 4, 5, 6] : isShabdal ? [1, 2, 3, 4, 5, 6] : TIER_KEYS;
+  const distData = isWord4 ? wordleDistribution : isShabdal ? shabdalDistribution : distribution;
+  const maxCount = (isChainword || isWord4 || isShabdal) ? Math.max(1, ...distKeys.map(k => distData[k] || 0)) : 1;
+  const distBarColor = isWord4 || isShabdal
     ? k => k <= 4 ? 'bg-yellow-400' : k === 5 ? 'bg-slate-400' : 'bg-orange-400'
     : k => ({ gold: 'bg-yellow-400', silver: 'bg-slate-400', bronze: 'bg-orange-400', unsolved: 'bg-red-400' }[k]);
-  const labels = isWordle || isShabdal ? {
+  const labels = isWord4 || isShabdal ? {
     1: '1 Guess', 2: '2 Guesses', 3: '3 Guesses',
     4: '4 Guesses', 5: '5 Guesses', 6: '6 Guesses',
   } : {
@@ -369,7 +369,7 @@ export default function StatsModal({ open, onClose, stats, onReset, isWordle, is
           <HistoryTable
             history={history}
             isChainword={isChainword}
-            isWordle={isWordle}
+            isWord4={isWord4}
             isTiles={isTiles}
             isSquares={isSquares}
             isShabdal={isShabdal}
@@ -377,7 +377,7 @@ export default function StatsModal({ open, onClose, stats, onReset, isWordle, is
           />
         ) : (
           <>
-            {!isWordle && !isTiles && !isSquares && !isShabdal && (
+            {!isWord4 && !isTiles && !isSquares && !isShabdal && (
               <div className="flex justify-center">
                 <span className={`text-xs font-bold px-3 py-1 rounded-full ${
                   hardMode

@@ -3,7 +3,7 @@ const THEME_KEY    = 'chainword_theme';
 
 const CHAINWORD_STATS_KEY      = 'braingym_chainword_stats';
 const CHAINWORD_STATS_HARD_KEY = 'braingym_chainword_stats_hard';
-const FOUR_WORD_STATS_KEY      = 'braingym_4word_stats';
+const FOUR_WORD_STATS_KEY      = 'braingym_word4_stats';
 const TILES_STATS_KEY          = 'braingym_tiles_stats';
 const SQUARES_STATS_KEY        = 'braingym_squares_stats';
 const SHABDAL_STATS_KEY        = 'braingym_shabdal_stats';
@@ -122,14 +122,24 @@ export function updateStatsOnGiveUp(guesses, hintsUsed, dateStr, key = CHAINWORD
 
 export { CHAINWORD_STATS_KEY, CHAINWORD_STATS_HARD_KEY };
 
-// --- 4word ---
+// --- word4 ---
 
-export function load4WordStats() {
+// One-time migration: copy legacy 'braingym_4word_stats' key to new name if present.
+(function migrateWord4Stats() {
+  try {
+    const OLD_KEY = 'braingym_4word_stats';
+    if (localStorage.getItem(OLD_KEY) && !localStorage.getItem(FOUR_WORD_STATS_KEY)) {
+      localStorage.setItem(FOUR_WORD_STATS_KEY, localStorage.getItem(OLD_KEY));
+    }
+  } catch (_) {}
+})();
+
+export function loadWord4Stats() {
   return { history: loadHistory(FOUR_WORD_STATS_KEY) };
 }
 
-export function update4WordStats(guessesCount, dateStr) {
-  const { history } = load4WordStats();
+export function updateWord4Stats(guessesCount, dateStr) {
+  const { history } = loadWord4Stats();
   upsertHistory(history, { dateStr, guesses: guessesCount, won: guessesCount > 0, playedDate: getTodayIST() });
   saveHistory(FOUR_WORD_STATS_KEY, history);
   return { history };

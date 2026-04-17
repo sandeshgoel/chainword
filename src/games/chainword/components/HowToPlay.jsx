@@ -199,7 +199,7 @@ function SquaresHelp() {
 
 const TITLES = {
   chainword: '🔗 How to Play Chainword',
-  '4word':   '🔤 How to Play 4word',
+  word4:     '🔤 How to Play word4',
   tiles:     '🎯 How to Play Tiles',
   squares:   '🔲 How to Play Squares',
 };
@@ -208,7 +208,7 @@ export default function HowToPlay({ open, onClose, activeGame = 'chainword' }) {
   return (
     <Modal open={open} onClose={onClose} title={TITLES[activeGame] ?? 'How to Play'}>
       {activeGame === 'chainword' && <ChainwordHelp />}
-      {activeGame === '4word'    && <FourWordHelp />}
+      {activeGame === 'word4'    && <FourWordHelp />}
       {activeGame === 'tiles'    && <TilesHelp />}
       {activeGame === 'squares'  && <SquaresHelp />}
     </Modal>

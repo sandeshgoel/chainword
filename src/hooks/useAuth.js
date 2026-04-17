@@ -43,7 +43,7 @@ const STAT_KEYS = [
   'braingym_chainword_stats',
   'braingym_chainword_stats_hard',
   'chainword_progress',
-  'braingym_4word_stats',
+  'braingym_word4_stats',
   'braingym_tiles_stats',
   'braingym_squares_stats',
   'braingym_shabdal_stats',

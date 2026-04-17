@@ -2,13 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { version } from '../../package.json';
 import Modal from './Modal.jsx';
-
-const GAMES = [
-  { id: 'chainword', emoji: '🔗', name: 'Chainword' },
-  { id: '4word', emoji: '🔤', name: '4word' },
-  { id: 'tiles', emoji: '🎯', name: 'Tiles' },
-  { id: 'squares', emoji: '🔲', name: 'Squares' },
-];
+import { GAMES_META } from '../gamesMeta.js';
 
 function getLocalDataKeys() {
   return Object.keys(localStorage)
@@ -67,13 +61,15 @@ export default function HamburgerMenu({ darkMode, onToggleDark, onSelectGame, ac
               </>
             )}
             <div className="px-4 py-2 text-xs font-semibold text-gray-400 uppercase tracking-wider">Games</div>
-            {GAMES.map(g => (
+            {GAMES_META.map(g => (
               <button
                 key={g.id}
                 onClick={() => { onSelectGame(g.id); setIsMenuOpen(false); }}
                 className={`w-full flex items-center gap-3 px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors text-left ${activeGame === g.id ? 'bg-indigo-50 dark:bg-indigo-900/20' : ''}`}
               >
-                <span className="text-xl flex-shrink-0">{g.emoji}</span>
+                {g.emoji.startsWith('/')
+                  ? <img src={g.emoji} alt={g.name} className="w-6 h-6 rounded flex-shrink-0" />
+                  : <span className="text-xl flex-shrink-0">{g.emoji}</span>}
                 <span className={`text-sm font-medium ${activeGame === g.id ? 'text-indigo-900 dark:text-indigo-300' : 'text-gray-900 dark:text-white'}`}>{g.name}</span>
               </button>
             ))}

@@ -6,7 +6,7 @@ import { getGameHistory, setGameHistory } from './storage.js';
 export const CLOUD_TO_LOCAL = {
   chainword:      'braingym_chainword_stats',
   chainword_hard: 'braingym_chainword_stats_hard',
-  '4word':        'braingym_4word_stats',
+  word4:          'braingym_word4_stats',
   tiles:          'braingym_tiles_stats',
   squares:        'braingym_squares_stats',
 };
@@ -16,7 +16,7 @@ export const CLOUD_GAME_KEYS = Object.keys(CLOUD_TO_LOCAL);
 export const GAME_DISPLAY_NAMES = {
   chainword:      'Chainword (Easy)',
   chainword_hard: 'Chainword (Hard)',
-  '4word':        '4word',
+  word4:          'word4',
   tiles:          'Tiles',
   squares:        'Squares',
 };

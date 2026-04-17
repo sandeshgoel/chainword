@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAdmin } from '../hooks/useAdmin.js';
 
-const GAME_IDS = ['chainword', '4word', 'tiles', 'squares', 'shabdal', 'cryptic'];
+const GAME_IDS = ['chainword', 'word4', 'tiles', 'squares', 'shabdal', 'cryptic'];
 
 function Toggle({ checked, onChange, disabled }) {
   return (

@@ -3,33 +3,7 @@ import { getDailyWord } from '../data/shabdalWords.js';
 import { formHindiWord } from '../../../utils/hindiUtils.js';
 import { loadShabdalStats, updateShabdalStats } from '../../../utils/storage.js';
 import { pushCloudStats } from '../../../utils/cloudStats.js';
-
-function getColorsFeedback(guess, target) {
-  const colors = Array(4).fill('gray');
-  const targetCopy = [...target];
-  const guessCopy = [...guess];
-
-  // First pass: greens
-  for (let i = 0; i < 4; i++) {
-    if (guessCopy[i] === targetCopy[i]) {
-      colors[i] = 'green';
-      targetCopy[i] = null;
-      guessCopy[i] = null;
-    }
-  }
-
-  // Second pass: oranges
-  for (let i = 0; i < 4; i++) {
-    if (guessCopy[i] === null) continue;
-    const j = targetCopy.indexOf(guessCopy[i]);
-    if (j !== -1) {
-      colors[i] = 'orange';
-      targetCopy[j] = null;
-    }
-  }
-
-  return colors;
-}
+import { evaluateGuess } from '../../../utils/wordUtils.js';
 
 export function useShabdal(overrideDateStr = null, user = null, statsVersion = 0) {
   const { target, dateStr, gameNumber } = getDailyWord(overrideDateStr);
@@ -73,7 +47,7 @@ export function useShabdal(overrideDateStr = null, user = null, statsVersion = 0
     }
     if (status !== 'playing') return false;
 
-    const colors = getColorsFeedback(letters, target);
+    const colors = evaluateGuess(letters, target);
     const won = colors.every(c => c === 'green');
     
     const newGuesses = [...guesses, { letters, colors, formed: formHindiWord(letters) }];

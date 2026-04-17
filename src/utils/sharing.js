@@ -1,6 +1,6 @@
 import { formatDate } from './wordUtils.js';
 import { chainwordTier, squaresTier, TIER_CONFIG } from './awards.js';
-import { SLOT_MULTIPLIERS } from '../games/tiles/hooks/useTiles.js';
+import { SLOT_MULTIPLIERS } from './awards.js';
 
 // Build a shareable text without revealing the actual words used
 export function buildShareText({ gameNumber, dateStr, start, end, userSteps, parSteps, chain, hintsUsed, gaveUp }) {
@@ -112,9 +112,9 @@ export function buildTilesShareText({ gameNumber, dateStr, bestScore, optimalSco
   );
 }
 
-export function build4WordShareText({ gameNumber, dateStr, guesses, status }) {
+export function buildWord4ShareText({ gameNumber, dateStr, guesses, status }) {
   const result = status === 'won' ? guesses.length : 'X';
-  let text = `4word #${gameNumber} 🔤\n${formatDate(dateStr)}  •  ${result}/6\n\n`;
+  let text = `word4 #${gameNumber} 🔤\n${formatDate(dateStr)}  •  ${result}/6\n\n`;
 
   for (const guess of guesses) {
     let row = '';

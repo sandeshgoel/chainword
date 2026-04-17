@@ -1,5 +1,6 @@
 import { formatDate } from '../utils/wordUtils.js';
 import HamburgerMenu from './HamburgerMenu.jsx';
+import { GAMES_META_BY_ID } from '../gamesMeta.js';
 
 export default function Header({
   activeGame,
@@ -18,7 +19,11 @@ export default function Header({
   lastUser,
   signingIn,
   isAdmin,
+  gamesConfig,
 }) {
+  const meta = GAMES_META_BY_ID[activeGame] ?? {};
+  const gameTitle = gamesConfig?.[activeGame]?.title ?? meta.name ?? activeGame;
+
   return (
     <header className="flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 sticky top-0 z-10">
       {/* Left: menu + how to play */}
@@ -43,12 +48,9 @@ export default function Header({
       {/* Center: title (tapping goes home) */}
       <button onClick={onHome} className="absolute left-1/2 -translate-x-1/2 flex flex-col items-center leading-none hover:opacity-70 transition-opacity">
         <span className="text-xl font-extrabold tracking-tight text-gray-900 dark:text-white">
-          {activeGame === '4word' ? '🔤 4word' : 
-           activeGame === 'tiles' ? '🎯 Tiles' : 
-           activeGame === 'squares' ? '🔲 Squares' : 
-           activeGame === 'shabdal' ? <><img src="/shabdal-icon.png" alt="अ" className="inline-block w-7 h-7 -mt-0.5 mr-1 rounded" />शब्दल</> :
-           activeGame === 'cryptic' ? '🧩 Cryptic' :
-           '🔗 Chainword'}
+          {meta.emoji?.startsWith('/')
+            ? <><img src={meta.emoji} alt={meta.name} className="inline-block w-7 h-7 -mt-0.5 mr-1 rounded" />{gameTitle}</>
+            : `${meta.emoji ?? ''} ${gameTitle}`.trim()}
         </span>
         {(gameNumber || dateStr) && (
           <span className="text-[10px] font-semibold text-gray-400 dark:text-gray-500">

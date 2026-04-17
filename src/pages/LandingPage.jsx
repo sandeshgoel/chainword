@@ -1,78 +1,10 @@
 import { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
-import { chainwordHistTier, fourWordTier, tilesTier, squaresTier, TIER_CONFIG } from '../utils/awards.js';
+import { chainwordHistTier, word4Tier as fourWordTier, tilesTier, squaresTier, TIER_CONFIG } from '../utils/awards.js';
 import { getParStepsForDate } from '../games/chainword/data/dailyPairs.js';
 import HamburgerMenu from '../components/HamburgerMenu.jsx';
-
-const GAMES = [
-  {
-    id: 'chainword',
-    route: '/chainword',
-    emoji: '🔗',
-    name: 'Chainword',
-    desc: 'Link 4-letter words one step at a time',
-    from: '#6366f1',
-    to: '#4f46e5',
-    shadow: '#3730a3',
-    badge: 'Word Chain',
-  },
-  {
-    id: '4word',
-    route: '/4word',
-    emoji: '🔤',
-    name: '4word',
-    desc: 'Guess the 4-letter word in 6 tries',
-    from: '#10b981',
-    to: '#059669',
-    shadow: '#065f46',
-    badge: 'Wordle',
-  },
-  {
-    id: 'tiles',
-    route: '/tiles',
-    emoji: '🎯',
-    name: 'Tiles',
-    desc: 'Build the top scoring word from your rack',
-    from: '#f59e0b',
-    to: '#d97706',
-    shadow: '#92400e',
-    badge: 'Scrabble',
-  },
-  {
-    id: 'squares',
-    route: '/squares',
-    emoji: '🔲',
-    name: 'Squares',
-    desc: 'Fill the corners to form valid words',
-    from: '#ec4899',
-    to: '#db2777',
-    shadow: '#9d174d',
-    badge: 'Logic',
-  },
-  {
-    id: 'shabdal',
-    route: '/shabdal',
-    emoji: '/shabdal-icon.png',
-    name: 'शब्दल',
-    desc: 'Guess the Hindi word in 6 tries',
-    from: '#f97316',
-    to: '#ea580c',
-    shadow: '#9a3412',
-    badge: 'Hindi Wordle',
-  },
-  {
-    id: 'cryptic',
-    route: '/cryptic',
-    emoji: '🧩',
-    name: 'Cryptic',
-    desc: 'Solve a daily cryptic crossword clue',
-    from: '#7c3aed',
-    to: '#6d28d9',
-    shadow: '#4c1d95',
-    badge: 'Cryptic Clues',
-  },
-];
+import { GAMES_META } from '../gamesMeta.js';
 
 function getTodayIST() {
   return new Date(Date.now() + 5.5 * 60 * 60 * 1000).toISOString().split('T')[0];
@@ -93,8 +25,8 @@ function getGameStatus(gameId, dateStr) {
       // Not finished — check if in progress
       const all = JSON.parse(localStorage.getItem('chainword_progress') || '{}');
       if (all[dateStr]?.chain?.length > 1 || all[dateStr + '_hard']?.chain?.length > 1) return 'started';
-    } else if (gameId === '4word') {
-      const stats = JSON.parse(localStorage.getItem('braingym_4word_stats') || 'null');
+    } else if (gameId === 'word4') {
+      const stats = JSON.parse(localStorage.getItem('braingym_word4_stats') || 'null');
       const entry = stats?.history?.find(h => h.dateStr === dateStr);
       if (entry) return fourWordTier(entry.won, entry.guesses);
       const saved = JSON.parse(localStorage.getItem('chainword_wordle_' + dateStr) || 'null');
@@ -261,7 +193,7 @@ export default function LandingPage({ darkMode, onToggleDark, onAuth, user, user
   const navigate = useNavigate();
   const todayIST = useMemo(() => getTodayIST(), []);
   const statuses = useMemo(
-    () => Object.fromEntries(GAMES.map(g => [g.id, getGameStatus(g.id, todayIST)])),
+    () => Object.fromEntries(GAMES_META.map(g => [g.id, getGameStatus(g.id, todayIST)])),
     [todayIST]
   );
 
@@ -340,7 +272,7 @@ export default function LandingPage({ darkMode, onToggleDark, onAuth, user, user
       {/* Game tiles */}
       <div className="flex-1 px-4 pb-6 max-w-sm mx-auto w-full">
         <div className="grid grid-cols-2 gap-4">
-          {GAMES.map(game => {
+          {GAMES_META.map(game => {
             const cfg = gamesConfig[game.id] || {};
             const isLocked = !!cfg.paid && !userProfile?.paid;
             return (

@@ -22,7 +22,7 @@ function getPlayStatus(dateStr, activeGame, hardMode) {
       const entry = all[key];
       if (entry?.status === 'won' || entry?.status === 'gaveUp') return 'finished';
       if (entry?.chain?.length > 1) return 'started';
-    } else if (activeGame === '4word') {
+    } else if (activeGame === 'word4') {
       const data = JSON.parse(localStorage.getItem(`chainword_wordle_${dateStr}`) || 'null');
       if (data?.status === 'won' || data?.status === 'lost') return 'finished';
       if (data?.guesses?.length > 0) return 'started';

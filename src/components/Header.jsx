@@ -35,6 +35,7 @@ export default function Header({
           activeGame={activeGame}
           onHome={onHome}
           isAdmin={isAdmin}
+          gamesConfig={gamesConfig}
         />
         <button
           onClick={onHowToPlay}

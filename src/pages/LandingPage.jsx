@@ -214,6 +214,7 @@ export default function LandingPage({ darkMode, onToggleDark, onAuth, user, user
           onToggleDark={onToggleDark}
           onSelectGame={id => navigate('/' + id)}
           isAdmin={userProfile?.admin ?? false}
+          gamesConfig={gamesConfig}
           buttonClassName="p-2 rounded-full hover:bg-white/60 dark:hover:bg-gray-700 text-gray-500 dark:text-gray-400 transition-colors"
         />
 

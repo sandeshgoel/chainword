@@ -16,7 +16,7 @@ function clearLocalDataKeys(keys) {
   window.location.reload();
 }
 
-export default function HamburgerMenu({ darkMode, onToggleDark, onSelectGame, activeGame, onHome, isAdmin, buttonClassName }) {
+export default function HamburgerMenu({ darkMode, onToggleDark, onSelectGame, activeGame, onHome, isAdmin, buttonClassName, gamesConfig }) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [showAbout, setShowAbout] = useState(false);
   const [localKeys, setLocalKeys] = useState([]);
@@ -52,7 +52,7 @@ export default function HamburgerMenu({ darkMode, onToggleDark, onSelectGame, ac
               <>
                 <button
                   onClick={() => { onHome(); setIsMenuOpen(false); }}
-                  className="w-full flex items-center gap-3 px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors text-left"
+                  className="w-full flex items-center gap-3 px-4 py-2 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors text-left"
                 >
                   <span className="text-xl flex-shrink-0">🏠</span>
                   <span className="text-sm font-medium text-gray-900 dark:text-white">Home</span>
@@ -65,48 +65,43 @@ export default function HamburgerMenu({ darkMode, onToggleDark, onSelectGame, ac
               <button
                 key={g.id}
                 onClick={() => { onSelectGame(g.id); setIsMenuOpen(false); }}
-                className={`w-full flex items-center gap-3 px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors text-left ${activeGame === g.id ? 'bg-indigo-50 dark:bg-indigo-900/20' : ''}`}
+                className={`w-full flex items-center gap-3 px-4 py-2 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors text-left ${activeGame === g.id ? 'bg-indigo-50 dark:bg-indigo-900/20' : ''}`}
               >
                 {g.emoji.startsWith('/')
-                  ? <img src={g.emoji} alt={g.name} className="w-6 h-6 rounded flex-shrink-0" />
+                  ? <img src={g.emoji} alt={g.id} className="w-6 h-6 rounded flex-shrink-0" />
                   : <span className="text-xl flex-shrink-0">{g.emoji}</span>}
-                <span className={`text-sm font-medium ${activeGame === g.id ? 'text-indigo-900 dark:text-indigo-300' : 'text-gray-900 dark:text-white'}`}>{g.name}</span>
+                <span className={`text-sm font-medium ${activeGame === g.id ? 'text-indigo-900 dark:text-indigo-300' : 'text-gray-900 dark:text-white'}`}>{gamesConfig?.[g.id]?.title || g.id}</span>
               </button>
             ))}
             <div className="border-t border-gray-100 dark:border-gray-700 my-1"></div>
             <button
               onClick={() => { setShowAbout(true); setIsMenuOpen(false); }}
-              className="w-full flex items-center gap-3 px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors text-left"
+              className="w-full flex items-center gap-3 px-4 py-2 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors text-left"
             >
               <span className="text-xl flex-shrink-0">ℹ️</span>
               <span className="text-sm font-medium text-gray-900 dark:text-white">About</span>
             </button>
             {isAdmin && (
-              <>
-                <div className="border-t border-gray-100 dark:border-gray-700 my-1"></div>
-                <button
-                  onClick={() => { navigate('/admin'); setIsMenuOpen(false); }}
-                  className="w-full flex items-center gap-3 px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors text-left"
-                >
-                  <span className="text-xl flex-shrink-0">🛠️</span>
-                  <span className="text-sm font-medium text-gray-900 dark:text-white">Admin Dashboard</span>
-                </button>
-              </>
+              <button
+                onClick={() => { navigate('/admin'); setIsMenuOpen(false); }}
+                className="w-full flex items-center gap-3 px-4 py-2 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors text-left"
+              >
+                <span className="text-xl flex-shrink-0">🛠️</span>
+                <span className="text-sm font-medium text-gray-900 dark:text-white">Admin Dashboard</span>
+              </button>
             )}
-            <div className="border-t border-gray-100 dark:border-gray-700 my-1"></div>
             <button
               onClick={() => { setLocalKeys(getLocalDataKeys()); setIsMenuOpen(false); }}
-              className="w-full flex items-center gap-3 px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors text-left"
+              className="w-full flex items-center gap-3 px-4 py-2 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors text-left"
             >
               <svg className="w-5 h-5 text-red-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6M1 7h22M8 7V5a2 2 0 012-2h4a2 2 0 012 2v2" />
               </svg>
               <span className="text-sm font-medium text-red-500">Clear Local Data</span>
             </button>
-            <div className="border-t border-gray-100 dark:border-gray-700 my-1"></div>
             <button
               onClick={() => { onToggleDark(); setIsMenuOpen(false); }}
-              className="w-full flex items-center gap-3 px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors text-left"
+              className="w-full flex items-center gap-3 px-4 py-2 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors text-left"
             >
               {darkMode ? (
                 <svg className="w-5 h-5 text-gray-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">

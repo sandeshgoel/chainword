@@ -1,9 +1,14 @@
 import { useState, useEffect, useRef } from 'react';
-import { toast } from 'react-hot-toast';
 import ShabdalKeyboard from './ShabdalKeyboard.jsx';
+import ResultBanner from '../../../components/ResultBanner.jsx';
 import Modal from '../../../components/Modal.jsx';
 import { formHindiWord } from '../../../utils/hindiUtils.js';
 import { buildShabdalShareText, shareOrCopy } from '../../../utils/sharing.js';
+import { shabdalTier } from '../../../utils/awards.js';
+
+function getTodayIST() {
+  return new Date(Date.now() + 5.5 * 60 * 60 * 1000).toISOString().split('T')[0];
+}
 
 // ── Tile ─────────────────────────────────────────────────────────────────────
 function Tile({ char, color, revealPhase }) {
@@ -92,7 +97,8 @@ export default function ShabdalGame({ game, onArchive, archiveDate }) {
   const { target, guesses, status, error, setError, submitGuess, formedTarget, gameNumber, dateStr } = game;
   const [input, setInput] = useState([]); // Array of Devanagari letters
   const [revealState, setRevealState] = useState(null);
-  const [showResultModal, setShowResultModal] = useState(false);
+  const [showShare, setShowShare] = useState(false);
+  const [copied, setCopied] = useState(false);
   const prevGuessCount = useRef(guesses.length);
   const revealTimers = useRef([]);
   const isPlaying = status === 'playing';
@@ -113,10 +119,7 @@ export default function ShabdalGame({ game, onArchive, archiveDate }) {
         setRevealState(prev => prev ? { ...prev, phases: prev.phases.map((p, j) => j === i ? 'done' : p) } : null),
         i * 500 + 500));
     }
-    revealTimers.current.push(setTimeout(() => {
-      setRevealState(null);
-      if (status !== 'playing') setShowResultModal(true);
-    }, 3 * 500 + 600));
+    revealTimers.current.push(setTimeout(() => setRevealState(null), 3 * 500 + 600));
   }
 
   useEffect(() => {
@@ -129,9 +132,15 @@ export default function ShabdalGame({ game, onArchive, archiveDate }) {
 
   useEffect(() => () => revealTimers.current.forEach(clearTimeout), []);
 
+  const shareText = status !== 'playing'
+    ? buildShabdalShareText({ gameNumber, dateStr, guesses, status })
+    : '';
+
   async function handleShare() {
-    const text = buildShabdalShareText({ gameNumber, dateStr, guesses, status });
-    await shareOrCopy(text, () => toast.success('Result copied to clipboard!'));
+    await shareOrCopy(shareText, () => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    });
   }
 
   function handleKey(key) {
@@ -195,22 +204,30 @@ export default function ShabdalGame({ game, onArchive, archiveDate }) {
           </div>
 
           {!isPlaying && !revealState && (
-            <div className="mt-4 flex flex-col items-center gap-3 w-full animate-in fade-in slide-in-from-bottom-2">
-              <button
-                onClick={() => setShowResultModal(true)}
-                className="w-full py-3 px-6 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold shadow-lg shadow-indigo-200 dark:shadow-none transition-all"
+            <div className="mt-4 w-full">
+              <ResultBanner
+                tier={shabdalTier(status === 'won', guesses.length)}
+                title={status === 'won' ? 'शाबाश!' : 'अगली बार!'}
+                details={status === 'won' ? `${guesses.length} / 6 में सही` : `शब्द था: ${formedTarget}`}
               >
-                Result Analysis
-              </button>
-              
-              <button
-                onClick={onArchive}
-                className="text-sm font-semibold text-gray-500 hover:text-indigo-600 transition-colors"
-              >
-                {archiveDate ? 'Back to Today' : 'Play Past Puzzles'}
-              </button>
+                {(!archiveDate || archiveDate === getTodayIST()) && (
+                  <button
+                    onClick={() => setShowShare(true)}
+                    className="w-full py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-xl transition-colors flex items-center justify-center gap-2 text-sm"
+                  >
+                    Share Result
+                  </button>
+                )}
+              </ResultBanner>
             </div>
           )}
+
+          <button
+            onClick={onArchive}
+            className="mt-2 px-4 py-2 text-xs font-bold rounded-xl bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-200 dark:border-indigo-700 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-100 dark:hover:bg-indigo-900/40 transition-colors flex items-center gap-2"
+          >
+            Archives &nbsp;📅
+          </button>
         </div>
       </div>
 
@@ -231,39 +248,20 @@ export default function ShabdalGame({ game, onArchive, archiveDate }) {
         </div>
       )}
 
-      {/* Result Modal */}
-      <Modal
-        open={showResultModal}
-        onClose={() => setShowResultModal(false)}
-        title={status === 'won' ? 'शाबाश!' : 'अगली बार!'}
-      >
-        <div className="text-center space-y-6">
-          <div className="text-5xl">{status === 'won' ? '🎉' : '😔'}</div>
-          
-          <div>
-            <p className="text-gray-600 dark:text-gray-400">
-              {status === 'won' ? 'आपने शब्द पहचान लिया!' : 'सही शब्द था:'}
-            </p>
-            <p className="text-3xl font-black mt-1" style={{ fontFamily: 'Noto Sans Devanagari, sans-serif' }}>
-              {formedTarget}
-            </p>
+      <Modal open={showShare} onClose={() => setShowShare(false)} title="Share Your Result">
+        <div className="space-y-4">
+          <div className="bg-gray-50 dark:bg-gray-700/50 rounded-xl p-4 font-mono text-xs whitespace-pre-wrap text-gray-700 dark:text-gray-300 leading-relaxed">
+            {shareText}
           </div>
-
           <button
             onClick={handleShare}
-            className="w-full py-4 bg-green-600 hover:bg-green-700 text-white rounded-2xl font-bold text-lg flex items-center justify-center gap-2 shadow-lg shadow-green-100 dark:shadow-none transition-all group"
+            className="w-full py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-xl transition-colors flex items-center justify-center gap-2"
           >
-            <span>SHARE RESULT</span>
-            <svg className="w-5 h-5 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
-            </svg>
+            {copied ? 'Copied!' : 'Share Result'}
           </button>
-
-          <p className="text-xs text-gray-400 dark:text-gray-500">
-            Shabdal #{gameNumber} • {guesses.length}/6
-          </p>
         </div>
       </Modal>
+
     </div>
   );
 }

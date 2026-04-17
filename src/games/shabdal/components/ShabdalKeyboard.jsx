@@ -2,9 +2,10 @@ import { HINDI_VOWELS, HINDI_CONSONANTS } from '../../../utils/hindiUtils.js';
 
 const KEYBOARD_ROWS = [
   HINDI_VOWELS,
-  HINDI_CONSONANTS.slice(0, 11),
-  HINDI_CONSONANTS.slice(11, 22),
-  ['ENTER', ...HINDI_CONSONANTS.slice(22), '⌫'],
+  HINDI_CONSONANTS.slice(0, 10),
+  HINDI_CONSONANTS.slice(10, 20),
+  HINDI_CONSONANTS.slice(20, 25),
+  ['ENTER', ...HINDI_CONSONANTS.slice(25), '⌫'],
 ];
 
 const KEY_COLORS = {

@@ -4,8 +4,8 @@ import { GAME_ID_WORD4 } from '../gamesMeta.js';
 import { getParStepsForDate } from '../games/chainword/data/dailyPairs.js';
 import { computeStreaks } from '../utils/storage.js';
 import {
-  chainwordHistTier, word4Tier, tilesTier, squaresTier,
-  TIER_CONFIG,
+  chainwordTier, word4Tier, tilesTier, squaresTier, shabdalTier,
+  TIER_CONFIG, TIER_GOLD, TIER_SILVER, TIER_BRONZE, TIER_UNSOLVED,
 } from '../utils/awards.js';
 
 function formatDate(dateStr) {
@@ -68,7 +68,7 @@ function HistoryTable({ history, isChainword, isWord4, isTiles, isSquares, isSha
 
                 {isChainword && (() => {
                   const parSteps = getParStepsForDate(h.dateStr, hardMode);
-                  const tier = chainwordHistTier(h.won, h.guesses, h.hintsUsed, parSteps);
+                  const tier = chainwordTier(h.won, h.guesses, h.hintsUsed, parSteps);
                   return (<>
                     <td className="text-center px-2 py-2 text-base">{TIER_CONFIG[tier].emoji}</td>
                     <td className="text-center px-2 py-2 text-gray-700 dark:text-gray-300">{h.guesses ?? '—'}</td>
@@ -109,6 +109,16 @@ function HistoryTable({ history, isChainword, isWord4, isTiles, isSquares, isSha
                   return (<>
                     <td className="text-center px-2 py-2 text-base">{TIER_CONFIG[tier].emoji}</td>
                     <td className="text-center px-2 py-2 text-gray-700 dark:text-gray-300">{hints}</td>
+                  </>);
+                })()}
+
+                {isShabdal && (() => {
+                  const tier = shabdalTier(h.won, h.guesses);
+                  return (<>
+                    <td className="text-center px-2 py-2 text-base">{TIER_CONFIG[tier].emoji}</td>
+                    <td className="text-center px-2 py-2 text-gray-700 dark:text-gray-300">
+                      {h.won ? h.guesses : '—'}
+                    </td>
                   </>);
                 })()}
               </tr>
@@ -291,7 +301,7 @@ export default function StatsModal({ open, onClose, stats, onReset, isWord4, isT
     const dist = { gold: 0, silver: 0, bronze: 0, unsolved: 0 };
     for (const h of (stats.history || [])) {
       const parSteps = getParStepsForDate(h.dateStr, hardMode);
-      const tier = chainwordHistTier(h.won, h.guesses, h.hintsUsed, parSteps);
+      const tier = chainwordTier(h.won, h.guesses, h.hintsUsed, parSteps);
       dist[tier] = (dist[tier] || 0) + 1;
     }
     return dist;
@@ -328,21 +338,21 @@ export default function StatsModal({ open, onClose, stats, onReset, isWord4, isT
     return dist;
   })();
 
-  const TIER_KEYS = ['gold', 'silver', 'bronze', 'unsolved'];
+  const TIER_KEYS = [TIER_GOLD, TIER_SILVER, TIER_BRONZE, TIER_UNSOLVED];
   const distKeys = isWord4 ? [1, 2, 3, 4, 5, 6] : isShabdal ? [1, 2, 3, 4, 5, 6] : TIER_KEYS;
   const distData = isWord4 ? wordleDistribution : isShabdal ? shabdalDistribution : distribution;
   const maxCount = (isChainword || isWord4 || isShabdal) ? Math.max(1, ...distKeys.map(k => distData[k] || 0)) : 1;
   const distBarColor = isWord4 || isShabdal
     ? k => k <= 4 ? 'bg-yellow-400' : k === 5 ? 'bg-slate-400' : 'bg-orange-400'
-    : k => ({ gold: 'bg-yellow-400', silver: 'bg-slate-400', bronze: 'bg-orange-400', unsolved: 'bg-red-400' }[k]);
+    : k => ({ [TIER_GOLD]: 'bg-yellow-400', [TIER_SILVER]: 'bg-slate-400', [TIER_BRONZE]: 'bg-orange-400', [TIER_UNSOLVED]: 'bg-red-400' }[k]);
   const labels = isWord4 || isShabdal ? {
     1: '1 Guess', 2: '2 Guesses', 3: '3 Guesses',
     4: '4 Guesses', 5: '5 Guesses', 6: '6 Guesses',
   } : {
-    gold: `${TIER_CONFIG.gold.emoji} Gold`,
-    silver: `${TIER_CONFIG.silver.emoji} Silver`,
-    bronze: `${TIER_CONFIG.bronze.emoji} Bronze`,
-    unsolved: `${TIER_CONFIG.unsolved.emoji} Unsolved`,
+    [TIER_GOLD]:     `${TIER_CONFIG[TIER_GOLD].emoji} ${TIER_GOLD.toUpperCase()}`,
+    [TIER_SILVER]:   `${TIER_CONFIG[TIER_SILVER].emoji} ${TIER_SILVER.toUpperCase()}`,
+    [TIER_BRONZE]:   `${TIER_CONFIG[TIER_BRONZE].emoji} ${TIER_BRONZE.toUpperCase()}`,
+    [TIER_UNSOLVED]: `${TIER_CONFIG[TIER_UNSOLVED].emoji} ${TIER_UNSOLVED.toUpperCase()}`,
   };
 
   return (

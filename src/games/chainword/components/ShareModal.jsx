@@ -24,21 +24,6 @@ export default function ShareModal({ open, onClose, gameData }) {
   return (
     <Modal open={open} onClose={onClose} title="Share Your Result">
       <div className="space-y-4">
-        {/* Result summary */}
-        <div className="text-center space-y-1">
-          <div className="text-3xl">{cfg.emoji}</div>
-          <p className="text-lg font-bold text-gray-900 dark:text-white">
-            {start.toUpperCase()} → {end.toUpperCase()}
-          </p>
-          <p className="text-sm text-gray-500 dark:text-gray-400">
-            {gaveUp
-              ? 'Gave up'
-              : `Solved in ${guesses} guess${guesses !== 1 ? 'es' : ''}`}
-            {!gaveUp && hintsUsed > 0 && ` • 💡 ${hintsUsed} hint${hintsUsed !== 1 ? 's' : ''}`}
-          </p>
-        </div>
-
-        {/* Preview of share text */}
         <div className="bg-gray-50 dark:bg-gray-700/50 rounded-xl p-4 font-mono text-xs whitespace-pre-wrap text-gray-700 dark:text-gray-300 leading-relaxed">
           {text}
         </div>

@@ -319,14 +319,6 @@ export default function SquaresGame({ game, onArchive, archiveDate }) {
 
               <Modal open={showShare} onClose={() => setShowShare(false)} title="Share Your Result">
                 <div className="space-y-4">
-                  <div className="text-center space-y-2">
-                    <div className="text-3xl">{cfg.emoji}</div>
-                    <p className="text-lg font-bold text-gray-900 dark:text-white">Squares #{gameNumber}</p>
-                    <p className="text-sm text-gray-500 dark:text-gray-400">
-                      {hintsUsed === 0 ? 'No hints used!' : `${hintsUsed} hint${hintsUsed !== 1 ? 's' : ''} used`}
-                    </p>
-                    <div className="flex justify-center pt-1"><ResultGrid /></div>
-                  </div>
                   <div className="bg-gray-50 dark:bg-gray-700/50 rounded-xl p-4 font-mono text-xs whitespace-pre-wrap text-gray-700 dark:text-gray-300 leading-relaxed">
                     {shareText}
                   </div>

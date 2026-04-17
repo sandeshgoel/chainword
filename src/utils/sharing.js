@@ -1,5 +1,6 @@
 import { formatDate } from './wordUtils.js';
-import { chainwordTier, squaresTier, TIER_CONFIG } from './awards.js';
+import { chainwordTier, squaresTier, tilesTier, word4Tier, shabdalTier,
+  TIER_CONFIG, TIER_GOLD, TIER_SILVER, TIER_BRONZE, TIER_UNSOLVED } from './awards.js';
 import { SLOT_MULTIPLIERS } from './awards.js';
 import { GAME_ID_CHAINWORD, GAME_ID_SQUARES, GAME_ID_WORD4, 
          GAME_ID_TILES, GAME_ID_SHABDAL,
@@ -34,9 +35,8 @@ export async function shareOrCopy(text, onCopied) {
 function shareHeader(gameId, gameNumber, dateStr, tier) {
   const gameCfg = GAMES_META_BY_ID[gameId];
   const gameName = gameId.toUpperCase();
-  const emoji = (gameId === GAME_ID_SHABDAL ? '🇮🇳' : gameCfg.emoji);
+  const emoji = gameCfg.emoji;
   const cfg = TIER_CONFIG[tier];
-  console.log(cfg.emoji, cfg.label);
   return `${emoji || ''} ${gameName} #${gameNumber} • ` +
          `${formatDate(dateStr)}\n\n`+
          `${cfg.emoji}  ${cfg.label}\n`;
@@ -88,17 +88,18 @@ export function buildSquaresShareText({ gameNumber, dateStr, hintedCorners, squa
   const ce = (h) => h ? '🟥' : '🟩';
   const hintsUsed = hintedCorners.filter(Boolean).length;
   const tier = squaresTier(hintsUsed);
-  const label = hintsUsed === 0 ? 'Perfect!' : hintsUsed === 1 ? 'Great!' : 'Completed';
+  const label = hintsUsed === 0 ? 'Perfect!' : hintsUsed === 1 ? 'Great!' : `Completed with ${hintsUsed} hints`;
 
   let grid;
   if (square) {
     const [top, left, right, bottom] = square;
-    const u = (s) => s.toUpperCase();
+    // Fullwidth letters (U+FF21+) are 2 visual columns wide, matching emoji width
+    const fw = (s) => String.fromCharCode(s.toUpperCase().charCodeAt(0) + 0xFEE0);
     grid =
-      `${ce(tl)} ${u(top[1])} ${u(top[2])} ${ce(tr)}\n` +
-      `${u(left[1])}` + "\u00A0".repeat(6) + `${u(right[1])}\n` +
-      `${u(left[2])}` + "\u00A0".repeat(6) + `${u(right[2])}\n` +
-      `${ce(bl)} ${u(bottom[1])} ${u(bottom[2])} ${ce(br)}`;
+      `${ce(tl)}${fw(top[1])}${fw(top[2])}${ce(tr)}\n` +
+      `${fw(left[1])}    ${fw(right[1])}\n` +
+      `${fw(left[2])}    ${fw(right[2])}\n` +
+      `${ce(bl)}${fw(bottom[1])}${fw(bottom[2])}${ce(br)}`;
   } else {
     grid = `${ce(tl)}${ce(tr)}\n${ce(bl)}${ce(br)}`;
   }
@@ -113,7 +114,7 @@ export function buildSquaresShareText({ gameNumber, dateStr, hintedCorners, squa
 
 export function buildTilesShareText({ gameNumber, dateStr, bestScore, optimalScore, bestWord }) {
   const isOptimal = bestScore >= optimalScore;
-  const tier = isOptimal ? 'gold' : (optimalScore > 0 && bestScore / optimalScore >= 0.75) ? 'silver' : 'bronze';
+  const tier = tilesTier(bestScore, optimalScore);
   const cfg = TIER_CONFIG[tier];
   const label = isOptimal ? 'Optimal!' : cfg.label;
 
@@ -130,7 +131,7 @@ export function buildTilesShareText({ gameNumber, dateStr, bestScore, optimalSco
 
 export function buildWord4ShareText({ gameNumber, dateStr, guesses, status }) {
   const result = status === 'won' ? guesses.length : 'X';
-  const tier = status === 'won' ? (result <= 4 ? 'gold' : result <= 5 ? 'silver' : 'bronze') : 'unsolved';
+  const tier = word4Tier(status === 'won', guesses.length);
   const cfg = TIER_CONFIG[tier];
   let text = shareHeader(GAME_ID_WORD4, gameNumber, dateStr, tier)+
     `${cfg.label}! Solved in ${result}/6 guesses\n\n`;
@@ -151,7 +152,7 @@ export function buildWord4ShareText({ gameNumber, dateStr, guesses, status }) {
 
 export function buildShabdalShareText({ gameNumber, dateStr, guesses, status }) {
   const result = status === 'won' ? guesses.length : 'X';
-  const tier = status === 'won' ? (result <= 4 ? 'gold' : result <= 5 ? 'silver' : 'bronze') : 'unsolved';
+  const tier = shabdalTier(status === 'won', guesses.length);
   const cfg = TIER_CONFIG[tier];
   let text = shareHeader(GAME_ID_SHABDAL, gameNumber, dateStr, tier) +
              `${result}/6\n\n`;

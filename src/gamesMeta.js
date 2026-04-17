@@ -9,7 +9,7 @@ export const GAME_ID_CRYPTIC        = 'cryptic';
 // Firestore key for chainword hard mode (not a standalone game, but referenced alongside game IDs)
 export const GAME_ID_CHAINWORD_HARD = 'chainword_hard';
 
-// Single source of truth for game identity: id, route, icon, default name,
+// Single source of truth for game identity: id, route, icon, 
 // and landing-page tile appearance.  Components that need only a subset
 // (e.g. the hamburger menu) can still import this and pick what they need.
 export const GAMES_META = [
@@ -53,7 +53,7 @@ export const GAMES_META = [
     id: GAME_ID_SHABDAL,
     route: '/' + GAME_ID_SHABDAL,
     // emoji is an image path — components should render <img> instead of a text emoji
-    emoji: '/shabdal-icon.png',
+    emoji: '🇮🇳',
     from: '#f97316',
     to: '#ea580c',
     shadow: '#9a3412',

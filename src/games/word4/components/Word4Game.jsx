@@ -316,15 +316,6 @@ export default function FourWordGame({ game, wordListReady, onArchive, archiveDa
             return (
               <Modal open={showShare} onClose={() => setShowShare(false)} title="Share Your Result">
                 <div className="space-y-4">
-                  <div className="text-center space-y-1">
-                    <div className="text-3xl">{cfg.emoji}</div>
-                    <p className="text-lg font-bold text-gray-900 dark:text-white">word4 #{gameNumber}</p>
-                    <p className="text-sm text-gray-500 dark:text-gray-400">
-                      {status === 'won'
-                        ? `Solved in ${guesses.length} / 6`
-                        : `The word was ${target.toUpperCase()}`}
-                    </p>
-                  </div>
                   <div className="bg-gray-50 dark:bg-gray-700/50 rounded-xl p-4 font-mono text-xs whitespace-pre-wrap text-gray-700 dark:text-gray-300 leading-relaxed">
                     {shareText}
                   </div>

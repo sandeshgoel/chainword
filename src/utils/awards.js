@@ -41,58 +41,61 @@ export function tilesPercentile(userScore, tiles) {
   return Math.round((scores.filter(s => s <= userScore).length / scores.length) * 100);
 }
 
+// --- Tier constants ---
+
+export const TIER_GOLD     = 'gold';
+export const TIER_SILVER   = 'silver';
+export const TIER_BRONZE   = 'bronze';
+export const TIER_UNSOLVED = 'unsolved';
+
 // --- Tier computations ---
 
-// 'gold' | 'silver' | 'bronze' | 'unsolved'
-
 export function chainwordTier(won, userSteps, hintsUsed, parSteps) {
-  if (!won) return 'unsolved';
-  if (!parSteps) return 'bronze';
+  if (!won) return TIER_UNSOLVED;
+  if (!parSteps) return TIER_BRONZE;
   const score = userSteps + 2 * hintsUsed;
-  if (score <= parSteps) return 'gold';
-  if (score === parSteps + 1) return 'silver';
-  return 'bronze';
-}
-
-// For history: use stored guesses (may differ from live userSteps by 1 in autoWin case)
-export function chainwordHistTier(won, guesses, hintsUsed, parSteps) {
-  if (!won) return 'unsolved';
-  if (!parSteps) return 'bronze';
-  const score = (guesses ?? 0) + 2 * (hintsUsed ?? 0);
-  if (score <= parSteps) return 'gold';
-  if (score === parSteps + 1) return 'silver';
-  return 'bronze';
+  if (score <= parSteps) return TIER_GOLD;
+  if (score === parSteps + 1) return TIER_SILVER;
+  return TIER_BRONZE;
 }
 
 export function word4Tier(won, guessCount) {
-  if (!won) return 'unsolved';
-  if (guessCount <= 4) return 'gold';
-  if (guessCount === 5) return 'silver';
-  return 'bronze';
+  if (!won) return TIER_UNSOLVED;
+  if (guessCount <= 4) return TIER_GOLD;
+  if (guessCount === 5) return TIER_SILVER;
+  return TIER_BRONZE;
+}
+
+export function shabdalTier(won, guessCount) {
+  if (!won) return TIER_UNSOLVED;
+  if (guessCount <= 4) return TIER_GOLD;
+  if (guessCount === 5) return TIER_SILVER;
+  return TIER_BRONZE;
 }
 
 export function tilesTier(userScore, optimalScore) {
-  if (userScore >= optimalScore) return 'gold';
-  if (optimalScore > 0 && userScore / optimalScore >= 0.5) return 'silver';
-  return 'bronze';
+  if (userScore >= optimalScore) return TIER_GOLD;
+  if (optimalScore > 0 && userScore / optimalScore >= 0.5) return TIER_SILVER;
+  return TIER_BRONZE;
 }
 
 export function squaresTier(hintsUsed) {
-  if (hintsUsed === 0) return 'gold';
-  if (hintsUsed === 1) return 'silver';
-  return 'bronze';
+  if (hintsUsed === 0) return TIER_GOLD;
+  if (hintsUsed === 1) return TIER_SILVER;
+  return TIER_BRONZE;
 }
 
 // --- Display config ---
 
-export const TIER_GOLD = 'gold';
-export const TIER_SILVER = 'silver';
-export const TIER_BRONZE = 'bronze';
-export const TIER_UNSOLVED = 'unsolved';
+
+const TIER_EMOJI_GOLD = '🥇';
+const TIER_EMOJI_SILVER = '🥈';
+const TIER_EMOJI_BRONZE = '🥉';
+const TIER_EMOJI_UNSOLVED = '😢';
 
 export const TIER_CONFIG = {
-  gold:     { emoji: '🥇', label: 'Gold',     bg: 'bg-yellow-50 dark:bg-yellow-900/20', border: 'border-yellow-200 dark:border-yellow-800', text: 'text-yellow-700 dark:text-yellow-300' },
-  silver:   { emoji: '🥈', label: 'Silver',   bg: 'bg-slate-100 dark:bg-slate-700/50',  border: 'border-slate-300 dark:border-slate-600',   text: 'text-slate-600 dark:text-slate-300'   },
-  bronze:   { emoji: '🥉', label: 'Bronze',   bg: 'bg-orange-50 dark:bg-orange-900/20', border: 'border-orange-200 dark:border-orange-800', text: 'text-orange-700 dark:text-orange-300' },
-  unsolved: { emoji: '😢', label: 'Unsolved', bg: 'bg-red-50 dark:bg-red-900/20',       border: 'border-red-200 dark:border-red-800',       text: 'text-red-600 dark:text-red-400'       },
+  [TIER_GOLD]:     { emoji: TIER_EMOJI_GOLD, label: 'Gold',     bg: 'bg-yellow-50 dark:bg-yellow-900/20', border: 'border-yellow-200 dark:border-yellow-800', text: 'text-yellow-700 dark:text-yellow-300' },
+  [TIER_SILVER]:   { emoji: TIER_EMOJI_SILVER, label: 'Silver',   bg: 'bg-slate-100 dark:bg-slate-700/50',  border: 'border-slate-300 dark:border-slate-600',   text: 'text-slate-600 dark:text-slate-300'   },
+  [TIER_BRONZE]:   { emoji: TIER_EMOJI_BRONZE, label: 'Bronze',   bg: 'bg-orange-50 dark:bg-orange-900/20', border: 'border-orange-200 dark:border-orange-800', text: 'text-orange-700 dark:text-orange-300' },
+  [TIER_UNSOLVED]: { emoji: TIER_EMOJI_UNSOLVED, label: 'Unsolved', bg: 'bg-red-50 dark:bg-red-900/20',       border: 'border-red-200 dark:border-red-800',       text: 'text-red-600 dark:text-red-40₀'       },
 };

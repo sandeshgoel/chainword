@@ -1,7 +1,8 @@
 import { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
-import { chainwordHistTier, word4Tier as fourWordTier, tilesTier, squaresTier, TIER_CONFIG } from '../utils/awards.js';
+import { chainwordTier, word4Tier, tilesTier, squaresTier, shabdalTier, 
+  TIER_CONFIG, TIER_GOLD, TIER_SILVER, TIER_BRONZE, TIER_UNSOLVED } from '../utils/awards.js';
 import { getParStepsForDate } from '../games/chainword/data/dailyPairs.js';
 import HamburgerMenu from '../components/HamburgerMenu.jsx';
 import { GAMES_META, GAME_ID_CHAINWORD, GAME_ID_WORD4, GAME_ID_TILES, GAME_ID_SQUARES, GAME_ID_SHABDAL } from '../gamesMeta.js';
@@ -23,10 +24,10 @@ function getGameStatus(gameId, dateStr) {
       // Check easy stats first, then hard
       const stats = JSON.parse(localStorage.getItem(CHAINWORD_STATS_KEY) || 'null');
       const entry = stats?.history?.find(h => h.dateStr === dateStr);
-      if (entry) return chainwordHistTier(entry.won, entry.guesses, entry.hintsUsed, getParStepsForDate(dateStr, false));
+      if (entry) return chainwordTier(entry.won, entry.guesses, entry.hintsUsed, getParStepsForDate(dateStr, false));
       const hardStats = JSON.parse(localStorage.getItem(CHAINWORD_HARD_STATS_KEY) || 'null');
       const hardEntry = hardStats?.history?.find(h => h.dateStr === dateStr);
-      if (hardEntry) return chainwordHistTier(hardEntry.won, hardEntry.guesses, hardEntry.hintsUsed, getParStepsForDate(dateStr, true));
+      if (hardEntry) return chainwordTier(hardEntry.won, hardEntry.guesses, hardEntry.hintsUsed, getParStepsForDate(dateStr, true));
       // Not finished — check if in progress
       const data = JSON.parse(localStorage.getItem(CHAINWORD_PROGRESS_PREFIX + dateStr) || 'null');
       const hardData = JSON.parse(localStorage.getItem(CHAINWORD_HARD_PROGRESS_PREFIX + dateStr) || 'null');
@@ -34,7 +35,7 @@ function getGameStatus(gameId, dateStr) {
     } else if (gameId === GAME_ID_WORD4) {
       const stats = JSON.parse(localStorage.getItem(WORD4_STATS_KEY) || 'null');
       const entry = stats?.history?.find(h => h.dateStr === dateStr);
-      if (entry) return fourWordTier(entry.won, entry.guesses);
+      if (entry) return word4Tier(entry.won, entry.guesses);
       const saved = JSON.parse(localStorage.getItem(WORD4_PROGRESS_PREFIX + dateStr) || 'null');
       if (saved?.guesses?.length > 0) return 'started';
     } else if (gameId === GAME_ID_TILES) {
@@ -52,7 +53,7 @@ function getGameStatus(gameId, dateStr) {
     } else if (gameId === GAME_ID_SHABDAL) {
       const stats = JSON.parse(localStorage.getItem(SHABDAL_STATS_KEY) || 'null');
       const entry = stats?.history?.find(h => h.dateStr === dateStr);
-      if (entry) return fourWordTier(entry.won, entry.guesses);
+      if (entry) return shabdalTier(entry.won, entry.guesses);
       const saved = JSON.parse(localStorage.getItem(SHABDAL_PROGRESS_PREFIX + dateStr) || 'null');
       if (saved?.guesses?.length > 0) return 'started';
     }
@@ -60,7 +61,7 @@ function getGameStatus(gameId, dateStr) {
   return 'new';
 }
 
-const TIER_KEYS = new Set(['gold', 'silver', 'bronze', 'unsolved']);
+const TIER_KEYS = new Set([TIER_GOLD, TIER_SILVER, TIER_BRONZE, TIER_UNSOLVED]);
 
 function BrainGraphic() {
   return (

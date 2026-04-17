@@ -14,6 +14,8 @@ export default function Header({
   onAuth,
   onFriends,
   user,
+  userProfile,
+  signingIn,
   isAdmin,
 }) {
   return (
@@ -86,11 +88,16 @@ export default function Header({
           className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-600 dark:text-gray-300 transition-colors"
           aria-label={user ? 'Account' : 'Sign in'}
         >
-          {user?.photoURL ? (
+          {signingIn ? (
+            <svg className="w-5 h-5 animate-spin text-indigo-500" fill="none" viewBox="0 0 24 24">
+              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
+            </svg>
+          ) : user?.photoURL ? (
             <img
               src={user.photoURL}
               alt={user.displayName}
-              className="w-6 h-6 rounded-full"
+              className={`w-6 h-6 rounded-full ${userProfile?.paid ? 'ring-2 ring-yellow-400 ring-offset-1 ring-offset-white dark:ring-offset-gray-900' : ''}`}
               referrerPolicy="no-referrer"
             />
           ) : (

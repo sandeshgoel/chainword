@@ -14,6 +14,7 @@ import HowToPlay from './games/chainword/components/HowToPlay.jsx';
 import StatsModal from './components/StatsModal.jsx';
 import AuthModal from './components/AuthModal.jsx';
 import StatsConflictModal from './components/StatsConflictModal.jsx';
+import SessionConflictModal from './components/SessionConflictModal.jsx';
 import FriendsModal from './components/FriendsModal.jsx';
 import ArchiveModal from './components/ArchiveModal.jsx';
 import LandingPage from './pages/LandingPage.jsx';
@@ -75,9 +76,12 @@ export default function App() {
   const [showFriends, setShowFriends] = useState(false);
   const [showArchive, setShowArchive] = useState(false);
 
-  const { user, userProfile, signInWithGoogle, signOut, pendingSync, acceptSync, declineSync } = useAuth(
-    () => setStatsVersion(v => v + 1)
-  );
+  const {
+    user, userProfile, signingIn,
+    signInWithGoogle, signOut,
+    pendingSync, acceptSync, declineSync,
+    sessionConflict, resolveSession,
+  } = useAuth(() => setStatsVersion(v => v + 1));
   const game = useGame(user, wordListReady, hardMode, archiveDates.chainword, statsVersion);
   const fourWord = use4Word(wordListReady, archiveDates['4word'], user, statsVersion);
   const tiles = useTiles(archiveDates.tiles, user, statsVersion);
@@ -222,14 +226,22 @@ export default function App() {
           onAuth={() => setShowAuth(true)}
           user={user}
           userProfile={userProfile}
+          signingIn={signingIn}
           gamesConfig={gamesConfig}
         />
         <AuthModal
           open={showAuth}
           onClose={() => setShowAuth(false)}
           user={user}
+          userProfile={userProfile}
           onSignIn={signInWithGoogle}
           onSignOut={signOut}
+        />
+        <SessionConflictModal
+          open={!!sessionConflict}
+          sessionConflict={sessionConflict}
+          onSignInHere={() => resolveSession(true)}
+          onCancel={() => resolveSession(false)}
         />
         <StatsConflictModal
           open={!!pendingSync}
@@ -260,6 +272,8 @@ export default function App() {
         onAuth={() => setShowAuth(true)}
         onFriends={() => setShowFriends(true)}
         user={user}
+        userProfile={userProfile}
+        signingIn={signingIn}
         isAdmin={userProfile?.admin ?? false}
       />
 
@@ -345,8 +359,16 @@ export default function App() {
         open={showAuth}
         onClose={() => setShowAuth(false)}
         user={user}
+        userProfile={userProfile}
         onSignIn={signInWithGoogle}
         onSignOut={signOut}
+      />
+
+      <SessionConflictModal
+        open={!!sessionConflict}
+        sessionConflict={sessionConflict}
+        onSignInHere={() => resolveSession(true)}
+        onCancel={() => resolveSession(false)}
       />
 
       <StatsConflictModal

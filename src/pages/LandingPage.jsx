@@ -257,7 +257,7 @@ function GameTile({ game, status, onClick, isLocked, displayTitle, displayDesc }
   );
 }
 
-export default function LandingPage({ darkMode, onToggleDark, onAuth, user, userProfile, gamesConfig = {} }) {
+export default function LandingPage({ darkMode, onToggleDark, onAuth, user, userProfile, signingIn, gamesConfig = {} }) {
   const navigate = useNavigate();
   const todayIST = useMemo(() => getTodayIST(), []);
   const statuses = useMemo(
@@ -284,8 +284,18 @@ export default function LandingPage({ darkMode, onToggleDark, onAuth, user, user
           className="p-2 rounded-full hover:bg-white/60 dark:hover:bg-gray-700 text-gray-500 dark:text-gray-400 transition-colors"
           aria-label={user ? 'Account' : 'Sign in'}
         >
-          {user?.photoURL ? (
-            <img src={user.photoURL} alt={user.displayName} className="w-6 h-6 rounded-full" referrerPolicy="no-referrer" />
+          {signingIn ? (
+            <svg className="w-5 h-5 animate-spin text-indigo-500" fill="none" viewBox="0 0 24 24">
+              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
+            </svg>
+          ) : user?.photoURL ? (
+            <img
+              src={user.photoURL}
+              alt={user.displayName}
+              className={`w-6 h-6 rounded-full ${userProfile?.paid ? 'ring-2 ring-yellow-400 ring-offset-1 ring-offset-white dark:ring-offset-gray-900' : ''}`}
+              referrerPolicy="no-referrer"
+            />
           ) : (
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />

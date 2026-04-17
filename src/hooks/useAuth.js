@@ -7,40 +7,130 @@ import {
   getRedirectResult,
   signOut as firebaseSignOut,
 } from 'firebase/auth';
-import { doc, setDoc, getDoc, serverTimestamp } from 'firebase/firestore';
+import { doc, setDoc, getDoc, serverTimestamp, onSnapshot } from 'firebase/firestore';
 import { auth, db, googleProvider, firebaseConfigured } from '../firebase.js';
 import { computeMerge, applyMerge } from '../utils/cloudStats.js';
+
+// localStorage-based session ID — stable per browser, shared across all tabs.
+// Using localStorage (not sessionStorage) prevents false conflicts between tabs
+// and ensures the same browser always presents the same session identity.
+function getSessionId() {
+  const key = 'braingym_session_id';
+  let id = localStorage.getItem(key);
+  if (!id) {
+    id = crypto.randomUUID();
+    localStorage.setItem(key, id);
+  }
+  return id;
+}
+
+function resetSessionId() {
+  const id = crypto.randomUUID();
+  localStorage.setItem('braingym_session_id', id);
+  return id;
+}
 
 
 export function useAuth(onSyncComplete) {
   const [user, setUser] = useState(null);
   const [userProfile, setUserProfile] = useState(null); // { admin, paid, beta }
   const [authLoading, setAuthLoading] = useState(firebaseConfigured);
+  // signingIn: true while Google auth flow is in progress
+  const [signingIn, setSigningIn] = useState(
+    () => sessionStorage.getItem('braingym_signing_in') === 'true'
+  );
   // pendingSync: null | { conflictsByGame, mergeResult, uid }
   const [pendingSync, setPendingSync] = useState(null);
+  // sessionConflict: null | { userAgent } — another active session detected
+  const [sessionConflict, setSessionConflict] = useState(null);
+
+  const sessionId = useRef(getSessionId());
+  const isNewSignIn = useRef(false);
+  const unsubSessionRef = useRef(null);
 
   // Keep a stable ref to the callback so the effect doesn't re-run when it changes.
   const onSyncCompleteRef = useRef(onSyncComplete);
   useEffect(() => { onSyncCompleteRef.current = onSyncComplete; });
 
+  // Run stats sync for a uid
+  async function runSync(uid) {
+    const syncedUid = sessionStorage.getItem('braingym_synced');
+    if (syncedUid === uid) {
+      onSyncCompleteRef.current?.();
+      return;
+    }
+    try {
+      const { mergeResult, conflictsByGame, cloudAddedCount } = await computeMerge(uid);
+      if (Object.keys(conflictsByGame).length > 0) {
+        setPendingSync({ conflictsByGame, mergeResult, uid, cloudAddedCount });
+      } else {
+        await applyMerge(uid, mergeResult);
+        sessionStorage.setItem('braingym_synced', uid);
+        onSyncCompleteRef.current?.();
+        if (cloudAddedCount > 0) {
+          toast.success(
+            `${cloudAddedCount} result${cloudAddedCount !== 1 ? 's' : ''} loaded from cloud`
+          );
+        }
+      }
+    } catch (err) {
+      console.error('Stats sync error (check Firestore rules for users/{uid}/stats/*):', err);
+      onSyncCompleteRef.current?.();
+    }
+  }
+
+  // Set up a real-time listener that detects when another device claims the session.
+  function setupSessionListener(uid) {
+    if (unsubSessionRef.current) {
+      unsubSessionRef.current();
+      unsubSessionRef.current = null;
+    }
+    const ref = doc(db, 'users', uid);
+    unsubSessionRef.current = onSnapshot(ref, (docSnap) => {
+      if (docSnap.exists()) {
+        const data = docSnap.data();
+        if (data.currentSessionId && data.currentSessionId !== sessionId.current) {
+          // Another device claimed the session while we were active — sign out here.
+          // Reset local session ID so a future sign-in on this browser starts fresh.
+          sessionId.current = resetSessionId();
+          firebaseSignOut(auth);
+          sessionStorage.removeItem('braingym_synced');
+          toast.error('Signed out — you signed in from another device.');
+        }
+      }
+    });
+  }
+
   useEffect(() => {
     if (!firebaseConfigured) return;
+
     // Handle result from signInWithRedirect (mobile flow)
     getRedirectResult(auth).then(result => {
-      if (result) console.log('Redirect sign-in succeeded:', result.user?.email);
+      sessionStorage.removeItem('braingym_signing_in');
+      if (result) {
+        console.log('Redirect sign-in succeeded:', result.user?.email);
+        isNewSignIn.current = true;
+      } else {
+        // No redirect result — clear spinner if it was lingering
+        setSigningIn(false);
+      }
     }).catch(err => {
+      sessionStorage.removeItem('braingym_signing_in');
+      setSigningIn(false);
       console.error('Redirect sign-in error:', err);
       toast.error(`Sign-in failed: ${err.code || err.message}`);
     });
+
     const unsub = onAuthStateChanged(auth, async (u) => {
       setUser(u);
       setAuthLoading(false);
 
       if (u) {
-        // Upsert user profile on first sign-in
         const ref = doc(db, 'users', u.uid);
         const snap = await getDoc(ref);
+
         if (!snap.exists()) {
+          // Brand-new user — create profile and immediately claim the session.
           await setDoc(ref, {
             displayName: u.displayName,
             email: u.email,
@@ -49,6 +139,9 @@ export function useAuth(onSyncComplete) {
             admin: false,
             paid: false,
             beta: false,
+            currentSessionId: sessionId.current,
+            currentSessionLastSeen: serverTimestamp(),
+            currentSessionUserAgent: navigator.userAgent,
           });
           setUserProfile({ admin: false, paid: false, beta: false });
         } else {
@@ -58,43 +151,48 @@ export function useAuth(onSyncComplete) {
             paid: data.paid ?? false,
             beta: data.beta ?? false,
           });
+
+          // Detect an active session on a different browser/device.
+          // This fires on both explicit sign-in clicks AND Firebase's auto-restore
+          // on page load — both cases should show the modal.
+          if (data.currentSessionId && data.currentSessionId !== sessionId.current) {
+            isNewSignIn.current = false;
+            setSigningIn(false);
+            setSessionConflict({ userAgent: data.currentSessionUserAgent });
+            return; // Wait for user to resolve before continuing
+          }
+
+          // No conflict — claim (or refresh) the session slot.
+          await setDoc(ref, {
+            currentSessionId: sessionId.current,
+            currentSessionLastSeen: serverTimestamp(),
+            currentSessionUserAgent: navigator.userAgent,
+          }, { merge: true });
         }
 
-        // Session guard: only sync once per browser session to avoid re-syncing on every page load
-        const syncedUid = sessionStorage.getItem('braingym_synced');
-        if (syncedUid === u.uid) {
-          // Already synced this session — just notify hooks to reload from localStorage
-          onSyncCompleteRef.current?.();
-        } else {
-          // Merge cloud stats into local
-          try {
-            const { mergeResult, conflictsByGame, cloudAddedCount } = await computeMerge(u.uid);
-            if (Object.keys(conflictsByGame).length > 0) {
-              // Conflicts found — surface them; wait for user decision
-              setPendingSync({ conflictsByGame, mergeResult, uid: u.uid, cloudAddedCount });
-            } else {
-              // No conflicts — apply silently
-              await applyMerge(u.uid, mergeResult);
-              sessionStorage.setItem('braingym_synced', u.uid);
-              onSyncCompleteRef.current?.();
-              if (cloudAddedCount > 0) {
-                toast.success(
-                  `${cloudAddedCount} result${cloudAddedCount !== 1 ? 's' : ''} loaded from cloud`
-                );
-              }
-            }
-          } catch (err) {
-            console.error('Stats sync error (check Firestore rules for users/{uid}/stats/*):', err);
-            // Still notify so hooks reload from local storage
-            onSyncCompleteRef.current?.();
-          }
-        }
+        isNewSignIn.current = false;
+        setSigningIn(false);
+
+        // Watch for forced sign-outs while this tab is active.
+        setupSessionListener(u.uid);
+
+        await runSync(u.uid);
       } else {
         setUserProfile(null);
         setPendingSync(null);
+        setSessionConflict(null);
+        setSigningIn(false);
+        if (unsubSessionRef.current) {
+          unsubSessionRef.current();
+          unsubSessionRef.current = null;
+        }
       }
     });
-    return unsub;
+
+    return () => {
+      unsub();
+      unsubSessionRef.current?.();
+    };
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   async function signInWithGoogle() {
@@ -102,14 +200,19 @@ export function useAuth(onSyncComplete) {
       toast.error('Firebase not configured');
       return;
     }
+    isNewSignIn.current = true;
+    setSigningIn(true);
     try {
       if (/Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) {
-        // Mobile: use redirect — same-origin (chainword.in) so getRedirectResult works correctly
+        // Mobile: redirect flow — set flag so spinner shows on return
+        sessionStorage.setItem('braingym_signing_in', 'true');
         await signInWithRedirect(auth, googleProvider);
       } else {
         await signInWithPopup(auth, googleProvider);
       }
     } catch (err) {
+      isNewSignIn.current = false;
+      setSigningIn(false);
       if (err.code !== 'auth/popup-closed-by-user') {
         console.error('Sign-in error:', err);
         toast.error(`Sign-in failed: ${err.code || err.message}`);
@@ -119,11 +222,38 @@ export function useAuth(onSyncComplete) {
 
   async function signOut() {
     if (!firebaseConfigured) return;
+    // Clear our session slot so no ghost session lingers for other devices.
+    if (user) {
+      try {
+        await setDoc(doc(db, 'users', user.uid), { currentSessionId: null }, { merge: true });
+      } catch { /* best effort */ }
+    }
     sessionStorage.removeItem('braingym_synced');
     await firebaseSignOut(auth);
   }
 
-  // User accepts the conflict resolution: local wins, merge applied, sync continues.
+  // Resolve a concurrent session conflict:
+  //   signInHere=true  → claim session here, kicking the other device
+  //   signInHere=false → stay on the other device; sign out from here
+  async function resolveSession(signInHere) {
+    setSessionConflict(null);
+    if (!user) return;
+
+    if (signInHere) {
+      const ref = doc(db, 'users', user.uid);
+      await setDoc(ref, {
+        currentSessionId: sessionId.current,
+        currentSessionLastSeen: serverTimestamp(),
+        currentSessionUserAgent: navigator.userAgent,
+      }, { merge: true });
+      setupSessionListener(user.uid);
+      await runSync(user.uid);
+    } else {
+      await signOut();
+    }
+  }
+
+  // User accepts the stats conflict resolution: local wins, merge applied.
   async function acceptSync() {
     if (!pendingSync) return;
     const { mergeResult, uid, cloudAddedCount } = pendingSync;
@@ -143,11 +273,16 @@ export function useAuth(onSyncComplete) {
     }
   }
 
-  // User declines: sign out, discard pending merge.
+  // User declines the stats merge: sign out and discard.
   async function declineSync() {
     setPendingSync(null);
     await signOut();
   }
 
-  return { user, userProfile, authLoading, signInWithGoogle, signOut, pendingSync, acceptSync, declineSync };
+  return {
+    user, userProfile, authLoading, signingIn,
+    signInWithGoogle, signOut,
+    pendingSync, acceptSync, declineSync,
+    sessionConflict, resolveSession,
+  };
 }

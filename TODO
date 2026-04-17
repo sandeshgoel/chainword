@@ -1,31 +1,15 @@
-- Have a common result banner for all games
-- Remove stars from the result
-- Introduce a three tier award system
-- If the game has best possible outcome, show a golden badge
-- If medium outcome, show silver badge
-- If poor outcome, show bronze badge
-- if unsolved, show sad face
+1. in the google sign in process, show a spinner until the login is complete and the profile pic is updated
+2. if the user is paid user, then show a golden halo around the profile
+3. if the user is already signed in somewhere else, show a modal allowing user to choose whether to terminate other session(s) or stay logged in there
 
-for chainword
-- compute score as #guesses + 2 * #hints
-- score <= par, means gold
-- score = par+1, means silver
-- otherwise bronze
 
-for 4word
-- guesses <=4, means gold
-- guesses = 5, means silver
-- otherwise bronze
+- on desktop browser, limit the max width of the app to something similar to mobile view
+- disable screen rotation on mobile, app should always render in portrait mode
+- have an icon on the profile to denote admin user
 
-for Tiles
-- list all possible words and their scores
-- compute percentile for each score
-- convert user score to percentile
-- if percentile = 100, means gold
-- if percentile between 50 and 90, means silver
-- otherwise bronze
 
-for Squares
-- if no hint taken, means gold
-- if 1 hint taken, means silver
-- otherwise bronze
+- save the user email and photo_url in the local storage
+- when not signed in, show the user from local storage, with an icon to denote not signed in
+
+
+

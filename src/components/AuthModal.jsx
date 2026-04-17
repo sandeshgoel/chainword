@@ -1,7 +1,7 @@
 import Modal from './Modal.jsx';
 import { firebaseConfigured } from '../firebase.js';
 
-export default function AuthModal({ open, onClose, user, onSignIn, onSignOut }) {
+export default function AuthModal({ open, onClose, user, userProfile, onSignIn, onSignOut }) {
   return (
     <Modal open={open} onClose={onClose} title={user ? 'Account' : 'Sign In'}>
       {!firebaseConfigured ? (
@@ -21,7 +21,7 @@ export default function AuthModal({ open, onClose, user, onSignIn, onSignOut }) 
               <img
                 src={user.photoURL}
                 alt={user.displayName}
-                className="w-12 h-12 rounded-full"
+                className={`w-12 h-12 rounded-full ${userProfile?.paid ? 'ring-4 ring-yellow-400 ring-offset-2 ring-offset-white dark:ring-offset-gray-800' : ''}`}
                 referrerPolicy="no-referrer"
               />
             )}

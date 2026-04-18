@@ -3,6 +3,11 @@ import json
 import re
 from collections import Counter
 
+LETTER_VALUES = {
+  'A':1, 'B':3, 'C':3, 'D':2, 'E':1, 'F':4, 'G':2, 'H':4, 'I':1, 'J':8, 'K':5, 'L':1, 'M':3,
+  'N':1, 'O':1, 'P':3, 'Q':10, 'R':1, 'S':1, 'T':1, 'U':1, 'V':4, 'W':4, 'X':8, 'Y':4, 'Z':10,
+}
+
 def extract_js_variable(filepath, variable_name):
     """
     Extracts the value of a given variable from a given javascript file.
@@ -65,6 +70,19 @@ def extract_js_variable(filepath, variable_name):
         raise ValueError(f"Could not parse extracted value as JSON: {e}\nValue parsed:\n{val_str[:100]}...")
 
 
+def count_points(word):
+    if len(word) != 4:
+        raise ValueError(f"Word must be 4 letters long: {word}")
+
+    position_mult = [1,2,1,3]
+    points = 0
+    for i, char in enumerate(word):
+        points += LETTER_VALUES[char] * position_mult[i]
+    return points
+
+MIN_WORDS = 10
+MIN_MAX_SCORE = 14
+
 def check_words(tiles):
     valid_words_path = os.path.join(os.path.dirname(__file__), '../src/validWords.js')
     valid_words = extract_js_variable(valid_words_path, 'VALID_WORDS')
@@ -79,8 +97,9 @@ def check_words(tiles):
     for tile in tiles:
         t_counts = Counter(tile)
         formed_count = 0
-        
-        for _, w_counts in word_counts:
+        max_points = 0
+
+        for word, w_counts in word_counts:
             # Check if all characters in the word are available in the tile in sufficient quantity
             can_form = True
             for char, count in w_counts.items():
@@ -90,13 +109,14 @@ def check_words(tiles):
             
             if can_form:
                 formed_count += 1
-                if formed_count >= 5:
-                    break
+                points = count_points(word)
+                if points > max_points:
+                    max_points = points
                     
-        if formed_count >= 5:
+        if formed_count >= MIN_WORDS and max_points >= MIN_MAX_SCORE:
             valid_tiles.append(tile)
 
-    print(f"Found {len(valid_tiles)} tiles out of {len(tiles)} that can form at least 5 words.")
+    print(f"Found {len(valid_tiles)} tiles out of {len(tiles)} that can form at least {MIN_WORDS} words and max score at least {MIN_MAX_SCORE} points.")
     return valid_tiles
 
 

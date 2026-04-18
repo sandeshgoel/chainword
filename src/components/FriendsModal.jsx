@@ -1,14 +1,9 @@
 import { useState, useEffect } from 'react';
 import Modal from './Modal.jsx';
 import { firebaseConfigured } from '../firebase.js';
-import { db } from '../firebase.js';
-import {
-  collection, doc, getDoc, getDocs, query, where,
-  setDoc, deleteDoc, serverTimestamp,
-} from 'firebase/firestore';
+import { dbGet, dbGetAll, dbGetWhere, dbSet, dbDelete, dbTimestamp } from '../utils/db.js';
 
 export default function FriendsModal({ open, onClose, user, dateStr }) {
-  const [friends, setFriends] = useState([]);
   const [friendScores, setFriendScores] = useState([]);
   const [emailInput, setEmailInput] = useState('');
   const [addStatus, setAddStatus] = useState('');
@@ -22,20 +17,15 @@ export default function FriendsModal({ open, onClose, user, dateStr }) {
   async function loadFriendsAndScores() {
     setLoading(true);
     try {
-      const friendsSnap = await getDocs(
-        collection(db, 'users', user.uid, 'friends')
-      );
-      const friendUids = friendsSnap.docs.map(d => d.id);
-      setFriends(friendUids);
+      const friendDocs = await dbGetAll(['users', user.uid, 'friends']);
+      const friendUids = friendDocs.map(d => d.id);
 
       // Fetch today's game for each friend
       const scores = [];
       for (const uid of friendUids) {
-        const profileSnap = await getDoc(doc(db, 'users', uid));
-        const gameSnap = await getDoc(doc(db, 'users', uid, 'games', dateStr));
-        if (profileSnap.exists()) {
-          const profile = profileSnap.data();
-          const game = gameSnap.exists() ? gameSnap.data() : null;
+        const profile = await dbGet(['users', uid]);
+        const game = await dbGet(['users', uid, 'games', dateStr]);
+        if (profile) {
           scores.push({ uid, profile, game });
         }
       }
@@ -52,21 +42,17 @@ export default function FriendsModal({ open, onClose, user, dateStr }) {
     if (!email) return;
     setAddStatus('Searching…');
     try {
-      const q = query(collection(db, 'users'), where('email', '==', email));
-      const snap = await getDocs(q);
-      if (snap.empty) {
+      const results = await dbGetWhere(['users'], 'email', email);
+      if (results.length === 0) {
         setAddStatus('No user found with that email.');
         return;
       }
-      const friendDoc = snap.docs[0];
+      const friendDoc = results[0];
       if (friendDoc.id === user.uid) {
         setAddStatus("That's you!");
         return;
       }
-      await setDoc(
-        doc(db, 'users', user.uid, 'friends', friendDoc.id),
-        { addedAt: serverTimestamp() }
-      );
+      await dbSet(['users', user.uid, 'friends', friendDoc.id], { addedAt: dbTimestamp() });
       setAddStatus('Friend added!');
       setEmailInput('');
       loadFriendsAndScores();
@@ -77,7 +63,7 @@ export default function FriendsModal({ open, onClose, user, dateStr }) {
   }
 
   async function removeFriend(uid) {
-    await deleteDoc(doc(db, 'users', user.uid, 'friends', uid));
+    await dbDelete(['users', user.uid, 'friends', uid]);
     setFriendScores(prev => prev.filter(f => f.uid !== uid));
   }
 

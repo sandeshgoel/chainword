@@ -1,8 +1,6 @@
 import { useEffect, useState } from 'react';
-import {
-  collection, doc, onSnapshot, updateDoc, setDoc, deleteField,
-} from 'firebase/firestore';
-import { db, firebaseConfigured } from '../firebase.js';
+import { firebaseConfigured } from '../firebase.js';
+import { dbSet, dbUpdate, dbSubscribeDoc, dbSubscribeCollection, DB_FIELD_DELETE } from '../utils/db.js';
 import {
   GAME_ID_CHAINWORD, GAME_ID_WORD4, GAME_ID_TILES,
   GAME_ID_SQUARES, GAME_ID_SHABDAL, GAME_ID_CRYPTIC,
@@ -39,27 +37,25 @@ export function useAdmin() {
     }
 
     // Real-time listener for all users
-    const usersUnsub = onSnapshot(
-      collection(db, 'users'),
-      snap => { setUsersError(null); setUsers(snap.docs.map(d => ({ uid: d.id, ...d.data() }))); },
+    const usersUnsub = dbSubscribeCollection(
+      ['users'],
+      docs => { setUsersError(null); setUsers(docs.map(({ id, ...rest }) => ({ uid: id, ...rest }))); },
       err => { console.error('useAdmin users snapshot error:', err); setUsersError(err.code || err.message); },
     );
 
     // Real-time listener for /admin/games
-    const gamesRef = doc(db, 'admin', 'games');
-    const gamesUnsub = onSnapshot(gamesRef, async snap => {
-      if (!snap.exists()) {
-        await setDoc(gamesRef, DEFAULT_GAMES_CONFIG);
+    const gamesUnsub = dbSubscribeDoc(['admin', 'games'], async data => {
+      if (!data) {
+        await dbSet(['admin', 'games'], DEFAULT_GAMES_CONFIG);
       } else {
-        const data = snap.data();
         // One-time migration: rename '4word' key → 'word4'
         if (data['4word'] && !data[GAME_ID_WORD4]) {
-          await updateDoc(gamesRef, { [GAME_ID_WORD4]: data['4word'], '4word': deleteField() });
+          await dbUpdate(['admin', 'games'], { [GAME_ID_WORD4]: data['4word'], '4word': DB_FIELD_DELETE });
         } else if (!data[GAME_ID_WORD4]) {
           // 'word4' entry missing (e.g. was deleted) — seed it with the default
-          await updateDoc(gamesRef, { [GAME_ID_WORD4]: DEFAULT_GAMES_CONFIG[GAME_ID_WORD4] });
+          await dbUpdate(['admin', 'games'], { [GAME_ID_WORD4]: DEFAULT_GAMES_CONFIG[GAME_ID_WORD4] });
         }
-        setGamesConfig({ ...DEFAULT_GAMES_CONFIG, ...snap.data() });
+        setGamesConfig({ ...DEFAULT_GAMES_CONFIG, ...data });
       }
       setGamesLoaded(true);
     }, err => {
@@ -68,12 +64,11 @@ export function useAdmin() {
     });
 
     // Real-time listener for /admin/config
-    const configRef = doc(db, 'admin', 'config');
-    const configUnsub = onSnapshot(configRef, async snap => {
-      if (!snap.exists()) {
-        await setDoc(configRef, DEFAULT_GLOBAL_CONFIG);
+    const configUnsub = dbSubscribeDoc(['admin', 'config'], async data => {
+      if (!data) {
+        await dbSet(['admin', 'config'], DEFAULT_GLOBAL_CONFIG);
       } else {
-        setGlobalConfig({ ...DEFAULT_GLOBAL_CONFIG, ...snap.data() });
+        setGlobalConfig({ ...DEFAULT_GLOBAL_CONFIG, ...data });
       }
       setConfigLoaded(true);
     }, err => {
@@ -89,7 +84,7 @@ export function useAdmin() {
   }, []);
 
   async function updateUser(uid, fields) {
-    await updateDoc(doc(db, 'users', uid), fields);
+    await dbUpdate(['users', uid], fields);
   }
 
   // Updates a single game's fields using dot-notation to avoid overwriting sibling games
@@ -98,11 +93,11 @@ export function useAdmin() {
     for (const [k, v] of Object.entries(fields)) {
       update[`${gameId}.${k}`] = v;
     }
-    await updateDoc(doc(db, 'admin', 'games'), update);
+    await dbUpdate(['admin', 'games'], update);
   }
 
   async function updateGlobalConfig(fields) {
-    await updateDoc(doc(db, 'admin', 'config'), fields);
+    await dbUpdate(['admin', 'config'], fields);
   }
 
   return { users, usersError, gamesConfig, globalConfig, updateUser, updateGame, updateGlobalConfig, loading };

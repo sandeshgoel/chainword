@@ -8,8 +8,8 @@ import {
   getRedirectResult,
   signOut as firebaseSignOut,
 } from 'firebase/auth';
-import { doc, setDoc, getDoc, serverTimestamp, onSnapshot } from 'firebase/firestore';
-import { auth, db, firebaseConfigured } from '../firebase.js';
+import { auth, firebaseConfigured } from '../firebase.js';
+import { dbGet, dbSet, dbMerge, dbSubscribeDoc, dbTimestamp } from '../utils/db.js';
 import { computeMerge, applyMerge } from '../utils/cloudStats.js';
 import { SESSION_ID_KEY, LAST_USER_KEY, ALL_STAT_KEYS, ALL_PROGRESS_PREFIXES } from '../utils/storage.js';
 
@@ -99,18 +99,14 @@ export function useAuth(onSyncComplete) {
       unsubSessionRef.current();
       unsubSessionRef.current = null;
     }
-    const ref = doc(db, 'users', uid);
-    unsubSessionRef.current = onSnapshot(ref, (docSnap) => {
-      if (docSnap.exists()) {
-        const data = docSnap.data();
-        if (data.currentSessionId && data.currentSessionId !== sessionId.current) {
-          // Another device claimed the session while we were active — sign out here.
-          // Reset local session ID so a future sign-in on this browser starts fresh.
-          sessionId.current = resetSessionId();
-          firebaseSignOut(auth);
-          sessionStorage.removeItem('braingym_synced');
-          toast.error('Signed out — you signed in from another device.');
-        }
+    unsubSessionRef.current = dbSubscribeDoc(['users', uid], (data) => {
+      if (data && data.currentSessionId && data.currentSessionId !== sessionId.current) {
+        // Another device claimed the session while we were active — sign out here.
+        // Reset local session ID so a future sign-in on this browser starts fresh.
+        sessionId.current = resetSessionId();
+        firebaseSignOut(auth);
+        sessionStorage.removeItem('braingym_synced');
+        toast.error('Signed out — you signed in from another device.');
       }
     });
   }
@@ -154,26 +150,24 @@ export function useAuth(onSyncComplete) {
         localStorage.setItem(LAST_USER_KEY, JSON.stringify(cached));
         setLastUser(cached);
 
-        const ref = doc(db, 'users', u.uid);
-        const snap = await getDoc(ref);
+        const data = await dbGet(['users', u.uid]);
 
-        if (!snap.exists()) {
+        if (!data) {
           // Brand-new user — create profile and immediately claim the session.
-          await setDoc(ref, {
+          await dbSet(['users', u.uid], {
             displayName: u.displayName,
             email: u.email,
             photoURL: u.photoURL,
-            createdAt: serverTimestamp(),
+            createdAt: dbTimestamp(),
             admin: false,
             paid: false,
             beta: false,
             currentSessionId: sessionId.current,
-            currentSessionLastSeen: serverTimestamp(),
+            currentSessionLastSeen: dbTimestamp(),
             currentSessionUserAgent: navigator.userAgent,
           });
           setUserProfile({ admin: false, paid: false, beta: false });
         } else {
-          const data = snap.data();
           setUserProfile({
             admin: data.admin ?? false,
             paid: data.paid ?? false,
@@ -191,11 +185,11 @@ export function useAuth(onSyncComplete) {
           }
 
           // No conflict — claim (or refresh) the session slot.
-          await setDoc(ref, {
+          await dbMerge(['users', u.uid], {
             currentSessionId: sessionId.current,
-            currentSessionLastSeen: serverTimestamp(),
+            currentSessionLastSeen: dbTimestamp(),
             currentSessionUserAgent: navigator.userAgent,
-          }, { merge: true });
+          });
         }
 
         isNewSignIn.current = false;
@@ -263,7 +257,7 @@ export function useAuth(onSyncComplete) {
     // Clear our session slot so no ghost session lingers for other devices.
     if (user) {
       try {
-        await setDoc(doc(db, 'users', user.uid), { currentSessionId: null }, { merge: true });
+        await dbMerge(['users', user.uid], { currentSessionId: null });
       } catch { /* best effort */ }
     }
     sessionStorage.removeItem('braingym_synced');
@@ -278,12 +272,11 @@ export function useAuth(onSyncComplete) {
     if (!user) return;
 
     if (signInHere) {
-      const ref = doc(db, 'users', user.uid);
-      await setDoc(ref, {
+      await dbMerge(['users', user.uid], {
         currentSessionId: sessionId.current,
-        currentSessionLastSeen: serverTimestamp(),
+        currentSessionLastSeen: dbTimestamp(),
         currentSessionUserAgent: navigator.userAgent,
-      }, { merge: true });
+      });
       setupSessionListener(user.uid);
       await runSync(user.uid);
     } else {

@@ -18,6 +18,7 @@ import FriendsModal from './components/FriendsModal.jsx';
 import ArchiveModal from './components/ArchiveModal.jsx';
 import LandingPage from './pages/LandingPage.jsx';
 import AdminDashboard from './pages/AdminDashboard.jsx';
+import DebugPage from './pages/DebugPage.jsx';
 import { useAuth } from './hooks/useAuth.js';
 import { useGame } from './games/chainword/hooks/useGame.js';
 import { useWord4 } from './games/word4/hooks/useWord4.js';
@@ -31,9 +32,9 @@ import {
   CHAINWORD_PROGRESS_PREFIX, WORD4_PROGRESS_PREFIX, TILES_PROGRESS_PREFIX, SQUARES_PROGRESS_PREFIX, SHABDAL_PROGRESS_PREFIX, CRYPTIC_PROGRESS_PREFIX,
 } from './utils/storage.js';
 import { pushCloudStats } from './utils/cloudStats.js';
+import { dbSubscribeDoc } from './utils/db.js';
 import { loadWordList } from './words.js';
-import { db, firebaseConfigured } from './firebase.js';
-import { doc, onSnapshot } from 'firebase/firestore';
+import { firebaseConfigured } from './firebase.js';
 import { DEFAULT_GLOBAL_CONFIG } from './hooks/useAdmin.js';
 import {
   GAME_ID_CHAINWORD, GAME_ID_WORD4, GAME_ID_TILES,
@@ -115,12 +116,11 @@ export default function App() {
   // Listen to admin config in real time for paid gating
   useEffect(() => {
     if (!firebaseConfigured) return;
-    const unsubGames = onSnapshot(doc(db, 'admin', 'games'), snap => {
-      if (!snap.exists()) {
+    const unsubGames = dbSubscribeDoc(['admin', 'games'], data => {
+      if (!data) {
         setGamesConfigError('Games configuration not found in database.');
         return;
       }
-      const data = snap.data();
       const missing = GAMES_META.filter(g => !data[g.id]?.title || !data[g.id]?.desc).map(g => g.id);
       if (missing.length > 0) {
         setGamesConfigError(`Missing title/desc in DB for: ${missing.join(', ')}`);
@@ -132,8 +132,8 @@ export default function App() {
       console.error('Failed to fetch games config:', err);
       setGamesConfigError('Failed to load games configuration from database.');
     });
-    const unsubConfig = onSnapshot(doc(db, 'admin', 'config'), snap => {
-      if (snap.exists()) setGlobalConfig(snap.data());
+    const unsubConfig = dbSubscribeDoc(['admin', 'config'], data => {
+      if (data) setGlobalConfig(data);
     }, (err) => { console.error('Failed to fetch global config:', err); });
     return () => { unsubGames(); unsubConfig(); };
   }, []);
@@ -234,6 +234,11 @@ export default function App() {
       ).catch(console.error);
     }
     window.location.reload();
+  }
+
+  // Debug page
+  if (location.pathname === '/debug') {
+    return <DebugPage darkMode={darkMode} />;
   }
 
   // Admin page

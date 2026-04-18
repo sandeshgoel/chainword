@@ -1,5 +1,5 @@
-import { doc, getDoc, setDoc, deleteDoc, collection, getDocs, serverTimestamp } from 'firebase/firestore';
-import { db, firebaseConfigured } from '../firebase.js';
+import { firebaseConfigured } from '../firebase.js';
+import { dbGet, dbSet, dbGetAll, dbDelete, dbTimestamp } from './db.js';
 import {
   getGameHistory, setGameHistory,
   CHAINWORD_STATS_KEY, CHAINWORD_HARD_STATS_KEY, WORD4_STATS_KEY, TILES_STATS_KEY, SQUARES_STATS_KEY, SHABDAL_STATS_KEY, CRYPTIC_STATS_KEY,
@@ -21,13 +21,11 @@ export const CLOUD_TO_LOCAL = {
 
 export const CLOUD_GAME_KEYS = Object.keys(CLOUD_TO_LOCAL);
 
-function cloudRef(uid, gameKey) {
-  return doc(db, 'users', uid, 'stats', gameKey);
-}
+const statsPath = (uid, gameKey) => ['users', uid, 'stats', gameKey];
 
 async function fetchCloudHistory(uid, gameKey) {
-  const snap = await getDoc(cloudRef(uid, gameKey));
-  return snap.exists() ? (snap.data().history || []) : [];
+  const data = await dbGet(statsPath(uid, gameKey));
+  return data ? (data.history || []) : [];
 }
 
 // Stable JSON comparison: sorts keys so insertion-order differences don't cause false conflicts.
@@ -99,7 +97,7 @@ export async function applyMerge(uid, mergeResult) {
       }
       // Only push to cloud if merged differs from what cloud had
       if (mergedJson !== JSON.stringify(cloudHistory)) {
-        await setDoc(cloudRef(uid, gameKey), { history: merged, updatedAt: serverTimestamp() });
+        await dbSet(statsPath(uid, gameKey), { history: merged, updatedAt: dbTimestamp() });
       }
     })
   );
@@ -108,7 +106,7 @@ export async function applyMerge(uid, mergeResult) {
 // Push local history for one game to cloud (ongoing sync after game completion).
 export async function pushCloudStats(uid, gameKey, history) {
   if (!firebaseConfigured) return;
-  await setDoc(cloudRef(uid, gameKey), { history, updatedAt: serverTimestamp() });
+  await dbSet(statsPath(uid, gameKey), { history, updatedAt: dbTimestamp() });
 }
 
 // Clear all cloud stats (called when user resets while signed in).
@@ -116,7 +114,7 @@ export async function clearAllCloudStats(uid) {
   if (!firebaseConfigured) return;
   await Promise.all(
     CLOUD_GAME_KEYS.map(gameKey =>
-      setDoc(cloudRef(uid, gameKey), { history: [], updatedAt: serverTimestamp() })
+      dbSet(statsPath(uid, gameKey), { history: [], updatedAt: dbTimestamp() })
     )
   );
 }
@@ -124,7 +122,6 @@ export async function clearAllCloudStats(uid) {
 // Clear all cloud game progress (in-progress chains stored in users/{uid}/games/).
 export async function clearAllCloudProgress(uid) {
   if (!firebaseConfigured) return;
-  const gamesCol = collection(db, 'users', uid, 'games');
-  const snap = await getDocs(gamesCol);
-  await Promise.all(snap.docs.map(d => deleteDoc(d.ref)));
+  const docs = await dbGetAll(['users', uid, 'games']);
+  await Promise.all(docs.map(d => dbDelete(['users', uid, 'games', d.id])));
 }

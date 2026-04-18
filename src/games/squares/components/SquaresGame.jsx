@@ -78,13 +78,13 @@ function GridCell({ letter, variant, cornerNum, onClick }) {
   );
 }
 
-function SquareGrid({ square, slots, cursorPos, winLetters, feedback, status, liveValidity, onCornerClick }) {
+function SquareGrid({ square, slots, cursorPos, feedback, status, liveValidity, onCornerClick }) {
   const [top, left, right, bottom] = square;
 
   // Corner cell info: letter + variant
   function getCornerInfo(idx) {
     if (status === 'won') {
-      return { letter: winLetters?.[idx] ?? '?', variant: 'corner-correct' };
+      return { letter: slots[idx] ?? '?', variant: 'corner-correct' };
     }
     if (feedback) return { letter: feedback.letters[idx], variant: 'corner-typed' };
     if (slots[idx]) return { letter: slots[idx], variant: cursorPos === idx ? 'corner-cursor' : 'corner-typed' };
@@ -170,9 +170,9 @@ function getTodayIST() {
 export default function SquaresGame({ game, onArchive, archiveDate }) {
   const {
     square, dateStr, gameNumber,
-    slots, cursorPos, winLetters, attempts, feedback, status, error,
+    slots, cursorPos, feedback, status, error,
     hintsUsed, hintedCorners,
-    addLetter, deleteLetter, submitGuess, setCursorAt, useHint,
+    addLetter, deleteLetter, setCursorAt, useHint,
   } = game;
 
   const [confirmingHint, setConfirmingHint] = useState(false);
@@ -209,7 +209,6 @@ export default function SquaresGame({ game, onArchive, archiveDate }) {
   function handleKeyboardKey(key) {
     setConfirmingHint(false);
     if (key === '⌫') deleteLetter();
-    else if (key === 'ENTER') submitGuess();
     else addLetter(key);
   }
 
@@ -231,12 +230,11 @@ export default function SquaresGame({ game, onArchive, archiveDate }) {
         e.preventDefault();
         setCursorAt(ARROW_MOVE[e.key][Math.min(cursorPos, 3)]);
       } else if (e.key === 'Backspace') { e.preventDefault(); deleteLetter(); }
-      else if (e.key === 'Enter') { e.preventDefault(); submitGuess(); }
       else if (/^[a-zA-Z]$/.test(e.key)) { e.preventDefault(); addLetter(e.key.toUpperCase()); }
     }
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
-  }, [isPlaying, cursorPos, setCursorAt, addLetter, deleteLetter, submitGuess]);
+  }, [isPlaying, cursorPos, setCursorAt, addLetter, deleteLetter]);
 
   return (
     <div className="h-full flex flex-col">
@@ -260,7 +258,6 @@ export default function SquaresGame({ game, onArchive, archiveDate }) {
             square={square}
             slots={slots}
             cursorPos={cursorPos}
-            winLetters={winLetters}
             feedback={feedback}
             status={status}
             liveValidity={liveValidity}
@@ -353,21 +350,12 @@ export default function SquaresGame({ game, onArchive, archiveDate }) {
                   </button>
                 </div>
               ) : (
-                <div className="flex gap-3">
-                  <button
-                    onClick={() => setConfirmingHint(true)}
-                    className="px-4 py-2 text-sm font-semibold rounded-xl border border-amber-300 dark:border-amber-700 text-amber-600 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-900/20 transition-colors"
-                  >
-                    💡 Hint{hintsUsed > 0 ? ` (${hintsUsed})` : ''}
-                  </button>
-                  <button
-                    onClick={submitGuess}
-                    disabled={slots.some(s => !s)}
-                    className="px-6 py-2 text-sm font-semibold bg-indigo-600 hover:bg-indigo-700 disabled:opacity-40 disabled:cursor-not-allowed text-white rounded-xl transition-colors"
-                  >
-                    Submit
-                  </button>
-                </div>
+                <button
+                  onClick={() => setConfirmingHint(true)}
+                  className="px-4 py-2 text-sm font-semibold rounded-xl border border-amber-300 dark:border-amber-700 text-amber-600 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-900/20 transition-colors"
+                >
+                  💡 Hint{hintsUsed > 0 ? ` (${hintsUsed})` : ''}
+                </button>
               )}
             </div>
           )}

@@ -47,7 +47,7 @@ function getPlayStatus(dateStr, activeGame, hardMode) {
     } else if (activeGame === GAME_ID_SQUARES) {
       if (hasStatsEntry(SQUARES_STATS_KEY, dateStr)) return 'finished';
       const data = JSON.parse(localStorage.getItem(SQUARES_PROGRESS_PREFIX + dateStr) || 'null');
-      if (data?.attempts > 0) return 'started';
+      if (data?.status === 'playing') return 'started';
     }
   } catch {}
   return 'unplayed';

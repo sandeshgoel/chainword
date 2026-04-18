@@ -49,7 +49,7 @@ function getGameStatus(gameId, dateStr) {
       const entry = stats?.history?.find(h => h.dateStr === dateStr);
       if (entry) return squaresTier(entry.hintsUsed ?? 0);
       const saved = JSON.parse(localStorage.getItem(SQUARES_PROGRESS_PREFIX + dateStr) || 'null');
-      if (saved?.attempts > 0) return 'started';
+      if (saved?.status === 'playing') return 'started';
     } else if (gameId === GAME_ID_SHABDAL) {
       const stats = JSON.parse(localStorage.getItem(SHABDAL_STATS_KEY) || 'null');
       const entry = stats?.history?.find(h => h.dateStr === dateStr);

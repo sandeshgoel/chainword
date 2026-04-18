@@ -3,7 +3,7 @@ import Modal from './Modal.jsx';
 import {
   CHAINWORD_STATS_KEY, CHAINWORD_HARD_STATS_KEY,
   WORD4_STATS_KEY, TILES_STATS_KEY, SQUARES_STATS_KEY,
-  CHAINWORD_PROGRESS_PREFIX, WORD4_PROGRESS_PREFIX, TILES_PROGRESS_PREFIX, SQUARES_PROGRESS_PREFIX,
+  CHAINWORD_PROGRESS_PREFIX, CHAINWORD_HARD_PROGRESS_PREFIX, WORD4_PROGRESS_PREFIX, TILES_PROGRESS_PREFIX, SQUARES_PROGRESS_PREFIX,
 } from '../utils/storage.js';
 import { GAME_ID_CHAINWORD, GAME_ID_WORD4, GAME_ID_TILES, GAME_ID_SQUARES } from '../gamesMeta.js';
 
@@ -32,8 +32,9 @@ function getPlayStatus(dateStr, activeGame, hardMode) {
     if (activeGame === GAME_ID_CHAINWORD) {
       const statsKey = hardMode ? CHAINWORD_HARD_STATS_KEY : CHAINWORD_STATS_KEY;
       if (hasStatsEntry(statsKey, dateStr)) return 'finished';
-      const key = hardMode ? dateStr + '_hard' : dateStr;
-      const entry = JSON.parse(localStorage.getItem(CHAINWORD_PROGRESS_PREFIX + key) || 'null');
+      const entry =  JSON.parse(localStorage.getItem(
+        (hardMode ? CHAINWORD_HARD_PROGRESS_PREFIX : CHAINWORD_PROGRESS_PREFIX) + 
+        datestr) || 'null');
       if (entry?.chain?.length > 1) return 'started';
     } else if (activeGame === GAME_ID_WORD4) {
       if (hasStatsEntry(WORD4_STATS_KEY, dateStr)) return 'finished';

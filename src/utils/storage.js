@@ -55,15 +55,22 @@ function getTodayIST() {
 }
 
 // --- Chainword per-date progress ---
-// progressKey is dateStr for easy mode, dateStr_hard for hard mode.
 
-export function getDateProgress(progressKey) {
-  try { return JSON.parse(localStorage.getItem(CHAINWORD_PROGRESS_PREFIX + progressKey) || 'null'); }
+export function getDateProgress(hardMode, dateStr) {
+  try { 
+    return JSON.parse(localStorage.getItem(
+      (hardMode ? CHAINWORD_HARD_PROGRESS_PREFIX : CHAINWORD_PROGRESS_PREFIX) + 
+      dateStr) || 'null'); 
+  }
   catch { return null; }
 }
 
-export function saveDateProgress(progressKey, data) {
-  try { localStorage.setItem(CHAINWORD_PROGRESS_PREFIX + progressKey, JSON.stringify(data)); } catch (_) {}
+export function saveDateProgress(hardMode, dateStr, data) {
+  try { 
+    localStorage.setItem(
+      (hardMode ? CHAINWORD_HARD_PROGRESS_PREFIX : CHAINWORD_PROGRESS_PREFIX) + 
+      dateStr, JSON.stringify(data)); 
+  } catch (_) {}
 }
 
 // --- Shared helpers ---

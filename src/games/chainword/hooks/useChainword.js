@@ -12,8 +12,6 @@ import { getWordSet } from '../../../words.js';
 
 export function useChainword(user, wordListReady, hardMode = false, overrideDateStr = null, statsVersion = 0) {
   const { pair, pairpath, dateStr, gameNumber } = getDailyInfo(hardMode, overrideDateStr);
-  // Mode-specific keys so easy and hard progress/stats are stored separately
-  const progressKey = hardMode ? `${dateStr}_hard` : dateStr;
   const statsKey = hardMode ? CHAINWORD_HARD_STATS_KEY : CHAINWORD_STATS_KEY;
 
   const [chain, setChain] = useState([pair.start]);
@@ -42,14 +40,14 @@ export function useChainword(user, wordListReady, hardMode = false, overrideDate
     setChain([pair.start]);
     setStatus('playing');
     setHintsUsed(0);
-    const saved = getDateProgress(progressKey);
+    const saved = getDateProgress(hardMode, dateStr);
     if (saved) {
       setChain(saved.chain || [pair.start]);
       setStatus(saved.status || 'playing');
       setHintsUsed(saved.hintsUsed || (saved.hintUsed ? 1 : 0));
     }
     setStats({ history: getGameHistory(statsKey) });
-  }, [progressKey, pair.start, statsKey]);
+  }, [hardMode, dateStr, pair.start, statsKey]);
 
   // Reload stats when cloud sync completes
   useEffect(() => {
@@ -58,7 +56,7 @@ export function useChainword(user, wordListReady, hardMode = false, overrideDate
 
   const persist = useCallback(
     (newChain, newStatus, newHintUsed) => {
-      saveDateProgress(progressKey, {
+      saveDateProgress(hardMode, dateStr, {
         chain: newChain,
         status: newStatus,
         hintsUsed: newHintUsed,
@@ -67,7 +65,7 @@ export function useChainword(user, wordListReady, hardMode = false, overrideDate
         gameNumber,
       });
     },
-    [progressKey, pair, gameNumber]
+    [hardMode, dateStr, pair, gameNumber]
   );
 
   function submitWord(word, hintsOverride) {

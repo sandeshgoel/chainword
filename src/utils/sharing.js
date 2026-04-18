@@ -39,7 +39,8 @@ function shareHeader(gameId, gameNumber, dateStr, tier) {
   const cfg = TIER_CONFIG[tier];
   return `${emoji || ''} ${gameName} #${gameNumber} • ` +
          `${formatDate(dateStr)}\n\n`+
-         `${cfg.emoji}  ${cfg.label}\n`;
+         `${cfg.emoji}  ${cfg.label}\n` +
+         shareLabel(tier) + '\n\n';
 }
 
 function shareFooter(gameId) {
@@ -47,11 +48,18 @@ function shareFooter(gameId) {
   return `\nPlay at ${url}`;
 }
 
+function shareLabel(tier) {
+  if (tier === TIER_GOLD) return 'You are awesome!!';
+  if (tier === TIER_SILVER) return 'Good job!';
+  if (tier === TIER_BRONZE) return 'You can do better!';
+  if (tier === TIER_UNSOLVED) return 'Tough puzzle!';
+  return '';
+}
+
 // Build a shareable text without revealing the actual words used
 export function buildChainwordShareText({ gameNumber, dateStr, start, end, userSteps, parSteps, chain, hintsUsed, gaveUp }) {
   const tier = chainwordTier(!gaveUp, userSteps, hintsUsed || 0, parSteps);
   const cfg = TIER_CONFIG[tier];
-  const label = gaveUp ? 'Gave up' : cfg.label;
 
   // Show visual chain: each row is a word's worth of blocks.
   // 🟩 = letter unchanged from previous word, 🟨 = letter changed.
@@ -69,7 +77,7 @@ export function buildChainwordShareText({ gameNumber, dateStr, start, end, userS
   }
 
   const guesses = userSteps - 1;
-  const hintStr = (hintsUsed || 0) > 0 ? ` 💡${hintsUsed}` : '';
+  const hintStr = (hintsUsed || 0) > 0 ? ` 💡${hintsUsed} hints` : '';
   const stepInfo = gaveUp
     ? 'DNF'
     : `${guesses} guess${guesses !== 1 ? 'es' : ''}${hintStr}`;
@@ -77,8 +85,8 @@ export function buildChainwordShareText({ gameNumber, dateStr, start, end, userS
   return (
     shareHeader(GAME_ID_CHAINWORD, gameNumber, dateStr, tier) +
     `${start.toUpperCase()} → ${end.toUpperCase()}\n` +
-    `${label}  (${stepInfo})` +
-    chainViz +
+    `${stepInfo}` +
+    chainViz + "\n" +
     shareFooter(GAME_ID_CHAINWORD)
   );
 }
@@ -88,7 +96,6 @@ export function buildSquaresShareText({ gameNumber, dateStr, hintedCorners, squa
   const ce = (h) => h ? '🟥' : '🟩';
   const hintsUsed = hintedCorners.filter(Boolean).length;
   const tier = squaresTier(hintsUsed);
-  const label = hintsUsed === 0 ? 'Perfect!' : hintsUsed === 1 ? 'Great!' : `Completed with ${hintsUsed} hints`;
 
   let grid;
   if (square) {
@@ -106,7 +113,7 @@ export function buildSquaresShareText({ gameNumber, dateStr, hintedCorners, squa
 
   return (
     shareHeader(GAME_ID_SQUARES, gameNumber, dateStr, tier) +
-    `${label}\n` +
+    (hintsUsed ? `${hintsUsed} hint${hintsUsed !== 1 ? 's' : ''}` + ` used\n` : '') +
     `${grid}\n` +
     shareFooter(GAME_ID_SQUARES)
   );
@@ -116,15 +123,14 @@ export function buildTilesShareText({ gameNumber, dateStr, bestScore, optimalSco
   const isOptimal = bestScore >= optimalScore;
   const tier = tilesTier(bestScore, optimalScore);
   const cfg = TIER_CONFIG[tier];
-  const label = isOptimal ? 'Optimal!' : cfg.label;
 
   // Visual: show multiplier squares for the 4 slots
   const slotViz = SLOT_MULTIPLIERS.map(m => m === 3 ? '🟥' : m === 2 ? '🟦' : '⬜').join('');
 
   return (
     shareHeader(GAME_ID_TILES, gameNumber, dateStr, tier) +
-    `${label}  (${bestScore} / ${optimalScore} pts)\n` +
-    `${slotViz}  ${bestWord}\n` +
+    slotViz +
+    ` (${bestScore} / ${optimalScore} pts)\n` +
     shareFooter(GAME_ID_TILES)
   );
 }
@@ -134,7 +140,7 @@ export function buildWord4ShareText({ gameNumber, dateStr, guesses, status }) {
   const tier = word4Tier(status === 'won', guesses.length);
   const cfg = TIER_CONFIG[tier];
   let text = shareHeader(GAME_ID_WORD4, gameNumber, dateStr, tier)+
-    `${cfg.label}! Solved in ${result}/6 guesses\n\n`;
+    `Solved in ${result}/6 guesses\n\n`;
 
   for (const guess of guesses) {
     let row = '';
@@ -155,7 +161,7 @@ export function buildShabdalShareText({ gameNumber, dateStr, guesses, status }) 
   const tier = shabdalTier(status === 'won', guesses.length);
   const cfg = TIER_CONFIG[tier];
   let text = shareHeader(GAME_ID_SHABDAL, gameNumber, dateStr, tier) +
-             `${result}/6\n\n`;
+             `Solved in ${result}/6 guesses\n\n`;
 
   for (const guess of guesses) {
     let row = '';

@@ -324,6 +324,7 @@ export default function App() {
         onHowToPlay={() => setShowHelp(true)}
         onStats={() => setShowStats(true)}
         onAuth={() => setShowAuth(true)}
+        onSignOut={signOut}
         onFriends={() => setShowFriends(true)}
         user={user}
         userProfile={userProfile}

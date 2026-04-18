@@ -1,6 +1,38 @@
+import { useState, useRef, useEffect } from 'react';
 import { formatDate } from '../utils/wordUtils.js';
 import HamburgerMenu from './HamburgerMenu.jsx';
 import { GAMES_META_BY_ID } from '../gamesMeta.js';
+
+function ProfileDropdown({ user, onFriends, onSignOut, onClose }) {
+  return (
+    <div className="absolute right-0 top-full mt-1 w-48 bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 py-1 z-50">
+      {user?.displayName && (
+        <div className="px-4 py-2.5 border-b border-gray-100 dark:border-gray-700">
+          <p className="text-sm font-semibold text-gray-900 dark:text-white truncate">{user.displayName}</p>
+        </div>
+      )}
+      <button
+        onClick={() => { onClose(); onFriends(); }}
+        className="w-full text-left px-4 py-2.5 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2 transition-colors"
+      >
+        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
+        </svg>
+        Friends
+      </button>
+      <div className="my-1 border-t border-gray-100 dark:border-gray-700" />
+      <button
+        onClick={() => { onClose(); onSignOut(); }}
+        className="w-full text-left px-4 py-2.5 text-sm text-red-600 dark:text-red-400 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2 transition-colors"
+      >
+        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+        </svg>
+        Sign out
+      </button>
+    </div>
+  );
+}
 
 export default function Header({
   activeGame,
@@ -13,6 +45,7 @@ export default function Header({
   onHowToPlay,
   onStats,
   onAuth,
+  onSignOut,
   onFriends,
   user,
   userProfile,
@@ -24,8 +57,50 @@ export default function Header({
   const meta = GAMES_META_BY_ID[activeGame] ?? {};
   const gameTitle = gamesConfig?.[activeGame]?.title || activeGame;
 
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const dropdownRef = useRef(null);
+
+  // Close dropdown on outside click
+  useEffect(() => {
+    if (!dropdownOpen) return;
+    function handleOutside(e) {
+      if (!dropdownRef.current?.contains(e.target)) setDropdownOpen(false);
+    }
+    document.addEventListener('mousedown', handleOutside);
+    return () => document.removeEventListener('mousedown', handleOutside);
+  }, [dropdownOpen]);
+
+  // Avatar content (shared between signed-in and signed-out states)
+  function AvatarImage({ photo, displayName, dim }) {
+    return (
+      <div className="relative">
+        <img
+          src={photo}
+          alt={displayName}
+          className={`w-6 h-6 rounded-full ${dim ? 'opacity-50 grayscale' : ''} ${userProfile?.paid && !dim ? 'ring-2 ring-yellow-400 ring-offset-1 ring-offset-white dark:ring-offset-gray-900' : ''}`}
+          referrerPolicy="no-referrer"
+        />
+        {userProfile?.admin && !dim && (
+          <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-blue-600 rounded-full flex items-center justify-center border border-white dark:border-gray-900">
+            <svg className="w-1.5 h-1.5 text-white" viewBox="0 0 20 20" fill="currentColor">
+              <path fillRule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" clipRule="evenodd" />
+            </svg>
+          </div>
+        )}
+        {dim && (
+          <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-amber-500 rounded-full flex items-center justify-center border border-white dark:border-gray-900">
+            <svg className="w-1.5 h-1.5 text-white" viewBox="0 0 20 20" fill="currentColor">
+              <path fillRule="evenodd" d="M3.707 2.293a1 1 0 00-1.414 1.414l14 14a1 1 0 001.414-1.414l-1.473-1.473A10.014 10.014 0 0019.542 10C18.268 5.943 14.478 3 10 3a9.958 9.958 0 00-4.512 1.074l-1.78-1.781zm4.261 4.26l1.514 1.515a2.003 2.003 0 012.45 2.45l1.514 1.514a4 4 0 00-5.478-5.478z" clipRule="evenodd" />
+              <path d="M12.454 16.697L9.75 13.992a4 4 0 01-3.742-3.741L2.335 6.578A9.98 9.98 0 00.458 10c1.274 4.057 5.065 7 9.542 7 .847 0 1.669-.105 2.454-.303z" />
+            </svg>
+          </div>
+        )}
+      </div>
+    );
+  }
+
   return (
-    <header className="flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 sticky top-0 z-10">
+    <header className="flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 sticky top-0 z-40">
       {/* Left: menu + how to play */}
       <div className="flex items-center gap-1">
         <HamburgerMenu
@@ -64,17 +139,6 @@ export default function Header({
 
       {/* Right: controls */}
       <div className="flex items-center gap-1">
-        {/* Friends */}
-        <button
-          onClick={onFriends}
-          className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-600 dark:text-gray-300 transition-colors"
-          aria-label="Friends"
-        >
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
-          </svg>
-        </button>
-
         {/* Stats */}
         <button
           onClick={onStats}
@@ -86,54 +150,54 @@ export default function Header({
           </svg>
         </button>
 
-        {/* Auth */}
-        <button
-          onClick={onAuth}
-          className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-600 dark:text-gray-300 transition-colors"
-          aria-label={user ? 'Account' : 'Sign in'}
-        >
+        {/* Profile — spinner while signing in, dropdown when signed in, auth trigger when signed out */}
+        <div className="relative" ref={dropdownRef}>
           {signingIn ? (
-            <svg className="w-5 h-5 animate-spin text-indigo-500" fill="none" viewBox="0 0 24 24">
-              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
-            </svg>
-          ) : user?.photoURL ? (
-            <div className="relative">
-              <img
-                src={user.photoURL}
-                alt={user.displayName}
-                className={`w-6 h-6 rounded-full ${userProfile?.paid ? 'ring-2 ring-yellow-400 ring-offset-1 ring-offset-white dark:ring-offset-gray-900' : ''}`}
-                referrerPolicy="no-referrer"
-              />
-              {userProfile?.admin && (
-                <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-blue-600 rounded-full flex items-center justify-center border border-white dark:border-gray-900">
-                  <svg className="w-1.5 h-1.5 text-white" viewBox="0 0 20 20" fill="currentColor">
-                    <path fillRule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" clipRule="evenodd" />
+            <div className="p-2">
+              <svg className="w-5 h-5 animate-spin text-indigo-500" fill="none" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
+              </svg>
+            </div>
+          ) : user ? (
+            // Signed in — avatar opens dropdown
+            <button
+              onClick={() => setDropdownOpen(o => !o)}
+              className="p-1.5 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+              aria-label="Account menu"
+            >
+              {user.photoURL
+                ? <AvatarImage photo={user.photoURL} displayName={user.displayName} dim={false} />
+                : <svg className="w-5 h-5 text-gray-600 dark:text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                   </svg>
-                </div>
-              )}
-            </div>
-          ) : lastUser?.photoURL ? (
-            <div className="relative">
-              <img
-                src={lastUser.photoURL}
-                alt={lastUser.displayName}
-                className="w-6 h-6 rounded-full opacity-50 grayscale"
-                referrerPolicy="no-referrer"
-              />
-              <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-amber-500 rounded-full flex items-center justify-center border border-white dark:border-gray-900">
-                <svg className="w-1.5 h-1.5 text-white" viewBox="0 0 20 20" fill="currentColor">
-                  <path fillRule="evenodd" d="M3.707 2.293a1 1 0 00-1.414 1.414l14 14a1 1 0 001.414-1.414l-1.473-1.473A10.014 10.014 0 0019.542 10C18.268 5.943 14.478 3 10 3a9.958 9.958 0 00-4.512 1.074l-1.78-1.781zm4.261 4.26l1.514 1.515a2.003 2.003 0 012.45 2.45l1.514 1.514a4 4 0 00-5.478-5.478z" clipRule="evenodd" />
-                  <path d="M12.454 16.697L9.75 13.992a4 4 0 01-3.742-3.741L2.335 6.578A9.98 9.98 0 00.458 10c1.274 4.057 5.065 7 9.542 7 .847 0 1.669-.105 2.454-.303z" />
-                </svg>
-              </div>
-            </div>
+              }
+            </button>
           ) : (
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-            </svg>
+            // Signed out — tapping opens auth modal
+            <button
+              onClick={onAuth}
+              className="p-1.5 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+              aria-label="Sign in"
+            >
+              {lastUser?.photoURL
+                ? <AvatarImage photo={lastUser.photoURL} displayName={lastUser.displayName} dim={true} />
+                : <svg className="w-5 h-5 text-gray-600 dark:text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                  </svg>
+              }
+            </button>
           )}
-        </button>
+
+          {dropdownOpen && (
+            <ProfileDropdown
+              user={user}
+              onFriends={onFriends}
+              onSignOut={onSignOut}
+              onClose={() => setDropdownOpen(false)}
+            />
+          )}
+        </div>
       </div>
     </header>
   );

@@ -137,6 +137,18 @@ export function useSquares(overrideDateStr = null, user = null, statsVersion = 0
       return;
     }
 
+    // If the current slot has content, clear it in place
+    const effectivePos = Math.min(cursorPos, 3);
+    if (slots[effectivePos]) {
+      const newSlots = [...slots];
+      newSlots[effectivePos] = '';
+      setSlots(newSlots);
+      setCursorPos(effectivePos);
+      setError('');
+      return;
+    }
+
+    // Current slot empty — move back and clear previous
     if (cursorPos === 0) return;
     const newSlots = [...slots];
     newSlots[cursorPos - 1] = '';

@@ -60,7 +60,6 @@ export default function HamburgerMenu({ darkMode, onToggleDark, onSelectGame, ac
                 <div className="border-t border-gray-100 dark:border-gray-700 my-1"></div>
               </>
             )}
-            <div className="px-4 py-2 text-xs font-semibold text-gray-400 uppercase tracking-wider">Games</div>
             {GAMES_META.map(g => (
               <button
                 key={g.id}
@@ -74,13 +73,6 @@ export default function HamburgerMenu({ darkMode, onToggleDark, onSelectGame, ac
               </button>
             ))}
             <div className="border-t border-gray-100 dark:border-gray-700 my-1"></div>
-            <button
-              onClick={() => { setShowAbout(true); setIsMenuOpen(false); }}
-              className="w-full flex items-center gap-3 px-4 py-2 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors text-left"
-            >
-              <span className="text-xl flex-shrink-0">ℹ️</span>
-              <span className="text-sm font-medium text-gray-900 dark:text-white">About</span>
-            </button>
             {isAdmin && (
               <button
                 onClick={() => { navigate('/admin'); setIsMenuOpen(false); }}
@@ -115,6 +107,13 @@ export default function HamburgerMenu({ darkMode, onToggleDark, onSelectGame, ac
               <span className="text-sm font-medium text-gray-900 dark:text-white">
                 {darkMode ? 'Light mode' : 'Dark mode'}
               </span>
+            </button>
+            <button
+              onClick={() => { setShowAbout(true); setIsMenuOpen(false); }}
+              className="w-full flex items-center gap-3 px-4 py-2 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors text-left"
+            >
+              <span className="text-xl flex-shrink-0">ℹ️</span>
+              <span className="text-sm font-medium text-gray-900 dark:text-white">About</span>
             </button>
             <div className="border-t border-gray-100 dark:border-gray-700 my-1"></div>
             <div className="px-4 py-2 text-center text-xs text-gray-400 dark:text-gray-600">

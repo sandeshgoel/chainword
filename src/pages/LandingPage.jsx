@@ -206,6 +206,7 @@ export default function LandingPage({ darkMode, onToggleDark, onAuth, user, user
         <HamburgerMenu
           darkMode={darkMode}
           onToggleDark={onToggleDark}
+          onHome={() => navigate('/')}
           onSelectGame={id => navigate('/' + id)}
           isAdmin={userProfile?.admin ?? false}
           gamesConfig={gamesConfig}

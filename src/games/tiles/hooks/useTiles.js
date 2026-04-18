@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { getDailyTiles } from '../data/dailyTiles.js';
 import { getWordSet } from '../../../words.js';
-import { loadTilesStats, updateTilesStats, TILES_PROGRESS_PREFIX } from '../../../utils/storage.js';
+import { updateTilesStats, getGameHistory, TILES_STATS_KEY, TILES_PROGRESS_PREFIX } from '../../../utils/storage.js';
 import { pushCloudStats } from '../../../utils/cloudStats.js';
 import { GAME_ID_TILES } from '../../../gamesMeta.js';
 
@@ -61,9 +61,9 @@ export function useTiles(overrideDateStr = null, user = null, statsVersion = 0) 
   const [error, setError] = useState('');
   const [submissions, setSubmissions] = useState([]);
   const [bestScore, setBestScore] = useState(0);
-  const [stats, setStats] = useState(loadTilesStats());
+  const [stats, setStats] = useState({ history: getGameHistory(TILES_STATS_KEY) });
 
-  useEffect(() => { setStats(loadTilesStats()); }, [statsVersion]);
+  useEffect(() => { setStats({ history: getGameHistory(TILES_STATS_KEY) }); }, [statsVersion]);
 
   const { optimalScore, optimalWord } = findOptimalPlay(dailyTiles);
 

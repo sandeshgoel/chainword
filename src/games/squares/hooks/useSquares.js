@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { getDailySquare } from '../data/dailySquares.js';
 import { getWordSet } from '../../../words.js';
-import { loadSquaresStats, updateSquaresStats, SQUARES_PROGRESS_PREFIX } from '../../../utils/storage.js';
+import { updateSquaresStats, getGameHistory, SQUARES_STATS_KEY, SQUARES_PROGRESS_PREFIX } from '../../../utils/storage.js';
 import { pushCloudStats } from '../../../utils/cloudStats.js';
 import { GAME_ID_SQUARES } from '../../../gamesMeta.js';
 
@@ -37,9 +37,9 @@ export function useSquares(overrideDateStr = null, user = null, statsVersion = 0
   // hintedCorners[i] = true if corner i was revealed by a hint
   const [hintedCorners, setHintedCorners] = useState(() => loadState(dateStr)?.hintedCorners || [false, false, false, false]);
   const [hintsUsed, setHintsUsed] = useState(() => loadState(dateStr)?.hintsUsed || 0);
-  const [stats, setStats] = useState(() => loadSquaresStats());
+  const [stats, setStats] = useState(() => { history: getGameHistory(SQUARES_STATS_KEY) });
 
-  useEffect(() => { setStats(loadSquaresStats()); }, [statsVersion]);
+  useEffect(() => { setStats({ history: getGameHistory(SQUARES_STATS_KEY) }); }, [statsVersion]);
 
   // Reset state when date changes (archive navigation)
   useEffect(() => {

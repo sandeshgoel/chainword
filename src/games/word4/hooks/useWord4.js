@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { getDailyWord4Target, getWordSet } from '../../../words.js';
-import { loadWord4Stats, updateWord4Stats, WORD4_PROGRESS_PREFIX } from '../../../utils/storage.js';
+import { updateWord4Stats, getGameHistory, WORD4_STATS_KEY, WORD4_PROGRESS_PREFIX } from '../../../utils/storage.js';
 import { pushCloudStats } from '../../../utils/cloudStats.js';
 import { GAME_ID_WORD4 } from '../../../gamesMeta.js';
 import { evaluateGuess } from '../../../utils/wordUtils.js';
@@ -11,9 +11,9 @@ export function useWord4(wordListReady, overrideDateStr = null, user = null, sta
   const [guesses, setGuesses] = useState([]); // array of { word, colors }
   const [status, setStatus] = useState('playing'); // playing | won | lost
   const [error, setError] = useState('');
-  const [stats, setStats] = useState(loadWord4Stats());
+  const [stats, setStats] = useState({ history: getGameHistory(WORD4_STATS_KEY) });
 
-  useEffect(() => { setStats(loadWord4Stats()); }, [statsVersion]);
+  useEffect(() => { setStats({ history: getGameHistory(WORD4_STATS_KEY) }); }, [statsVersion]);
 
   // Load from local storage
   useEffect(() => {

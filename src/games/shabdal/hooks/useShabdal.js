@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { getDailyWord } from '../data/shabdalWords.js';
 import { formHindiWord } from '../../../utils/hindiUtils.js';
-import { loadShabdalStats, updateShabdalStats, SHABDAL_PROGRESS_PREFIX } from '../../../utils/storage.js';
+import { updateShabdalStats, getGameHistory, SHABDAL_STATS_KEY, SHABDAL_PROGRESS_PREFIX } from '../../../utils/storage.js';
 import { pushCloudStats } from '../../../utils/cloudStats.js';
 import { GAME_ID_SHABDAL } from '../../../gamesMeta.js';
 import { evaluateGuess } from '../../../utils/wordUtils.js';
@@ -11,9 +11,9 @@ export function useShabdal(overrideDateStr = null, user = null, statsVersion = 0
   const [guesses, setGuesses] = useState([]); // [{ letters: [...], colors: [...], formed: '...' }]
   const [status, setStatus] = useState('playing'); // 'playing' | 'won' | 'lost'
   const [error, setError] = useState('');
-  const [stats, setStats] = useState(loadShabdalStats());
+  const [stats, setStats] = useState({ history: getGameHistory(SHABDAL_STATS_KEY) });
 
-  useEffect(() => { setStats(loadShabdalStats()); }, [statsVersion]);
+  useEffect(() => { setStats({ history: getGameHistory(SHABDAL_STATS_KEY) }); }, [statsVersion]);
 
   // Load from local storage
   useEffect(() => {

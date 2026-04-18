@@ -131,36 +131,17 @@ export function setGameHistory(key, history) { saveHistory(key, history); }
 
 // --- Chainword ---
 
-export function loadStats(key = CHAINWORD_STATS_KEY) {
-  return { history: loadHistory(key) };
-}
-
-export function saveStats({ history }, key = CHAINWORD_STATS_KEY) {
+export function updateChainwordStats(guesses, hintsUsed, dateStr, won, key = CHAINWORD_STATS_KEY) {
+  const history = loadHistory(key);
+  upsertHistory(history, { dateStr, guesses, hintsUsed, won, playedDate: getTodayIST() });
   saveHistory(key, history);
-}
-
-export function updateStatsOnWin(guesses, hintsUsed, dateStr, key = CHAINWORD_STATS_KEY) {
-  const { history } = loadStats(key);
-  upsertHistory(history, { dateStr, guesses, hintsUsed, won: true, playedDate: getTodayIST() });
-  saveStats({ history }, key);
-  return { history };
-}
-
-export function updateStatsOnGiveUp(guesses, hintsUsed, dateStr, key = CHAINWORD_STATS_KEY) {
-  const { history } = loadStats(key);
-  upsertHistory(history, { dateStr, guesses, hintsUsed, won: false, playedDate: getTodayIST() });
-  saveStats({ history }, key);
   return { history };
 }
 
 // --- word4 ---
 
-export function loadWord4Stats() {
-  return { history: loadHistory(WORD4_STATS_KEY) };
-}
-
 export function updateWord4Stats(guessesCount, dateStr) {
-  const { history } = loadWord4Stats();
+  const history = loadHistory(WORD4_STATS_KEY);
   upsertHistory(history, { dateStr, guesses: guessesCount, won: guessesCount > 0, playedDate: getTodayIST() });
   saveHistory(WORD4_STATS_KEY, history);
   return { history };
@@ -168,12 +149,8 @@ export function updateWord4Stats(guessesCount, dateStr) {
 
 // --- Tiles ---
 
-export function loadTilesStats() {
-  return { history: loadHistory(TILES_STATS_KEY) };
-}
-
 export function updateTilesStats(dateStr, score, optimalScore) {
-  const { history } = loadTilesStats();
+  const history = loadHistory(TILES_STATS_KEY);
   upsertHistory(history, { dateStr, score, optimalScore, playedDate: getTodayIST() });
   saveHistory(TILES_STATS_KEY, history);
   return { history };
@@ -181,12 +158,8 @@ export function updateTilesStats(dateStr, score, optimalScore) {
 
 // --- Squares ---
 
-export function loadSquaresStats() {
-  return { history: loadHistory(SQUARES_STATS_KEY) };
-}
-
 export function updateSquaresStats(dateStr, hintsUsed) {
-  const { history } = loadSquaresStats();
+  const history = loadHistory(SQUARES_STATS_KEY);
   upsertHistory(history, { dateStr, hintsUsed, won: true, playedDate: getTodayIST() });
   saveHistory(SQUARES_STATS_KEY, history);
   return { history };
@@ -194,12 +167,8 @@ export function updateSquaresStats(dateStr, hintsUsed) {
 
 // --- Shabdal ---
 
-export function loadShabdalStats() {
-  return { history: loadHistory(SHABDAL_STATS_KEY) };
-}
-
 export function updateShabdalStats(guessesCount, dateStr) {
-  const { history } = loadShabdalStats();
+  const history = loadHistory(SHABDAL_STATS_KEY);
   upsertHistory(history, { dateStr, guesses: guessesCount, won: guessesCount > 0, playedDate: getTodayIST() });
   saveHistory(SHABDAL_STATS_KEY, history);
   return { history };

@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { bfs, diffsByOneLetter } from '../../../utils/wordUtils.js';
 import {
   getDateProgress, saveDateProgress,
-  updateStatsOnWin, updateStatsOnGiveUp, loadStats,
+  updateChainwordStats, getGameHistory,
   CHAINWORD_STATS_KEY, CHAINWORD_HARD_STATS_KEY,
 } from '../../../utils/storage.js';
 import { pushCloudStats } from '../../../utils/cloudStats.js';
@@ -21,7 +21,7 @@ export function useGame(user, wordListReady, hardMode = false, overrideDateStr =
   const [status, setStatus] = useState('playing'); // 'playing' | 'won' | 'gaveUp'
   const [error, setError] = useState('');
   const [hintsUsed, setHintsUsed] = useState(0);
-  const [stats, setStats] = useState(() => loadStats(statsKey));
+  const [stats, setStats] = useState(() => ({ history: getGameHistory(statsKey) }));
 
   const cloudKey = hardMode ? GAME_ID_CHAINWORD_HARD : GAME_ID_CHAINWORD;
   const parSteps = optimalPath ? optimalPath.length - 1 : null;
@@ -48,12 +48,12 @@ export function useGame(user, wordListReady, hardMode = false, overrideDateStr =
       setStatus(saved.status || 'playing');
       setHintsUsed(saved.hintsUsed || (saved.hintUsed ? 1 : 0));
     }
-    setStats(loadStats(statsKey));
+    setStats({ history: getGameHistory(statsKey) });
   }, [progressKey, pair.start, statsKey]);
 
   // Reload stats when cloud sync completes
   useEffect(() => {
-    setStats(loadStats(statsKey));
+    setStats({ history: getGameHistory(statsKey) });
   }, [statsKey, statsVersion]);
 
   const persist = useCallback(
@@ -111,7 +111,7 @@ export function useGame(user, wordListReady, hardMode = false, overrideDateStr =
       setStatus(newStatus);
       // autoWin auto-appends `end` — don't count it as an extra guess
       const guesses = autoWin ? newChain.length - 1 : finalChain.length - 1;
-      const newStats = updateStatsOnWin(guesses, effectiveHints, dateStr, statsKey);
+      const newStats = updateChainwordStats(guesses, effectiveHints, dateStr, true, statsKey);
       setStats(newStats);
       persist(finalChain, newStatus, effectiveHints);
       if (user) pushCloudStats(user.uid, cloudKey, newStats.history).catch(console.error);
@@ -133,7 +133,7 @@ export function useGame(user, wordListReady, hardMode = false, overrideDateStr =
   function giveUp() {
     const newStatus = 'gaveUp';
     setStatus(newStatus);
-    const newStats = updateStatsOnGiveUp(chain.length - 1, hintsUsed, dateStr, statsKey);
+    const newStats = updateChainwordStats(chain.length - 1, hintsUsed, dateStr, false, statsKey);
     setStats(newStats);
     persist(chain, newStatus, hintsUsed);
     if (user) pushCloudStats(user.uid, cloudKey, newStats.history).catch(console.error);

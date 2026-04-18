@@ -57,14 +57,14 @@ function shareLabel(tier) {
 }
 
 // Build a shareable text without revealing the actual words used
-export function buildChainwordShareText({ gameNumber, dateStr, start, end, userSteps, parSteps, chain, hintsUsed, gaveUp }) {
-  const tier = chainwordTier(!gaveUp, userSteps, hintsUsed || 0, parSteps);
+export function buildChainwordShareText({ gameNumber, dateStr, start, end, userSteps, parSteps, chain, hintsUsed }) {
+  const tier = chainwordTier(true, userSteps, hintsUsed || 0, parSteps);
   const cfg = TIER_CONFIG[tier];
 
   // Show visual chain: each row is a word's worth of blocks.
   // 🟩 = letter unchanged from previous word, 🟨 = letter changed.
   let chainViz = '';
-  if (!gaveUp && chain.length >= 2) {
+  if (chain.length >= 2) {
     for (let i = 1; i < chain.length; i++) {
       const prev = chain[i - 1];
       const curr = chain[i];
@@ -78,9 +78,7 @@ export function buildChainwordShareText({ gameNumber, dateStr, start, end, userS
 
   const guesses = userSteps - 1;
   const hintStr = (hintsUsed || 0) > 0 ? ` 💡${hintsUsed} hints` : '';
-  const stepInfo = gaveUp
-    ? 'DNF'
-    : `${guesses} guess${guesses !== 1 ? 'es' : ''}${hintStr}`;
+  const stepInfo = `${guesses} guess${guesses !== 1 ? 'es' : ''}${hintStr}`;
 
   return (
     shareHeader(GAME_ID_CHAINWORD, gameNumber, dateStr, tier) +

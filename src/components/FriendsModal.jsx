@@ -69,8 +69,7 @@ export default function FriendsModal({ open, onClose, user, dateStr }) {
 
   function renderScore(game) {
     if (!game) return <span className="text-gray-400 dark:text-gray-500 text-sm">Not played yet</span>;
-    if (game.status === 'gaveUp') return <span className="text-red-500 text-sm">Gave up ❌</span>;
-    if (game.status === 'won') {
+if (game.status === 'won') {
       const steps = (game.chain?.length || 1) - 1;
       return (
         <span className="text-sm font-semibold text-indigo-600 dark:text-indigo-400">

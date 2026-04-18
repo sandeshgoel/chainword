@@ -4,6 +4,7 @@ import ResultBanner from '../../../components/ResultBanner.jsx';
 import Modal from '../../../components/Modal.jsx';
 import { chainwordTier } from '../../../utils/awards.js';
 import { showRewardedAd } from '../../../utils/ads.js';
+import { buildChainwordShareText, shareOrCopy } from '../../../utils/sharing.js';
 
 
 const KEYBOARD_ROWS = [
@@ -119,16 +120,28 @@ export default function Game({ game, wordListReady, hardMode, adsEnabled, onTogg
     pair, dateStr, gameNumber,
     chain, optimalPath, parSteps, userSteps,
     currentWord, status, error, hintsUsed,
-    submitWord, undoLastMove, giveUp, useHint, setError,
+    submitWord, undoLastMove, useHint, setError,
   } = game;
 
   const [showHintModal, setShowHintModal] = useState(false);
+  const [showShare, setShowShare] = useState(false);
+  const [copied, setCopied] = useState(false);
   const [inputValue, setInputValue] = useState('');
   const inputRef = useRef(null);
   const scrollRef = useRef(null);
 
   const isPlaying = status === 'playing';
-  const isFinished = status === 'won' || status === 'gaveUp';
+  const isFinished = status === 'won';
+
+  const shareText = isFinished ? buildChainwordShareText({
+    gameNumber, dateStr,
+    start: pair.start, end: pair.end,
+    userSteps, parSteps, chain, hintsUsed,
+  }) : null;
+
+  async function handleShare() {
+    await shareOrCopy(shareText, () => { setCopied(true); setTimeout(() => setCopied(false), 2000); });
+  }
 
   useEffect(() => {
     if (!isPlaying || !wordListReady) return;
@@ -323,19 +336,7 @@ export default function Game({ game, wordListReady, hardMode, adsEnabled, onTogg
                 title={status === 'won' ? 'Well done!' : "Couldn't solve it"}
                 details={detailParts.join(' · ')}
               >
-                {status === 'gaveUp' && optimalPath && (
-                  <div className="text-sm text-gray-600 dark:text-gray-400">
-                    <p className="font-medium mb-1">Optimal solution ({optimalPath.length - 2} step{optimalPath.length - 2 !== 1 ? 's' : ''}):</p>
-                    <div className="flex flex-wrap justify-center gap-1">
-                      {optimalPath.map((w, i) => (
-                        <span key={i} className="font-mono font-bold text-sm">
-                          {w.toUpperCase()}{i < optimalPath.length - 1 ? ' →' : ''}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                )}
-                {(!archiveDate || archiveDate === getTodayIST()) && (
+{(!archiveDate || archiveDate === getTodayIST()) && (
                   <button
                     onClick={() => setShowShare(true)}
                     className="px-5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-xl text-sm transition-colors"
@@ -376,6 +377,20 @@ export default function Game({ game, wordListReady, hardMode, adsEnabled, onTogg
                   Yes, show hint
                 </button>
               </div>
+            </div>
+          </Modal>
+
+          <Modal open={showShare} onClose={() => setShowShare(false)} title="Share Your Result">
+            <div className="space-y-4">
+              <pre className="text-xs bg-gray-50 dark:bg-gray-800 rounded-xl p-3 whitespace-pre-wrap font-mono text-gray-700 dark:text-gray-300">
+                {shareText}
+              </pre>
+              <button
+                onClick={handleShare}
+                className="w-full px-4 py-2 text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl transition-colors"
+              >
+                {copied ? 'Copied!' : 'Share Result'}
+              </button>
             </div>
           </Modal>
 

@@ -18,7 +18,7 @@ export function useChainword(user, wordListReady, hardMode = false, overrideDate
 
   const [chain, setChain] = useState([pair.start]);
   const [optimalPath, setOptimalPath] = useState(null);
-  const [status, setStatus] = useState('playing'); // 'playing' | 'won' | 'gaveUp'
+  const [status, setStatus] = useState('playing'); // 'playing' | 'won'
   const [error, setError] = useState('');
   const [hintsUsed, setHintsUsed] = useState(0);
   const [stats, setStats] = useState(() => ({ history: getGameHistory(statsKey) }));
@@ -130,16 +130,7 @@ export function useChainword(user, wordListReady, hardMode = false, overrideDate
     persist(newChain, 'playing', hintsUsed);
   }
 
-  function giveUp() {
-    const newStatus = 'gaveUp';
-    setStatus(newStatus);
-    const newStats = updateChainwordStats(chain.length - 1, hintsUsed, dateStr, false, statsKey);
-    setStats(newStats);
-    persist(chain, newStatus, hintsUsed);
-    if (user) pushCloudStats(user.uid, cloudKey, newStats.history).catch(console.error);
-  }
-
-  function useHint() {
+function useHint() {
     if (!optimalPath) return { hint: null, newCount: hintsUsed };
     const newCount = hintsUsed + 1;
     setHintsUsed(newCount);
@@ -173,7 +164,6 @@ export function useChainword(user, wordListReady, hardMode = false, overrideDate
     stats,
     submitWord,
     undoLastMove,
-    giveUp,
     useHint,
     setError,
   };

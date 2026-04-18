@@ -4,6 +4,7 @@ import ResultBanner from '../../../components/ResultBanner.jsx';
 import ShareModal from './ShareModal.jsx';
 import Modal from '../../../components/Modal.jsx';
 import { chainwordTier } from '../../../utils/awards.js';
+import { showRewardedAd } from '../../../utils/ads.js';
 
 
 const KEYBOARD_ROWS = [
@@ -114,7 +115,7 @@ function getTodayIST() {
   return new Date(Date.now() + 5.5 * 60 * 60 * 1000).toISOString().split('T')[0];
 }
 
-export default function Game({ game, wordListReady, hardMode, onToggleHardMode, onArchive, archiveDate }) {
+export default function Game({ game, wordListReady, hardMode, adsEnabled, onToggleHardMode, onArchive, archiveDate }) {
   const {
     pair, dateStr, gameNumber,
     chain, optimalPath, parSteps, userSteps,
@@ -193,7 +194,7 @@ export default function Game({ game, wordListReady, hardMode, onToggleHardMode, 
     }
   }
 
-  function confirmHint() {
+  function applyHint() {
     setShowHintModal(false);
     const { hint, newCount } = useHint();
     if (hint) {
@@ -201,6 +202,19 @@ export default function Game({ game, wordListReady, hardMode, onToggleHardMode, 
       setInputValue('');
     }
     refocus();
+  }
+
+  function handleHintClick() {
+    if (adsEnabled) {
+      showRewardedAd({
+        name: 'chainword-hint',
+        onGranted: applyHint,
+        onDismissed: refocus,
+        onNoAd: () => setShowHintModal(true), // no ad available → fall back to free hint modal
+      });
+    } else {
+      setShowHintModal(true);
+    }
   }
 
   return (
@@ -273,10 +287,10 @@ export default function Game({ game, wordListReady, hardMode, onToggleHardMode, 
                 {optimalPath && (
                   <button
                     onMouseDown={(e) => e.preventDefault()}
-                    onClick={() => setShowHintModal(true)}
+                    onClick={handleHintClick}
                     className="px-4 py-2 text-sm text-amber-600 dark:text-amber-400 border border-amber-300 dark:border-amber-700 rounded-xl hover:bg-amber-50 dark:hover:bg-amber-900/20 transition-colors font-medium"
                   >
-                    💡 Hint
+                    {adsEnabled ? '📺 Hint' : '💡 Hint'}
                   </button>
                 )}
               </div>
@@ -369,7 +383,7 @@ export default function Game({ game, wordListReady, hardMode, onToggleHardMode, 
                   Cancel
                 </button>
                 <button
-                  onClick={confirmHint}
+                  onClick={applyHint}
                   className="px-4 py-2 text-sm font-semibold text-white bg-amber-500 hover:bg-amber-600 rounded-xl transition-colors"
                 >
                   Yes, show hint

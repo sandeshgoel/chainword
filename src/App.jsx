@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Routes, Route, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import Header from './components/Header.jsx';
-import Game from './games/chainword/components/Game.jsx';
+import ChainwordGame from './games/chainword/components/ChainwordGame.jsx';
 import Word4Game from './games/word4/components/Word4Game.jsx';
 import TilesGame from './games/tiles/components/TilesGame.jsx';
 import SquaresGame from './games/squares/components/SquaresGame.jsx';
@@ -75,7 +75,7 @@ export default function App() {
   const [statsVersion, setStatsVersion] = useState(0);
   const [gamesConfig, setGamesConfig] = useState({});
   const [gamesConfigError, setGamesConfigError] = useState(null);
-  const [globalConfig, setGlobalConfig] = useState(DEFAULT_GLOBAL_CONFIG); // eslint-disable-line no-unused-vars
+  const [globalConfig, setGlobalConfig] = useState(DEFAULT_GLOBAL_CONFIG);
 
   // Per-game archive date overrides (null = today)
   const [archiveDates, setArchiveDates] = useState({
@@ -338,10 +338,11 @@ export default function App() {
           <Route path="/chainword" element={
             gamesConfig.chainword?.paid && !userProfile?.paid
               ? <Navigate to="/" replace />
-              : <Game
+              : <ChainwordGame
                 game={game}
                 wordListReady={wordListReady}
                 hardMode={hardMode}
+                adsEnabled={globalConfig.ads_enabled && !userProfile?.paid}
                 onToggleHardMode={() => {
                   const next = !hardMode;
                   setHardMode(next);

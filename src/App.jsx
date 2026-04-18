@@ -9,7 +9,10 @@ import SquaresGame from './games/squares/components/SquaresGame.jsx';
 import ShabdalGame from './games/shabdal/components/ShabdalGame.jsx';
 import { useShabdal } from './games/shabdal/hooks/useShabdal.js';
 import CrypticGame from './games/cryptic/components/CrypticGame.jsx';
-import HowToPlay from './games/chainword/components/HowToPlay.jsx';
+import ChainwordHowToPlay from './games/chainword/components/HowToPlay.jsx';
+import Word4HowToPlay from './games/word4/components/HowToPlay.jsx';
+import TilesHowToPlay from './games/tiles/components/HowToPlay.jsx';
+import SquaresHowToPlay from './games/squares/components/HowToPlay.jsx';
 import StatsModal from './components/StatsModal.jsx';
 import AuthModal from './components/AuthModal.jsx';
 import StatsConflictModal from './components/StatsConflictModal.jsx';
@@ -20,7 +23,7 @@ import LandingPage from './pages/LandingPage.jsx';
 import AdminDashboard from './pages/AdminDashboard.jsx';
 import DebugPage from './pages/DebugPage.jsx';
 import { useAuth } from './hooks/useAuth.js';
-import { useGame } from './games/chainword/hooks/useGame.js';
+import { useChainword } from './games/chainword/hooks/useChainword.js';
 import { useWord4 } from './games/word4/hooks/useWord4.js';
 import { useTiles } from './games/tiles/hooks/useTiles.js';
 import { useSquares } from './games/squares/hooks/useSquares.js';
@@ -96,7 +99,7 @@ export default function App() {
     pendingSync, acceptSync, declineSync,
     sessionConflict, resolveSession,
   } = useAuth(() => setStatsVersion(v => v + 1));
-  const game = useGame(user, wordListReady, hardMode, archiveDates.chainword, statsVersion);
+  const game = useChainword(user, wordListReady, hardMode, archiveDates.chainword, statsVersion);
   const fourWord = useWord4(wordListReady, archiveDates.word4, user, statsVersion);
   const tiles = useTiles(archiveDates.tiles, user, statsVersion);
   const squares = useSquares(archiveDates.squares, user, statsVersion);
@@ -399,7 +402,10 @@ export default function App() {
       </main>
 
       {/* Modals */}
-      <HowToPlay open={showHelp} onClose={() => setShowHelp(false)} activeGame={activeGame} />
+      {activeGame === GAME_ID_WORD4   && <Word4HowToPlay   open={showHelp} onClose={() => setShowHelp(false)} />}
+      {activeGame === GAME_ID_TILES   && <TilesHowToPlay   open={showHelp} onClose={() => setShowHelp(false)} />}
+      {activeGame === GAME_ID_SQUARES && <SquaresHowToPlay open={showHelp} onClose={() => setShowHelp(false)} />}
+      {(activeGame === GAME_ID_CHAINWORD || activeGame === GAME_ID_CHAINWORD_HARD) && <ChainwordHowToPlay open={showHelp} onClose={() => setShowHelp(false)} />}
 
       <StatsModal
         open={showStats}

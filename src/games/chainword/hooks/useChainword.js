@@ -10,7 +10,7 @@ import { GAME_ID_CHAINWORD, GAME_ID_CHAINWORD_HARD } from '../../../gamesMeta.js
 import { getDailyInfo } from '../data/dailyPairs.js';
 import { getWordSet } from '../../../words.js';
 
-export function useGame(user, wordListReady, hardMode = false, overrideDateStr = null, statsVersion = 0) {
+export function useChainword(user, wordListReady, hardMode = false, overrideDateStr = null, statsVersion = 0) {
   const { pair, pairpath, dateStr, gameNumber } = getDailyInfo(hardMode, overrideDateStr);
   // Mode-specific keys so easy and hard progress/stats are stored separately
   const progressKey = hardMode ? `${dateStr}_hard` : dateStr;

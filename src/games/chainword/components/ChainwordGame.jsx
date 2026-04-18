@@ -1,7 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import WordRow from './WordRow.jsx';
 import ResultBanner from '../../../components/ResultBanner.jsx';
-import ShareModal from './ShareModal.jsx';
 import Modal from '../../../components/Modal.jsx';
 import { chainwordTier } from '../../../utils/awards.js';
 import { showRewardedAd } from '../../../utils/ads.js';
@@ -123,7 +122,6 @@ export default function Game({ game, wordListReady, hardMode, adsEnabled, onTogg
     submitWord, undoLastMove, giveUp, useHint, setError,
   } = game;
 
-  const [showShare, setShowShare] = useState(false);
   const [showHintModal, setShowHintModal] = useState(false);
   const [inputValue, setInputValue] = useState('');
   const inputRef = useRef(null);
@@ -357,18 +355,7 @@ export default function Game({ game, wordListReady, hardMode, adsEnabled, onTogg
             Archives &nbsp;📅
           </button>
 
-          <ShareModal
-            open={showShare}
-            onClose={() => setShowShare(false)}
-            gameData={isFinished ? {
-              gameNumber, dateStr,
-              start: pair.start, end: pair.end,
-              userSteps, parSteps, chain, hintsUsed,
-              gaveUp: status === 'gaveUp',
-            } : null}
-          />
-
-          <Modal open={showHintModal} onClose={() => { setShowHintModal(false); refocus(); }} title="Use a hint?">
+<Modal open={showHintModal} onClose={() => { setShowHintModal(false); refocus(); }} title="Use a hint?">
             <div className="space-y-4">
               <p className="text-sm text-gray-600 dark:text-gray-400">
                 A hint will reveal the next word on the optimal path.

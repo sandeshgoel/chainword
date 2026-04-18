@@ -119,9 +119,3 @@ export async function clearAllCloudStats(uid) {
   );
 }
 
-// Clear all cloud game progress (in-progress chains stored in users/{uid}/games/).
-export async function clearAllCloudProgress(uid) {
-  if (!firebaseConfigured) return;
-  const docs = await dbGetAll(['users', uid, 'games']);
-  await Promise.all(docs.map(d => dbDelete(['users', uid, 'games', d.id])));
-}

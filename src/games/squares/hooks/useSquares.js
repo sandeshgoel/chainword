@@ -5,6 +5,8 @@ import { updateSquaresStats, getGameHistory, SQUARES_STATS_KEY, SQUARES_PROGRESS
 import { pushCloudStats } from '../../../utils/cloudStats.js';
 import { GAME_ID_SQUARES } from '../../../gamesMeta.js';
 
+const EMPTY_SLOTS = ['', '', '', ''];
+
 function loadState(dateStr) {
   try {
     const saved = localStorage.getItem(SQUARES_PROGRESS_PREFIX + dateStr);
@@ -13,11 +15,20 @@ function loadState(dateStr) {
   return null;
 }
 
+function resolveState(dateStr) {
+  const statsEntry = getGameHistory(SQUARES_STATS_KEY).find(h => h.dateStr === dateStr);
+  const saved = loadState(dateStr);
+  return {
+    slots:        statsEntry?.slots || saved?.slots || [...EMPTY_SLOTS],
+    status:       statsEntry ? 'won' : (saved?.status || 'playing'),
+    hintedCorners: saved?.hintedCorners || [false, false, false, false],
+    hintsUsed:    saved?.hintsUsed ?? statsEntry?.hintsUsed ?? 0,
+  };
+}
+
 function saveState(dateStr, data) {
   localStorage.setItem(SQUARES_PROGRESS_PREFIX + dateStr, JSON.stringify(data));
 }
-
-const EMPTY_SLOTS = ['', '', '', ''];
 
 export function useSquares(overrideDateStr = null, user = null, statsVersion = 0) {
   const { square, dateStr, gameNumber } = getDailySquare(overrideDateStr);
@@ -26,29 +37,27 @@ export function useSquares(overrideDateStr = null, user = null, statsVersion = 0
   // Correct corner letters derived from puzzle: TL, TR, BL, BR
   const answer = [top[0], top[3], bottom[0], bottom[3]];
 
-  // slots[0..3] = TL, TR, BL, BR (each '' or a letter)
-  const [slots, setSlots] = useState(() => loadState(dateStr)?.slots || [...EMPTY_SLOTS]);
+  const [slots, setSlots] = useState(() => resolveState(dateStr).slots);
   const [cursorPos, setCursorPos] = useState(0);
-  const [status, setStatus] = useState(() => loadState(dateStr)?.status || 'playing');
+  const [status, setStatus] = useState(() => resolveState(dateStr).status);
   const [feedback, setFeedback] = useState(null);
   const [error, setError] = useState('');
-  // hintedCorners[i] = true if corner i was revealed by a hint
-  const [hintedCorners, setHintedCorners] = useState(() => loadState(dateStr)?.hintedCorners || [false, false, false, false]);
-  const [hintsUsed, setHintsUsed] = useState(() => loadState(dateStr)?.hintsUsed || 0);
+  const [hintedCorners, setHintedCorners] = useState(() => resolveState(dateStr).hintedCorners);
+  const [hintsUsed, setHintsUsed] = useState(() => resolveState(dateStr).hintsUsed);
   const [stats, setStats] = useState(() => ({ history: getGameHistory(SQUARES_STATS_KEY) }));
 
   useEffect(() => { setStats({ history: getGameHistory(SQUARES_STATS_KEY) }); }, [statsVersion]);
 
   // Reset state when date changes (archive navigation)
   useEffect(() => {
-    const saved = loadState(dateStr);
-    setSlots(saved?.slots || [...EMPTY_SLOTS]);
+    const { slots, status, hintedCorners, hintsUsed } = resolveState(dateStr);
+    setSlots(slots);
     setCursorPos(0);
-    setStatus(saved?.status || 'playing');
+    setStatus(status);
     setFeedback(null);
     setError('');
-    setHintedCorners(saved?.hintedCorners || [false, false, false, false]);
-    setHintsUsed(saved?.hintsUsed || 0);
+    setHintedCorners(hintedCorners);
+    setHintsUsed(hintsUsed);
   }, [dateStr]);
 
   const persist = useCallback((newStatus, newSlots, newHintedCorners, newHintsUsed) => {
@@ -119,7 +128,7 @@ export function useSquares(overrideDateStr = null, user = null, statsVersion = 0
       setSlots([tl, tr, bl, br]);
       setFeedback(null);
       persist('won', [tl, tr, bl, br], hintedCorners, hintsUsed);
-      const newStats = updateSquaresStats(dateStr, hintsUsed);
+      const newStats = updateSquaresStats(dateStr, hintsUsed, [tl, tr, bl, br]);
       setStats(newStats);
       if (user) pushCloudStats(user.uid, GAME_ID_SQUARES, newStats.history).catch(console.error);
     } else {

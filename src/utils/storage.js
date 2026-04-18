@@ -165,9 +165,9 @@ export function updateTilesStats(dateStr, score, optimalScore) {
 
 // --- Squares ---
 
-export function updateSquaresStats(dateStr, hintsUsed) {
+export function updateSquaresStats(dateStr, hintsUsed, slots) {
   const history = loadHistory(SQUARES_STATS_KEY);
-  upsertHistory(history, { dateStr, hintsUsed, won: true, playedDate: getTodayIST() });
+  upsertHistory(history, { dateStr, hintsUsed, slots, won: true, playedDate: getTodayIST() });
   saveHistory(SQUARES_STATS_KEY, history);
   return { history };
 }

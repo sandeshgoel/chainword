@@ -2,7 +2,8 @@ import { useEffect, useRef } from 'react';
 import { TIER_GOLD, TIER_UNSOLVED, TIER_CONFIG } from '../utils/awards.js';
 
 const CONFETTI_COLORS = ['#f59e0b', '#fbbf24', '#fde68a', '#f97316', '#ef4444', '#8b5cf6', '#3b82f6', '#10b981', '#ec4899'];
-const CONFETTI_DURATION = 3500;
+const CONFETTI_DURATION = 8000;
+const CONFETTI_FADE_START = 6000; // stay fully opaque until this point
 
 function useConfetti(active) {
   const canvasRef = useRef(null);
@@ -41,13 +42,19 @@ function useConfetti(active) {
 
       if (elapsed >= CONFETTI_DURATION) return;
 
-      const fade = Math.max(0, 1 - elapsed / CONFETTI_DURATION);
+      const fade = elapsed < CONFETTI_FADE_START ? 1 : Math.max(0, 1 - (elapsed - CONFETTI_FADE_START) / (CONFETTI_DURATION - CONFETTI_FADE_START));
 
       for (const p of particles) {
         p.x += p.vx;
         p.y += p.vy;
         p.vy += 0.12;
         p.angle += p.spin;
+        if (p.y > canvas.height + 20 && elapsed < CONFETTI_FADE_START) {
+          p.x = Math.random() * canvas.width;
+          p.y = -10 - Math.random() * 60;
+          p.vy = 1.5 + Math.random() * 4;
+          p.vx = (Math.random() - 0.5) * 5;
+        }
 
         ctx.save();
         ctx.translate(p.x, p.y);

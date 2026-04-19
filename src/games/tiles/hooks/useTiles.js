@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { getDailyTiles } from '../data/dailyTiles.js';
+import { getDailyTiles, LETTER_VALUES } from '../data/dailyTiles.js';
 import { getWordSet } from '../../../words.js';
 import { updateTilesStats, getGameHistory, TILES_STATS_KEY, TILES_PROGRESS_PREFIX } from '../../../utils/storage.js';
 import { pushCloudStats } from '../../../utils/cloudStats.js';
@@ -13,6 +13,10 @@ export function calcScore(slots) {
     if (!tile) return sum;
     return sum + tile.points * SLOT_MULTIPLIERS[i];
   }, 0);
+}
+
+export function calcScoreFromWord(word) {
+  return [...word].reduce((sum, letter, i) => sum + (LETTER_VALUES[letter] ?? 0) * SLOT_MULTIPLIERS[i], 0);
 }
 
 // Enumerate all 4-permutations of the 7 tiles and find the highest-scoring valid word.
@@ -60,7 +64,6 @@ export function useTiles(overrideDateStr = null, user = null, statsVersion = 0) 
   const [slots, setSlots] = useState([null, null, null, null]);
   const [error, setError] = useState('');
   const [submissions, setSubmissions] = useState([]);
-  const [bestScore, setBestScore] = useState(0);
   const [stats, setStats] = useState({ history: getGameHistory(TILES_STATS_KEY) });
 
   useEffect(() => { setStats({ history: getGameHistory(TILES_STATS_KEY) }); }, [statsVersion]);
@@ -74,23 +77,28 @@ export function useTiles(overrideDateStr = null, user = null, statsVersion = 0) 
     setSlots([null, null, null, null]);
     setError('');
 
-    const key = TILES_PROGRESS_PREFIX + dateStr;
-    const saved = localStorage.getItem(key);
-    if (saved) {
-      try {
-        const data = JSON.parse(saved);
-        setSubmissions(data.submissions || []);
-        setBestScore(data.bestScore || 0);
-        return;
-      } catch {}
+    // Prefer stats (authoritative, cloud-synced) for completed games
+    const statsEntry = getGameHistory(TILES_STATS_KEY).find(h => h.dateStr === dateStr);
+    if (statsEntry?.words?.length) {
+      setSubmissions(statsEntry.words.map(w => ({ word: w })));
+      return;
     }
+
+    // Fall back to in-progress save
+    try {
+      const data = JSON.parse(localStorage.getItem(TILES_PROGRESS_PREFIX + dateStr) || 'null');
+      if (data?.submissions?.length) {
+        setSubmissions(data.submissions);
+        return;
+      }
+    } catch {}
+
     setSubmissions([]);
-    setBestScore(0);
   }, [dateStr]);
 
-  const persist = useCallback((newSubmissions, newBest) => {
+  const persist = useCallback((newSubmissions) => {
     const key = TILES_PROGRESS_PREFIX + dateStr;
-    localStorage.setItem(key, JSON.stringify({ submissions: newSubmissions, bestScore: newBest }));
+    localStorage.setItem(key, JSON.stringify({ submissions: newSubmissions }));
   }, [dateStr]);
 
   // Clear a single slot without compacting (for animated tile removal)
@@ -167,21 +175,15 @@ export function useTiles(overrideDateStr = null, user = null, statsVersion = 0) 
       return 'duplicate';
     }
 
-    const score = calcScore(slots);
-    const newSub = { word: word.toUpperCase(), score, slots: slots.map(t => ({ ...t })) };
-    const newSubmissions = [...submissions, newSub];
-    const newBest = Math.max(bestScore, score);
+    const newSubmissions = [...submissions, { word: word.toUpperCase() }];
 
     setSubmissions(newSubmissions);
-    setBestScore(newBest);
     setError('');
-    persist(newSubmissions, newBest);
+    persist(newSubmissions);
 
-    if (score >= newBest) {
-      const newStats = updateTilesStats(dateStr, newBest, optimalScore);
-      setStats(newStats);
-      if (user) pushCloudStats(user.uid, GAME_ID_TILES, newStats.history).catch(console.error);
-    }
+    const newStats = updateTilesStats(dateStr, newSubmissions.map(s => s.word), optimalScore);
+    setStats(newStats);
+    if (user) pushCloudStats(user.uid, GAME_ID_TILES, newStats.history).catch(console.error);
 
     return true;
   }
@@ -193,7 +195,7 @@ export function useTiles(overrideDateStr = null, user = null, statsVersion = 0) 
     gameNumber,
     error,
     submissions,
-    bestScore,
+    bestScore: submissions.reduce((m, s) => Math.max(m, calcScoreFromWord(s.word)), 0),
     optimalScore,
     optimalWord,
     stats,

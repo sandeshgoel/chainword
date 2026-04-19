@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
-import { SLOT_MULTIPLIERS, calcScore } from '../hooks/useTiles.js';
+import { SLOT_MULTIPLIERS, calcScore, calcScoreFromWord } from '../hooks/useTiles.js';
+import { LETTER_VALUES } from '../data/dailyTiles.js';
 import { getWordSet } from '../../../words.js';
 import ResultBanner from '../../../components/ResultBanner.jsx';
 import Modal from '../../../components/Modal.jsx';
@@ -305,11 +306,12 @@ export default function TilesGame({ game, onArchive, archiveDate }) {
 
         {/* Result banner + best word — visible once any valid word submitted */}
         {submissions.length > 0 && (() => {
-          const best = submissions.reduce((a, b) => b.score > a.score ? b : a);
-          const isOptimal = best.score === optimalScore;
-          const tier = tilesTier(best.score, optimalScore);
+          const best = submissions.reduce((a, b) => calcScoreFromWord(b.word) > calcScoreFromWord(a.word) ? b : a);
+          const bestWordScore = calcScoreFromWord(best.word);
+          const isOptimal = bestWordScore === optimalScore;
+          const tier = tilesTier(bestWordScore, optimalScore);
           const tierTitles = { gold: 'Optimal score!', silver: 'Great score!', bronze: 'Keep trying!' };
-          const shareText = buildTilesShareText({ gameNumber, dateStr, bestScore: best.score, optimalScore, bestWord: best.word });
+          const shareText = buildTilesShareText({ gameNumber, dateStr, bestScore: bestWordScore, optimalScore, bestWord: best.word });
 
           async function handleShare() {
             await shareOrCopy(shareText, () => {
@@ -322,7 +324,7 @@ export default function TilesGame({ game, onArchive, archiveDate }) {
             <ResultBanner
               tier={tier}
               title={tierTitles[tier]}
-              details={`${best.score} / ${optimalScore} pts`}
+              details={`${bestWordScore} / ${optimalScore} pts`}
             >
               {(!archiveDate || archiveDate === getTodayIST()) && (
                 <button
@@ -351,8 +353,9 @@ export default function TilesGame({ game, onArchive, archiveDate }) {
             {/* All attempts as tiles, sorted by score */}
             <div className="w-full space-y-2">
               <p className="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider text-center">All attempts</p>
-              {[...submissions].sort((a, b) => b.score - a.score).map((sub, i) => {
-                const isBest = sub.score === bestScore;
+              {[...submissions].sort((a, b) => calcScoreFromWord(b.word) - calcScoreFromWord(a.word)).map((sub, i) => {
+                const subScore = calcScoreFromWord(sub.word);
+                const isBest = subScore === bestScore;
                 return (
                   <div
                     key={i}
@@ -363,9 +366,10 @@ export default function TilesGame({ game, onArchive, archiveDate }) {
                     }`}
                   >
                     <div className="flex gap-1.5">
-                      {sub.slots.map((t, j) => {
+                      {[...sub.word].map((letter, j) => {
                         const mult = SLOT_MULTIPLIERS[j];
                         const label = MULTIPLIER_LABEL[mult];
+                        const points = LETTER_VALUES[letter];
                         return (
                           <div
                             key={j}
@@ -376,8 +380,8 @@ export default function TilesGame({ game, onArchive, archiveDate }) {
                               boxShadow: '0 3px 0 #92400e, 0 4px 6px rgba(0,0,0,0.15), inset 0 1px 2px rgba(255,255,255,0.8)',
                             }}
                           >
-                            {t.letter}
-                            <span className="absolute bottom-0.5 right-1 text-[9px] font-bold leading-none text-amber-700">{t.points}</span>
+                            {letter}
+                            <span className="absolute bottom-0.5 right-1 text-[9px] font-bold leading-none text-amber-700">{points}</span>
                             {label && (
                               <span className={`absolute top-0.5 left-1 text-[8px] font-extrabold leading-none ${MULTIPLIER_TEXT[mult]}`}>{label}</span>
                             )}
@@ -386,7 +390,7 @@ export default function TilesGame({ game, onArchive, archiveDate }) {
                       })}
                     </div>
                     <span className={`font-bold text-sm ${isBest ? 'text-indigo-600 dark:text-indigo-400' : 'text-gray-500 dark:text-gray-400'}`}>
-                      {sub.score} pts
+                      {subScore} pts
                     </span>
                   </div>
                 );

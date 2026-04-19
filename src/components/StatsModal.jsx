@@ -3,6 +3,7 @@ import Modal from './Modal.jsx';
 import { GAME_ID_WORD4 } from '../gamesMeta.js';
 import { getParStepsForDate } from '../games/chainword/data/dailyPairs.js';
 import { computeStreaks } from '../utils/storage.js';
+import { calcScoreFromWord } from '../games/tiles/hooks/useTiles.js';
 import {
   chainwordTier, word4Tier, tilesTier, squaresTier, shabdalTier,
   TIER_CONFIG, TIER_GOLD, TIER_SILVER, TIER_BRONZE, TIER_UNSOLVED,
@@ -92,12 +93,13 @@ function HistoryTable({ history, isChainword, isWord4, isTiles, isSquares, isSha
                 })()}
 
                 {isTiles && (() => {
-                  const isOptimal = h.score >= h.optimalScore;
-                  const tier = tilesTier(h.score, h.optimalScore);
+                  const bestScore = Math.max(0, ...(h.words ?? []).map(w => calcScoreFromWord(w)));
+                  const isOptimal = bestScore >= h.optimalScore;
+                  const tier = tilesTier(bestScore, h.optimalScore);
                   return (<>
                     <td className="text-center px-2 py-2 text-base">{TIER_CONFIG[tier].emoji}</td>
                     <td className={`text-center px-2 py-2 font-medium ${isOptimal ? 'text-emerald-600 dark:text-emerald-400' : 'text-gray-700 dark:text-gray-300'}`}>
-                      {h.score}
+                      {bestScore}
                     </td>
                     <td className="text-center px-2 py-2 text-gray-500 dark:text-gray-400">{h.optimalScore}</td>
                   </>);

@@ -4,6 +4,7 @@ import toast from 'react-hot-toast';
 import { chainwordTier, word4Tier, tilesTier, squaresTier, shabdalTier, 
   TIER_CONFIG, TIER_GOLD, TIER_SILVER, TIER_BRONZE, TIER_UNSOLVED } from '../utils/awards.js';
 import { getParStepsForDate } from '../games/chainword/data/dailyPairs.js';
+import { calcScoreFromWord } from '../games/tiles/hooks/useTiles.js';
 import Header from '../components/Header.jsx';
 import { GAMES_META, GAME_ID_CHAINWORD, GAME_ID_WORD4, GAME_ID_TILES, GAME_ID_SQUARES, GAME_ID_SHABDAL } from '../gamesMeta.js';
 import {
@@ -41,7 +42,7 @@ function getGameStatus(gameId, dateStr) {
     } else if (gameId === GAME_ID_TILES) {
       const stats = JSON.parse(localStorage.getItem(TILES_STATS_KEY) || 'null');
       const entry = stats?.history?.find(h => h.dateStr === dateStr);
-      if (entry) return tilesTier(entry.score, entry.optimalScore);
+      if (entry) return tilesTier(Math.max(0, ...(entry.words ?? []).map(w => calcScoreFromWord(w))), entry.optimalScore);
       const saved = JSON.parse(localStorage.getItem(TILES_PROGRESS_PREFIX + dateStr) || 'null');
       if (saved?.submissions?.length > 0) return 'started';
     } else if (gameId === GAME_ID_SQUARES) {

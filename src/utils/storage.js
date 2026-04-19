@@ -156,9 +156,9 @@ export function updateWord4Stats(guessesCount, dateStr) {
 
 // --- Tiles ---
 
-export function updateTilesStats(dateStr, score, optimalScore) {
+export function updateTilesStats(dateStr, words, optimalScore) {
   const history = loadHistory(TILES_STATS_KEY);
-  upsertHistory(history, { dateStr, score, optimalScore, playedDate: getTodayIST() });
+  upsertHistory(history, { dateStr, words, optimalScore, playedDate: getTodayIST() });
   saveHistory(TILES_STATS_KEY, history);
   return { history };
 }

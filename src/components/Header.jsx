@@ -3,12 +3,25 @@ import { formatDate } from '../utils/wordUtils.js';
 import HamburgerMenu from './HamburgerMenu.jsx';
 import { GAMES_META_BY_ID } from '../gamesMeta.js';
 
-function ProfileDropdown({ user, onFriends, onSignOut, onClose }) {
+function ProfileDropdown({ user, userProfile, onFriends, onSignOut, onClose }) {
   return (
     <div className="absolute right-0 top-full mt-1 w-48 bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 py-1 z-50">
       {user?.displayName && (
         <div className="px-4 py-2.5 border-b border-gray-100 dark:border-gray-700">
           <p className="text-sm font-semibold text-gray-900 dark:text-white truncate">{user.displayName}</p>
+          {(userProfile?.admin || userProfile?.beta || userProfile?.paid) && (
+            <div className="flex gap-1 mt-1">
+              {userProfile.admin && (
+                <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400">⚡ Admin</span>
+              )}
+              {userProfile.beta && (
+                <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-purple-100 dark:bg-purple-900/40 text-purple-600 dark:text-purple-400">🧪 Beta</span>
+              )}
+              {userProfile.paid && (
+                <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-yellow-100 dark:bg-yellow-900/40 text-yellow-600 dark:text-yellow-400">⭐ Premium</span>
+              )}
+            </div>
+          )}
         </div>
       )}
       <button
@@ -53,6 +66,7 @@ export default function Header({
   signingIn,
   isAdmin,
   gamesConfig,
+  transparent = false,
 }) {
   const meta = GAMES_META_BY_ID[activeGame] ?? {};
   const gameTitle = gamesConfig?.[activeGame]?.title || activeGame;
@@ -100,7 +114,7 @@ export default function Header({
   }
 
   return (
-    <header className="flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 sticky top-0 z-40">
+    <header className={`flex items-center justify-between px-4 py-3 sticky top-0 z-40 ${transparent ? 'bg-transparent' : 'border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900'}`}>
       {/* Left: menu + how to play */}
       <div className="flex items-center gap-1">
         <HamburgerMenu
@@ -112,43 +126,49 @@ export default function Header({
           isAdmin={isAdmin}
           gamesConfig={gamesConfig}
         />
-        <button
-          onClick={onHowToPlay}
-          className="w-7 h-7 rounded-full border-2 border-gray-400 dark:border-gray-500 text-gray-400 dark:text-gray-500 hover:border-indigo-500 hover:text-indigo-500 dark:hover:border-indigo-400 dark:hover:text-indigo-400 flex items-center justify-center text-[11px] font-extrabold leading-none transition-colors"
-          aria-label="How to play"
-        >
-          ?
-        </button>
+        {onHowToPlay && (
+          <button
+            onClick={onHowToPlay}
+            className="w-7 h-7 rounded-full border-2 border-gray-400 dark:border-gray-500 text-gray-400 dark:text-gray-500 hover:border-indigo-500 hover:text-indigo-500 dark:hover:border-indigo-400 dark:hover:text-indigo-400 flex items-center justify-center text-[11px] font-extrabold leading-none transition-colors"
+            aria-label="How to play"
+          >
+            ?
+          </button>
+        )}
       </div>
 
       {/* Center: title (tapping goes home) */}
-      <button onClick={onHome} className="absolute left-1/2 -translate-x-1/2 flex flex-col items-center leading-none hover:opacity-70 transition-opacity">
-        <span className="text-xl font-extrabold tracking-tight text-gray-900 dark:text-white">
-          {meta.emoji?.startsWith('/')
-            ? <><img src={meta.emoji} alt={meta.name} className="inline-block w-7 h-7 -mt-0.5 mr-1 rounded" />{gameTitle}</>
-            : `${meta.emoji ?? ''} ${gameTitle}`.trim()}
-        </span>
-        {(gameNumber || dateStr) && (
-          <span className="text-[10px] font-semibold text-gray-400 dark:text-gray-500">
-            {dateStr ? formatDate(dateStr) : ''}
-            {gameNumber && dateStr ? '  •  ' : ''}
-            {gameNumber ? `#${gameNumber}` : ''}
+      {activeGame && (
+        <button onClick={onHome} className="absolute left-1/2 -translate-x-1/2 flex flex-col items-center leading-none hover:opacity-70 transition-opacity">
+          <span className="text-xl font-extrabold tracking-tight text-gray-900 dark:text-white">
+            {meta.emoji?.startsWith('/')
+              ? <><img src={meta.emoji} alt={meta.name} className="inline-block w-7 h-7 -mt-0.5 mr-1 rounded" />{gameTitle}</>
+              : `${meta.emoji ?? ''} ${gameTitle}`.trim()}
           </span>
-        )}
-      </button>
+          {(gameNumber || dateStr) && (
+            <span className="text-[10px] font-semibold text-gray-400 dark:text-gray-500">
+              {dateStr ? formatDate(dateStr) : ''}
+              {gameNumber && dateStr ? '  •  ' : ''}
+              {gameNumber ? `#${gameNumber}` : ''}
+            </span>
+          )}
+        </button>
+      )}
 
       {/* Right: controls */}
       <div className="flex items-center gap-1">
         {/* Stats */}
-        <button
-          onClick={onStats}
-          className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-600 dark:text-gray-300 transition-colors"
-          aria-label="Statistics"
-        >
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-          </svg>
-        </button>
+        {onStats && (
+          <button
+            onClick={onStats}
+            className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-600 dark:text-gray-300 transition-colors"
+            aria-label="Statistics"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+            </svg>
+          </button>
+        )}
 
         {/* Profile — spinner while signing in, dropdown when signed in, auth trigger when signed out */}
         <div className="relative" ref={dropdownRef}>
@@ -192,6 +212,7 @@ export default function Header({
           {dropdownOpen && (
             <ProfileDropdown
               user={user}
+              userProfile={userProfile}
               onFriends={onFriends}
               onSignOut={onSignOut}
               onClose={() => setDropdownOpen(false)}

@@ -80,11 +80,10 @@ service cloud.firestore {
 
   return (
     <div className="overflow-x-scroll">
-      <table className="min-w-[580px] w-full text-sm">
+      <table className="min-w-[480px] w-full text-xs">
         <thead>
           <tr className="border-b border-gray-200 dark:border-gray-700 text-left text-xs font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
             <th className="pb-3 pr-4">User</th>
-            <th className="pb-3 pr-4">Email</th>
             <th className="pb-3 pr-4 text-center">Admin</th>
             <th className="pb-3 pr-4 text-center">Paid</th>
             <th className="pb-3 pr-4 text-center">Beta</th>
@@ -94,7 +93,7 @@ service cloud.firestore {
         <tbody>
           {users.length === 0 && (
             <tr>
-              <td colSpan={6} className="py-8 text-center text-gray-400 dark:text-gray-500">
+              <td colSpan={5} className="py-8 text-center text-gray-400 dark:text-gray-500">
                 No users found
               </td>
             </tr>
@@ -110,19 +109,21 @@ service cloud.firestore {
                     <img
                       src={u.photoURL}
                       alt={u.displayName}
-                      className="w-7 h-7 rounded-full flex-shrink-0"
+                      className="w-6 h-6 rounded-full flex-shrink-0"
                       referrerPolicy="no-referrer"
                     />
                   ) : (
-                    <div className="w-7 h-7 rounded-full bg-gray-200 dark:bg-gray-700 flex-shrink-0" />
+                    <div className="w-6 h-6 rounded-full bg-gray-200 dark:bg-gray-700 flex-shrink-0" />
                   )}
-                  <span className="font-medium text-gray-900 dark:text-white truncate max-w-[120px]">
-                    {u.displayName || '—'}
-                  </span>
+                  <div className="min-w-0">
+                    <div className="font-medium text-gray-900 dark:text-white truncate max-w-[160px]">
+                      {u.displayName || '—'}
+                    </div>
+                    <div className="text-[10px] text-gray-500 dark:text-gray-400 truncate max-w-[160px]">
+                      {u.email}
+                    </div>
+                  </div>
                 </div>
-              </td>
-              <td className="py-3 pr-4 text-gray-600 dark:text-gray-400 truncate max-w-[180px]">
-                {u.email}
               </td>
               <td className="py-3 pr-4 text-center">
                 <Toggle

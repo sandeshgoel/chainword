@@ -264,6 +264,8 @@ export default function App() {
           darkMode={darkMode}
           onToggleDark={() => setDarkMode(d => !d)}
           onAuth={() => setShowAuth(true)}
+          onSignOut={signOut}
+          onFriends={() => setShowFriends(true)}
           user={user}
           userProfile={userProfile}
           lastUser={lastUser}

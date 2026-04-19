@@ -52,7 +52,7 @@ export const COMMON_WORDS = ["that", "this", "with", "from", "your", "have", "mo
     "coat", "doll", "reed", "mice", "temp", "vast", "wrap", "mood", "quiz", "beam", "tops", "shut",
     "thou", "mask", "coal", "lion", "beef", "hats", "surf", "hook", "cord", "crop", "lite", "sing",
     "tons", "hang", "hood", "fame", "eggs", "ruby", "stem", "drew", "tune", "corn", "puts", "grew",
-    "trek", "ties", "jury", "tail", "lawn", "soup", "byte", "nose", "thru", "jews", "trim", "quit",
+    "trek", "ties", "jury", "tail", "lawn", "soup", "byte", "nose", "jews", "trim", "quit",
     "lung", "sees", "bull", "mart", "tale", "docs", "coin", "fake", "cure", "arch", "bomb", "harm",
     "deer", "oven", "noon", "cams", "proc", "mate", "chef", "isle", "slim", "luke", "comp", "spec",
     "midi", "tied", "oils", "unto", "pays", "stud", "fold", "pole", "mega", "bend", "moms", "glen",

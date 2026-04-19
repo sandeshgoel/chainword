@@ -153,9 +153,14 @@ export default function FourWordGame({ game, wordListReady, onArchive, archiveDa
   const prevGuessCount = useRef(guesses.length); // skip animating pre-loaded guesses
   const revealTimers = useRef([]);
 
+  // Show banner only after last tile has finished flipping (2000ms).
+  // For already-finished games (archive), show immediately.
+  const [showBanner, setShowBanner] = useState(() => status !== 'playing');
+  const bannerTimer = useRef(null);
+
   const isPlaying = status === 'playing';
 
-  function startReveal(rowIndex) {
+  function startReveal(rowIndex, onComplete) {
     revealTimers.current.forEach(clearTimeout);
     revealTimers.current = [];
     setRevealState({ rowIndex, phases: [null, null, null, null] });
@@ -176,19 +181,26 @@ export default function FourWordGame({ game, wordListReady, onArchive, archiveDa
     }
     // Clear reveal state after all letters done
     revealTimers.current.push(setTimeout(() => setRevealState(null), 3 * 500 + 550));
+    if (onComplete) {
+      revealTimers.current.push(setTimeout(onComplete, 3 * 500 + 500));
+    }
   }
 
   // Detect new guess and start reveal
   useEffect(() => {
     if (guesses.length > prevGuessCount.current) {
       prevGuessCount.current = guesses.length;
-      startReveal(guesses.length - 1);
+      const finishing = status !== 'playing';
+      startReveal(guesses.length - 1, finishing ? () => setShowBanner(true) : null);
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [guesses.length]);
+  }, [guesses.length, status]);
 
   // Cleanup timers on unmount
-  useEffect(() => () => revealTimers.current.forEach(clearTimeout), []);
+  useEffect(() => () => {
+    revealTimers.current.forEach(clearTimeout);
+    clearTimeout(bannerTimer.current);
+  }, []);
 
   useEffect(() => {
     if (!isPlaying || !wordListReady) return;
@@ -291,7 +303,7 @@ export default function FourWordGame({ game, wordListReady, onArchive, archiveDa
             </div>
           )}
 
-          {status !== 'playing' && (
+          {showBanner && (
             <div className="mt-4 w-full">
               <ResultBanner
                 tier={word4Tier(status === 'won', guesses.length)}
@@ -310,7 +322,7 @@ export default function FourWordGame({ game, wordListReady, onArchive, archiveDa
             </div>
           )}
 
-          {status !== 'playing' && (() => {
+          {showBanner && (() => {
             const tier = word4Tier(status === 'won', guesses.length);
             const cfg = TIER_CONFIG[tier];
             return (

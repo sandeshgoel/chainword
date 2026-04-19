@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
-import { getDailyWord4Target, getWordSet } from '../../../words.js';
+import { getDailyWord4Target } from '../data/dailyWord4.js';
+import { getWordSet } from '../../../words.js';
 import { updateWord4Stats, getGameHistory, WORD4_STATS_KEY, WORD4_PROGRESS_PREFIX } from '../../../utils/storage.js';
 import { pushCloudStats } from '../../../utils/cloudStats.js';
 import { GAME_ID_WORD4 } from '../../../gamesMeta.js';

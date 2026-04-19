@@ -241,7 +241,7 @@ export default function App() {
 
   // Debug page
   if (location.pathname === '/debug') {
-    return <DebugPage darkMode={darkMode} />;
+    return <DebugPage darkMode={darkMode} onToggleDark={() => setDarkMode(d => !d)} onHome={() => navigate('/')} onSelectGame={id => navigate('/' + id)} isAdmin={userProfile?.admin ?? false} gamesConfig={gamesConfig} user={user} userProfile={userProfile} lastUser={lastUser} signingIn={signingIn} onAuth={() => setShowAuth(true)} onSignOut={signOut} onFriends={() => setShowFriends(true)} />;
   }
 
   // Admin page

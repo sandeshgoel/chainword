@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react';
 import { getDbStats } from '../utils/dbTracker.js';
+import Header from '../components/Header.jsx';
+import Modal from '../components/Modal.jsx';
 
 function formatElapsed(ms) {
   const totalSec = Math.floor(ms / 1000);
@@ -11,11 +13,23 @@ function formatElapsed(ms) {
   return `${s}s`;
 }
 
-export default function DebugPage({ darkMode }) {
+export default function DebugPage({ darkMode, onToggleDark, onHome, onSelectGame, isAdmin, gamesConfig, user, userProfile, lastUser, signingIn, onAuth, onSignOut, onFriends }) {
   const [snapshot, setSnapshot] = useState(() => getDbStats());
 
   useEffect(() => {
     const id = setInterval(() => setSnapshot(getDbStats()), 1000);
+    return () => clearInterval(id);
+  }, []);
+
+  const [localStorageRows, setLocalStorageRows] = useState(() =>
+    Object.keys(localStorage).sort().map(k => ({ key: k, value: localStorage.getItem(k) }))
+  );
+  const [selectedEntry, setSelectedEntry] = useState(null);
+
+  useEffect(() => {
+    const id = setInterval(() => {
+      setLocalStorageRows(Object.keys(localStorage).sort().map(k => ({ key: k, value: localStorage.getItem(k) })));
+    }, 1000);
     return () => clearInterval(id);
   }, []);
 
@@ -32,8 +46,23 @@ export default function DebugPage({ darkMode }) {
 
   return (
     <div className={darkMode ? 'dark' : ''}>
-      <div className="min-h-dvh bg-gray-100 dark:bg-gray-950 text-gray-900 dark:text-gray-100 p-6 font-mono text-sm">
-        <div className="max-w-xl mx-auto space-y-6">
+      <div className="min-h-dvh bg-gray-100 dark:bg-gray-950 text-gray-900 dark:text-gray-100 font-mono text-sm">
+        <Header
+          darkMode={darkMode}
+          onToggleDark={onToggleDark}
+          onHome={onHome}
+          onSelectGame={onSelectGame}
+          isAdmin={isAdmin}
+          gamesConfig={gamesConfig}
+          user={user}
+          userProfile={userProfile}
+          lastUser={lastUser}
+          signingIn={signingIn}
+          onAuth={onAuth}
+          onSignOut={onSignOut}
+          onFriends={onFriends}
+        />
+        <div className="max-w-xl mx-auto space-y-6 p-6">
 
           <div>
             <h1 className="text-xl font-bold tracking-tight">DB Tracker</h1>
@@ -80,8 +109,47 @@ export default function DebugPage({ darkMode }) {
             </div>
           )}
 
+          <div>
+            <h2 className="text-lg font-bold tracking-tight mb-3">Local Storage</h2>
+            {localStorageRows.length === 0 ? (
+              <p className="text-gray-400 dark:text-gray-500 text-xs">No localStorage entries found.</p>
+            ) : (
+              <div className="overflow-x-auto rounded-xl border border-gray-200 dark:border-gray-700">
+                <table className="w-full text-left border-collapse text-[10px]">
+                  <thead>
+                    <tr className="bg-gray-200 dark:bg-gray-800 text-[9px] uppercase tracking-wider text-gray-500 dark:text-gray-400">
+                      <th className="px-3 py-1.5 font-semibold w-2/5">Key</th>
+                      <th className="px-3 py-1.5 font-semibold">Value</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {localStorageRows.map(({ key, value }) => (
+                      <tr
+                        key={key}
+                        onClick={() => setSelectedEntry({ key, value })}
+                        className="border-t border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors cursor-pointer"
+                      >
+                        <td className="px-3 py-1.5 text-indigo-600 dark:text-indigo-400 align-top break-all">{key}</td>
+                        <td className="px-3 py-1.5 text-gray-700 dark:text-gray-300 truncate max-w-[200px]">{value}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+
+          {selectedEntry && (
+            <Modal open onClose={() => setSelectedEntry(null)} title={selectedEntry.key}>
+              <pre className="text-xs bg-gray-50 dark:bg-gray-900 rounded-lg p-3 overflow-auto max-h-[60vh] whitespace-pre-wrap break-all text-gray-800 dark:text-gray-200">
+                {(() => { try { return JSON.stringify(JSON.parse(selectedEntry.value), null, 2); } catch { return selectedEntry.value; } })()}
+              </pre>
+            </Modal>
+          )}
+
         </div>
       </div>
     </div>
   );
 }
+

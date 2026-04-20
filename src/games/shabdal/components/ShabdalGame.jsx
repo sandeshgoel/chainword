@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import ShabdalKeyboard from './ShabdalKeyboard.jsx';
 import ResultBanner from '../../../components/ResultBanner.jsx';
 import Modal from '../../../components/Modal.jsx';
-import { formHindiWord } from '../../../utils/hindiUtils.js';
+import { formSyllable, MATRAS } from '../../../utils/hindiUtils.js';
 import { buildShabdalShareText, shareOrCopy } from '../../../utils/sharing.js';
 import { shabdalTier } from '../../../utils/awards.js';
 
@@ -11,12 +11,15 @@ function getTodayIST() {
 }
 
 // ── Tile ─────────────────────────────────────────────────────────────────────
-function Tile({ char, color, revealPhase }) {
+// consonant: the guessed consonant (null if empty)
+// vowel: pre-set vowel for this position (always known)
+// When empty: shows the vowel matra as a hint (or 'अ' for the inherent vowel)
+function Tile({ consonant, vowel, color, revealPhase }) {
   const useReveal = revealPhase !== undefined;
   const showColor = !useReveal || revealPhase === 'in' || revealPhase === 'done';
 
   const effectiveColor = (() => {
-    if (!showColor) return char ? 'active' : 'empty';
+    if (!showColor) return consonant ? 'active' : 'empty';
     return color;
   })();
 
@@ -25,41 +28,45 @@ function Tile({ char, color, revealPhase }) {
   else if (effectiveColor === 'orange') bgClass = 'border-orange-400 bg-orange-400 text-white';
   else if (effectiveColor === 'gray') bgClass = 'border-gray-500 bg-gray-500 text-white dark:border-gray-600 dark:bg-gray-600';
   else if (effectiveColor === 'active') bgClass = 'border-orange-400 bg-white dark:bg-gray-800 text-orange-700 dark:text-orange-300';
-  else if (effectiveColor === 'next') bgClass = 'border-orange-500 bg-orange-50/50 dark:bg-orange-900/20 text-orange-900 dark:text-orange-100 ring-4 ring-orange-200 dark:ring-orange-900/50 scale-105 shadow-sm';
-  else if (effectiveColor === 'empty') bgClass = 'border-dashed border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100';
+  else if (effectiveColor === 'next') bgClass = 'border-orange-500 bg-orange-50/50 dark:bg-orange-900/20 text-orange-600 dark:text-orange-400 ring-4 ring-orange-200 dark:ring-orange-900/50 scale-105 shadow-sm';
+  else if (effectiveColor === 'empty') bgClass = 'border-dashed border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-400 dark:text-gray-500';
 
   let tileStyle = {};
   if (revealPhase === 'out') tileStyle = { transform: 'scaleY(0)', transition: 'transform 250ms ease-in' };
   else if (revealPhase === 'in') tileStyle = { transform: 'scaleY(1)', transition: 'transform 250ms ease-out' };
+
+  // Filled: show consonant+matra. Empty: show matra hint (or 'अ' for inherent vowel).
+  const display = consonant
+    ? formSyllable(consonant, vowel)
+    : (MATRAS[vowel] || '');
 
   return (
     <div
       className={`w-11 h-11 flex items-center justify-center rounded-lg text-xl font-extrabold border-2 ${bgClass}`}
       style={{ ...tileStyle, fontFamily: 'Noto Sans Devanagari, sans-serif' }}
     >
-      {char || ''}
+      {display}
     </div>
   );
 }
 
 // ── WordRow ───────────────────────────────────────────────────────────────────
-function WordRow({ letters = [], colors, isActive, inputLength = 0, revealPhases, formedWord }) {
-  const padded = [...letters];
-  while (padded.length < 4) padded.push(null);
-
+function WordRow({ guessConsonants = [], vowels = [], colors, isActive, inputLength = 0, revealPhases, formedWord }) {
   return (
     <div className="flex items-center gap-3">
-      {/* 4-letter grid */}
+      {/* 4-tile grid */}
       <div className="flex gap-2">
-        {padded.map((ch, i) => {
+        {vowels.map((v, i) => {
+          const c = guessConsonants[i] || null;
           let color = 'empty';
           if (colors && colors[i]) color = colors[i];
-          else if (ch) color = 'active';
+          else if (c) color = 'active';
           else if (isActive && i === inputLength) color = 'next';
           return (
             <Tile
               key={i}
-              char={ch || ''}
+              consonant={c}
+              vowel={v}
               color={color}
               revealPhase={revealPhases ? revealPhases[i] : undefined}
             />
@@ -82,7 +89,7 @@ function WordRow({ letters = [], colors, isActive, inputLength = 0, revealPhases
 function getLetterStates(guesses) {
   const states = {};
   for (const g of guesses) {
-    g.letters.forEach((ch, i) => {
+    g.consonants.forEach((ch, i) => {
       const color = g.colors[i];
       if (color === 'green') states[ch] = 'green';
       else if (color === 'orange' && states[ch] !== 'green') states[ch] = 'orange';
@@ -94,8 +101,8 @@ function getLetterStates(guesses) {
 
 // ── Main Game ─────────────────────────────────────────────────────────────────
 export default function ShabdalGame({ game, onArchive, archiveDate }) {
-  const { target, guesses, status, error, setError, submitGuess, formedTarget, gameNumber, dateStr } = game;
-  const [input, setInput] = useState([]); // Array of Devanagari letters
+  const { targetVowels, guesses, status, error, setError, submitGuess, formedTarget, gameNumber, dateStr } = game;
+  const [input, setInput] = useState([]); // Array of consonants being typed
   const [revealState, setRevealState] = useState(null);
   const [showShare, setShowShare] = useState(false);
   const [copied, setCopied] = useState(false);
@@ -149,7 +156,7 @@ export default function ShabdalGame({ game, onArchive, archiveDate }) {
       setInput(prev => prev.slice(0, -1));
       if (error) setError('');
     } else if (key === 'ENTER') {
-      if (input.length !== 4) { setError('4 अक्षर चाहिए'); return; }
+      if (input.length !== 4) { setError('4 व्यंजन चाहिए'); return; }
       const ok = submitGuess(input);
       if (ok) setInput([]);
     } else {
@@ -171,7 +178,8 @@ export default function ShabdalGame({ game, onArchive, archiveDate }) {
       rows.push(
         <WordRow
           key={i}
-          letters={guesses[i].letters}
+          guessConsonants={guesses[i].consonants}
+          vowels={targetVowels}
           colors={guesses[i].colors}
           revealPhases={isRevealingRow ? revealState.phases : undefined}
           formedWord={guesses[i].formed}
@@ -181,14 +189,15 @@ export default function ShabdalGame({ game, onArchive, archiveDate }) {
       rows.push(
         <WordRow
           key={i}
-          letters={input}
+          guessConsonants={input}
+          vowels={targetVowels}
           isActive={true}
           inputLength={input.length}
-          formedWord={input.length > 0 ? formHindiWord(input) : ''}
+          formedWord={input.length > 0 ? input.map((c, j) => formSyllable(c, targetVowels[j])).join('') : ''}
         />
       );
     } else {
-      rows.push(<WordRow key={i} />);
+      rows.push(<WordRow key={i} vowels={targetVowels} />);
     }
   }
 

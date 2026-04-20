@@ -1,6 +1,13 @@
 import { useState, useEffect, useCallback } from 'react';
 import { getDailyWord } from '../data/shabdalWords.js';
-import { formHindiWord } from '../../../utils/hindiUtils.js';
+import { VALID_WORDS_HINDI } from '../../../validWordsHindi.js';
+import { formSyllable, formWordFromPairs } from '../../../utils/hindiUtils.js';
+
+let hindiWordSet = null;
+function getHindiWordSet() {
+  if (!hindiWordSet) hindiWordSet = new Set(VALID_WORDS_HINDI);
+  return hindiWordSet;
+}
 import { updateShabdalStats, getGameHistory, SHABDAL_STATS_KEY, SHABDAL_PROGRESS_PREFIX } from '../../../utils/storage.js';
 import { pushCloudStats } from '../../../utils/cloudStats.js';
 import { GAME_ID_SHABDAL } from '../../../gamesMeta.js';
@@ -8,14 +15,17 @@ import { evaluateGuess } from '../../../utils/wordUtils.js';
 
 export function useShabdal(overrideDateStr = null, user = null, statsVersion = 0) {
   const { target, dateStr, gameNumber } = getDailyWord(overrideDateStr);
-  const [guesses, setGuesses] = useState([]); // [{ letters: [...], colors: [...], formed: '...' }]
+  // target is [{c, v}, ...] — 4 syllable pairs
+  const targetConsonants = target.map(p => p.c);
+  const targetVowels = target.map(p => p.v);
+
+  const [guesses, setGuesses] = useState([]); // [{ consonants: [...], colors: [...], formed: '...' }]
   const [status, setStatus] = useState('playing'); // 'playing' | 'won' | 'lost'
   const [error, setError] = useState('');
   const [stats, setStats] = useState({ history: getGameHistory(SHABDAL_STATS_KEY) });
 
   useEffect(() => { setStats({ history: getGameHistory(SHABDAL_STATS_KEY) }); }, [statsVersion]);
 
-  // Load from local storage
   useEffect(() => {
     const key = SHABDAL_PROGRESS_PREFIX + dateStr;
     const saved = localStorage.getItem(key);
@@ -24,9 +34,7 @@ export function useShabdal(overrideDateStr = null, user = null, statsVersion = 0
         const data = JSON.parse(saved);
         setGuesses(data.guesses || []);
         setStatus(data.status || 'playing');
-      } catch (e) {
-        // ignore
-      }
+      } catch (e) {}
     } else {
       setGuesses([]);
       setStatus('playing');
@@ -35,23 +43,25 @@ export function useShabdal(overrideDateStr = null, user = null, statsVersion = 0
 
   const persist = useCallback((newGuesses, newStatus) => {
     const key = SHABDAL_PROGRESS_PREFIX + dateStr;
-    localStorage.setItem(key, JSON.stringify({
-      guesses: newGuesses,
-      status: newStatus,
-    }));
+    localStorage.setItem(key, JSON.stringify({ guesses: newGuesses, status: newStatus }));
   }, [dateStr]);
 
-  const submitGuess = useCallback((letters) => {
-    if (letters.length !== 4) {
-      setError('Enter 4 letters');
+  const submitGuess = useCallback((consonants) => {
+    if (consonants.length !== 4) {
+      setError('4 व्यंजन चाहिए');
       return false;
     }
     if (status !== 'playing') return false;
 
-    const colors = evaluateGuess(letters, target);
+    const formed = consonants.map((c, i) => formSyllable(c, targetVowels[i])).join('');
+    if (!getHindiWordSet().has(formed)) {
+      setError(`"${formed}" मान्य शब्द नहीं है`);
+      return false;
+    }
+
+    const colors = evaluateGuess(consonants, targetConsonants);
     const won = colors.every(c => c === 'green');
-    
-    const newGuesses = [...guesses, { letters, colors, formed: formHindiWord(letters) }];
+    const newGuesses = [...guesses, { consonants, colors, formed }];
     let newStatus = 'playing';
 
     if (won) {
@@ -72,10 +82,12 @@ export function useShabdal(overrideDateStr = null, user = null, statsVersion = 0
 
     setError('');
     return true;
-  }, [status, target, guesses, dateStr, persist, user]);
+  }, [status, targetConsonants, targetVowels, guesses, dateStr, persist, user]);
 
   return {
     target,
+    targetConsonants,
+    targetVowels,
     dateStr,
     gameNumber,
     guesses,
@@ -84,6 +96,6 @@ export function useShabdal(overrideDateStr = null, user = null, statsVersion = 0
     stats,
     setError,
     submitGuess,
-    formedTarget: formHindiWord(target),
+    formedTarget: formWordFromPairs(target),
   };
 }

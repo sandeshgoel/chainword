@@ -49,3 +49,15 @@ export function formHindiWord(letters) {
   
   return result;
 }
+
+// Returns the display string for a single syllable (consonant + vowel)
+export function formSyllable(consonant, vowel) {
+  if (!consonant) return MATRAS[vowel] || vowel || '';
+  if (vowel === 'अ' || !MATRAS[vowel]) return consonant;
+  return consonant + MATRAS[vowel];
+}
+
+// Forms a complete Hindi word from an array of {c, v} pairs
+export function formWordFromPairs(pairs) {
+  return pairs.map(({ c, v }) => formSyllable(c, v)).join('');
+}

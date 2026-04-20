@@ -13,6 +13,7 @@ import ChainwordHowToPlay from './games/chainword/components/HowToPlay.jsx';
 import Word4HowToPlay from './games/word4/components/HowToPlay.jsx';
 import TilesHowToPlay from './games/tiles/components/HowToPlay.jsx';
 import SquaresHowToPlay from './games/squares/components/HowToPlay.jsx';
+import ShabdalHowToPlay from './games/shabdal/components/HowToPlay.jsx';
 import StatsModal from './components/StatsModal.jsx';
 import AuthModal from './components/AuthModal.jsx';
 import StatsConflictModal from './components/StatsConflictModal.jsx';
@@ -407,6 +408,7 @@ export default function App() {
       {activeGame === GAME_ID_WORD4   && <Word4HowToPlay   open={showHelp} onClose={() => setShowHelp(false)} />}
       {activeGame === GAME_ID_TILES   && <TilesHowToPlay   open={showHelp} onClose={() => setShowHelp(false)} />}
       {activeGame === GAME_ID_SQUARES && <SquaresHowToPlay open={showHelp} onClose={() => setShowHelp(false)} />}
+      {activeGame === GAME_ID_SHABDAL && <ShabdalHowToPlay open={showHelp} onClose={() => setShowHelp(false)} />}
       {(activeGame === GAME_ID_CHAINWORD || activeGame === GAME_ID_CHAINWORD_HARD) && <ChainwordHowToPlay open={showHelp} onClose={() => setShowHelp(false)} />}
 
       <StatsModal

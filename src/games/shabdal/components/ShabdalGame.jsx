@@ -51,7 +51,7 @@ function Tile({ consonant, vowel, color, revealPhase }) {
 }
 
 // ── WordRow ───────────────────────────────────────────────────────────────────
-function WordRow({ guessConsonants = [], vowels = [], colors, isActive, inputLength = 0, revealPhases, formedWord }) {
+function WordRow({ guessConsonants = [], vowels = [], colors, isActive, inputLength = 0, revealPhases, formedWord, invalid }) {
   return (
     <div className="flex items-center gap-3">
       {/* 4-tile grid */}
@@ -74,12 +74,19 @@ function WordRow({ guessConsonants = [], vowels = [], colors, isActive, inputLen
         })}
       </div>
 
-      {/* Formed Hindi word to the right */}
-      <div
-        className="min-w-[3rem] text-2xl font-bold text-gray-700 dark:text-gray-200"
-        style={{ fontFamily: 'Noto Sans Devanagari, sans-serif' }}
-      >
-        {formedWord || ''}
+      {/* Formed Hindi word + invalid badge */}
+      <div className="flex items-center gap-1.5">
+        <div
+          className="min-w-[3rem] text-2xl font-bold text-gray-700 dark:text-gray-200"
+          style={{ fontFamily: 'Noto Sans Devanagari, sans-serif' }}
+        >
+          {formedWord || ''}
+        </div>
+        {invalid && (
+          <span className="text-[10px] font-bold px-1 py-0.5 rounded bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-400 leading-none">
+            ?
+          </span>
+        )}
       </div>
     </div>
   );
@@ -101,7 +108,7 @@ function getLetterStates(guesses) {
 
 // ── Main Game ─────────────────────────────────────────────────────────────────
 export default function ShabdalGame({ game, onArchive, archiveDate }) {
-  const { targetVowels, guesses, status, error, setError, submitGuess, formedTarget, gameNumber, dateStr } = game;
+  const { targetVowels, guesses, status, error, setError, submitGuess, formedTarget, gameNumber, dateStr, freeGuessesLeft } = game;
   const [input, setInput] = useState([]); // Array of consonants being typed
   const [revealState, setRevealState] = useState(null);
   const [showShare, setShowShare] = useState(false);
@@ -169,6 +176,9 @@ export default function ShabdalGame({ game, onArchive, archiveDate }) {
   }
 
   const letterStates = getLetterStates(guesses);
+  // Disable vowel keys when the current position already has a matra (vowel + matra = invalid Devanagari)
+  const currentPos = input.length;
+  const disableVowels = currentPos < 4 && !!MATRAS[targetVowels[currentPos]];
   const maxRows = status === 'won' ? guesses.length : 6;
 
   const rows = [];
@@ -183,6 +193,7 @@ export default function ShabdalGame({ game, onArchive, archiveDate }) {
           colors={guesses[i].colors}
           revealPhases={isRevealingRow ? revealState.phases : undefined}
           formedWord={guesses[i].formed}
+          invalid={guesses[i].invalid}
         />
       );
     } else if (i === guesses.length && isPlaying) {
@@ -252,7 +263,12 @@ export default function ShabdalGame({ game, onArchive, archiveDate }) {
                 {error}
               </p>
             )}
-            <ShabdalKeyboard letterStates={letterStates} onKey={handleKey} />
+            {!error && freeGuessesLeft > 0 && (
+              <p className="text-xs text-center text-gray-400 dark:text-gray-500 mb-1">
+                {freeGuessesLeft} free guess{freeGuessesLeft !== 1 ? 'es' : ''} remaining for invalid words
+              </p>
+            )}
+            <ShabdalKeyboard letterStates={letterStates} onKey={handleKey} disableVowels={disableVowels} />
           </div>
         </div>
       )}

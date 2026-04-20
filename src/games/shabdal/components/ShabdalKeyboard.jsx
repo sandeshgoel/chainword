@@ -24,31 +24,39 @@ for (const { keys, cls } of GROUPS) {
   for (const k of keys) GROUP_COLOR[k] = cls;
 }
 
+const VOWEL_SET = new Set(HINDI_VOWELS);
+
 const EVAL_COLORS = {
   green:  'bg-green-500 text-white',
   orange: 'bg-orange-400 text-white',
   gray:   'bg-gray-400 dark:bg-gray-600 text-white opacity-50',
 };
 
-export default function ShabdalKeyboard({ letterStates = {}, onKey }) {
+export default function ShabdalKeyboard({ letterStates = {}, onKey, disableVowels = false }) {
   return (
     <div className="flex flex-col gap-1.5 w-full mt-2">
       {KEYBOARD_ROWS.map((row, ri) => (
         <div key={ri} className="flex justify-center gap-0.5 sm:gap-1">
           {row.map((key) => {
+            const isVowel = VOWEL_SET.has(key);
+            const disabled = isVowel && disableVowels;
             const state = letterStates[key];
-            const colorClass = state
-              ? (EVAL_COLORS[state] ?? GROUP_COLOR[key] ?? 'bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-gray-100')
-              : (GROUP_COLOR[key] ?? 'bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-gray-100');
+            const colorClass = disabled
+              ? 'bg-gray-100 dark:bg-gray-800 text-gray-300 dark:text-gray-600'
+              : state
+                ? (EVAL_COLORS[state] ?? GROUP_COLOR[key] ?? 'bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-gray-100')
+                : (GROUP_COLOR[key] ?? 'bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-gray-100');
             const isWide = key === 'ENTER' || key === '⌫';
             return (
               <button
                 key={key}
-                onMouseDown={(e) => { e.preventDefault(); onKey(key); }}
+                onMouseDown={(e) => { e.preventDefault(); if (!disabled) onKey(key); }}
+                disabled={disabled}
                 className={`
                   ${isWide ? 'px-1 min-w-[38px] sm:min-w-[46px] text-[10px]' : 'flex-1 max-w-[32px] text-sm sm:text-base'}
                   h-11 rounded font-bold flex items-center justify-center
                   transition-colors select-none touch-manipulation ${colorClass}
+                  ${disabled ? 'cursor-not-allowed' : ''}
                 `}
                 style={{ fontFamily: 'Noto Sans Devanagari, sans-serif' }}
               >

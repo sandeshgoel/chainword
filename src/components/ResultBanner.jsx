@@ -2,8 +2,8 @@ import { useEffect, useRef } from 'react';
 import { TIER_GOLD, TIER_UNSOLVED, TIER_CONFIG } from '../utils/awards.js';
 
 const CONFETTI_COLORS = ['#f59e0b', '#fbbf24', '#fde68a', '#f97316', '#ef4444', '#8b5cf6', '#3b82f6', '#10b981', '#ec4899'];
-const CONFETTI_DURATION = 6000;
-const CONFETTI_FADE_START = 4000; // stay fully opaque until this point
+const CONFETTI_DURATION = 5000;
+const CONFETTI_FADE_START = 3000; // stay fully opaque until this point
 
 function useConfetti(active) {
   const canvasRef = useRef(null);

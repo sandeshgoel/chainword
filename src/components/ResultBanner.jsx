@@ -2,10 +2,8 @@ import { useEffect, useRef } from 'react';
 import { TIER_GOLD, TIER_UNSOLVED, TIER_CONFIG } from '../utils/awards.js';
 
 const CONFETTI_COLORS = ['#f59e0b', '#fbbf24', '#fde68a', '#f97316', '#ef4444', '#8b5cf6', '#3b82f6', '#10b981', '#ec4899'];
-const CONFETTI_DURATION = 5000;
-const CONFETTI_FADE_START = 3000; // stay fully opaque until this point
 
-function useConfetti(active) {
+function useConfetti(active, speed) {
   const canvasRef = useRef(null);
 
   useEffect(() => {
@@ -21,11 +19,15 @@ function useConfetti(active) {
     resize();
     window.addEventListener('resize', resize);
 
+    const vyMin = 1 * speed;
+    const vyRange = 2 * speed;
+    const gravity = 0.04 * speed;
+
     const particles = Array.from({ length: 140 }, () => ({
       x: Math.random() * canvas.width,
       y: -10 - Math.random() * 120,
-      vx: (Math.random() - 0.5) * 5,
-      vy: 1.5 + Math.random() * 4,
+      vx: (Math.random() - 0.5) * 5 * speed,
+      vy: vyMin + Math.random() * vyRange,
       color: CONFETTI_COLORS[Math.floor(Math.random() * CONFETTI_COLORS.length)],
       w: 5 + Math.random() * 7,
       h: 3 + Math.random() * 5,
@@ -33,39 +35,30 @@ function useConfetti(active) {
       spin: (Math.random() - 0.5) * 0.25,
     }));
 
-    const start = Date.now();
     let animId;
 
     function draw() {
-      const elapsed = Date.now() - start;
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-      if (elapsed >= CONFETTI_DURATION) return;
-
-      const fade = elapsed < CONFETTI_FADE_START ? 1 : Math.max(0, 1 - (elapsed - CONFETTI_FADE_START) / (CONFETTI_DURATION - CONFETTI_FADE_START));
-
+      let anyVisible = false;
       for (const p of particles) {
         p.x += p.vx;
         p.y += p.vy;
-        p.vy += 0.12;
+        p.vy += gravity;
         p.angle += p.spin;
-        if (p.y > canvas.height + 20 && elapsed < CONFETTI_FADE_START) {
-          p.x = Math.random() * canvas.width;
-          p.y = -10 - Math.random() * 60;
-          p.vy = 1.5 + Math.random() * 4;
-          p.vx = (Math.random() - 0.5) * 5;
-        }
 
-        ctx.save();
-        ctx.translate(p.x, p.y);
-        ctx.rotate(p.angle);
-        ctx.globalAlpha = fade;
-        ctx.fillStyle = p.color;
-        ctx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h);
-        ctx.restore();
+        if (p.y <= canvas.height + 20) {
+          anyVisible = true;
+          ctx.save();
+          ctx.translate(p.x, p.y);
+          ctx.rotate(p.angle);
+          ctx.fillStyle = p.color;
+          ctx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h);
+          ctx.restore();
+        }
       }
 
-      animId = requestAnimationFrame(draw);
+      if (anyVisible) animId = requestAnimationFrame(draw);
     }
 
     animId = requestAnimationFrame(draw);
@@ -79,9 +72,9 @@ function useConfetti(active) {
   return canvasRef;
 }
 
-export default function ResultBanner({ tier, title, details, children }) {
+export default function ResultBanner({ tier, title, details, children, confettiSpeed = 0.4 }) {
   const cfg = TIER_CONFIG[tier] || TIER_CONFIG[TIER_UNSOLVED];
-  const canvasRef = useConfetti(tier === TIER_GOLD);
+  const canvasRef = useConfetti(tier === TIER_GOLD, confettiSpeed);
 
   return (
     <>

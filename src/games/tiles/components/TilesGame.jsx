@@ -133,6 +133,15 @@ export default function TilesGame({ game, onArchive, archiveDate }) {
   const [showWordsModal, setShowWordsModal] = useState(false);
   const [wordsData, setWordsData] = useState(null);
   const isSubmittingRef = useRef(false);
+  const animCancelledRef = useRef(false);
+
+  function handleClear() {
+    animCancelledRef.current = true;
+    isSubmittingRef.current = false;
+    setExitingSet(new Set());
+    setToast(null);
+    clearSlots();
+  }
 
   function handleShowWords() {
     setWordsData(computeValidWords(tiles));
@@ -152,6 +161,7 @@ export default function TilesGame({ game, onArchive, archiveDate }) {
     if (!ws.has(word)) return;
 
     isSubmittingRef.current = true;
+    animCancelledRef.current = false;
     const score = calcScore(slots);
     const result = submitWord();
     if (!result) {
@@ -165,8 +175,10 @@ export default function TilesGame({ game, onArchive, archiveDate }) {
     // After 2 seconds, clear slots one tile at a time (right to left)
     setTimeout(async () => {
       for (let i = 3; i >= 0; i--) {
+        if (animCancelledRef.current) return;
         setExitingSet(prev => new Set([...prev, i]));
         await new Promise(r => setTimeout(r, 600)); // wait for CSS transition
+        if (animCancelledRef.current) return;
         clearSlotAt(i);
         setExitingSet(prev => {
           const next = new Set(prev);
@@ -233,7 +245,7 @@ export default function TilesGame({ game, onArchive, archiveDate }) {
                 key={i}
                 tile={tile}
                 multiplier={SLOT_MULTIPLIERS[i]}
-                onClick={() => tile && !isSubmittingRef.current && removeFromSlot(i)}
+                onClick={() => tile && removeFromSlot(i)}
                 exiting={exitingSet.has(i)}
               />
             ))}
@@ -252,16 +264,15 @@ export default function TilesGame({ game, onArchive, archiveDate }) {
                 </p>
               );
             })()}
-            {/* Tap to remove + clear all — shown whenever any tile is placed and not submitting */}
-            {!toast && filledCount > 0 && (
+            {/* Tap to remove + clear all */}
+            {(filledCount > 0 || toast) && (
               <div className="flex items-center gap-3">
                 <p className="text-[10px] font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-widest">
                   Tap tile to remove
                 </p>
                 <button
-                  onClick={clearSlots}
-                  disabled={isSubmittingRef.current}
-                  className="text-[10px] font-semibold text-gray-400 dark:text-gray-500 border border-gray-300 dark:border-gray-600 rounded-lg px-2 py-0.5 hover:bg-gray-50 dark:hover:bg-gray-800 disabled:opacity-40 disabled:cursor-not-allowed transition-colors uppercase tracking-widest"
+                  onClick={handleClear}
+                  className="text-[10px] font-semibold text-gray-400 dark:text-gray-500 border border-gray-300 dark:border-gray-600 rounded-lg px-2 py-0.5 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors uppercase tracking-widest"
                 >
                   Clear all
                 </button>

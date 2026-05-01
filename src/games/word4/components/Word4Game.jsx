@@ -250,7 +250,8 @@ export default function FourWordGame({ game, wordListReady, onArchive, archiveDa
     }
   }
 
-  const letterStates = getLetterStates(guesses);
+  const guessesForKeyboard = revealState !== null ? guesses.slice(0, revealState.rowIndex) : guesses;
+  const letterStates = getLetterStates(guessesForKeyboard);
 
   const shareText = status !== 'playing'
     ? buildWord4ShareText({ gameNumber, dateStr, guesses, status })
@@ -352,7 +353,7 @@ export default function FourWordGame({ game, wordListReady, onArchive, archiveDa
         </div>
       </div>
 
-      {isPlaying && (
+      {(isPlaying || revealState !== null) && (
         <div className="flex-shrink-0 border-t border-gray-100 dark:border-gray-800 bg-white dark:bg-gray-900 px-3 pt-2 pb-4">
           <div className="max-w-sm mx-auto">
             <input

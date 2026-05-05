@@ -421,6 +421,7 @@ export default function App() {
         isSquares={activeGame === GAME_ID_SQUARES}
         isShabdal={activeGame === GAME_ID_SHABDAL}
         hardMode={activeGame === GAME_ID_CHAINWORD ? hardMode : undefined}
+        isBeta={userProfile?.beta ?? false}
       />
 
       <AuthModal

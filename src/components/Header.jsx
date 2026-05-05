@@ -114,7 +114,7 @@ export default function Header({
   }
 
   return (
-    <header className={`flex items-center justify-between px-4 py-3 sticky top-0 z-40 ${transparent ? 'bg-transparent' : 'border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900'}`}>
+    <header className={`flex items-center justify-between px-4 py-3 sticky top-0 z-[10000] ${transparent ? 'bg-transparent' : 'border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900'}`}>
       {/* Left: menu + how to play */}
       <div className="flex items-center gap-1">
         <HamburgerMenu

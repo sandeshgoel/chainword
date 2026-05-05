@@ -265,7 +265,7 @@ export default function FourWordGame({ game, wordListReady, onArchive, archiveDa
   }
 
   const rows = [];
-  const maxRows = status === 'won' ? guesses.length : 6;
+  const maxRows = (status === 'won' && revealState === null) ? guesses.length : 6;
   for (let i = 0; i < maxRows; i++) {
     const isRevealingRow = revealState?.rowIndex === i;
     if (i < guesses.length) {

@@ -46,7 +46,7 @@ export default function HamburgerMenu({ darkMode, onToggleDark, onSelectGame, ac
       </button>
 
       {isMenuOpen && (
-        <div className="absolute top-full left-0 mt-2 w-56 bg-white dark:bg-gray-800 rounded-xl shadow-xl border border-gray-100 dark:border-gray-700 overflow-hidden z-20">
+        <div className="absolute top-full left-0 mt-2 w-56 bg-white dark:bg-gray-800 rounded-xl shadow-xl border border-gray-100 dark:border-gray-700 overflow-hidden z-[10000]">
           <div className="py-2">
             {onHome && (
               <>

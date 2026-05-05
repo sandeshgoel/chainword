@@ -285,7 +285,7 @@ function SquaresStats({ stats, hintsDistribution }) {
   );
 }
 
-export default function StatsModal({ open, onClose, stats, onReset, isWord4, isTiles, isSquares, isShabdal, hardMode }) {
+export default function StatsModal({ open, onClose, stats, onReset, isWord4, isTiles, isSquares, isShabdal, hardMode, isBeta }) {
   const [view, setView] = useState('stats');
   const isChainword = !isWord4 && !isTiles && !isSquares && !isShabdal;
   const gameName = isWord4 ? GAME_ID_WORD4 : isTiles ? 'Tiles' : isSquares ? 'Squares' : isShabdal ? 'शब्दल' : 'Chainword';
@@ -451,7 +451,7 @@ export default function StatsModal({ open, onClose, stats, onReset, isWord4, isT
           </>
         )}
 
-        <ResetButton onReset={onReset} onClose={onClose} gameName={gameName} />
+        {isBeta && <ResetButton onReset={onReset} onClose={onClose} gameName={gameName} />}
       </div>
     </Modal>
   );
